@@ -1,0 +1,155 @@
+generator client {
+    provider = "prisma-client-js"
+}
+
+datasource db {
+    provider = "postgresql"
+    url      = env("DATABASE_URL")
+}
+
+model Role {
+    id          Int             @id @default(autoincrement())
+    name        String
+    description String?
+    users       UserRole[]
+    authorities RoleAuthority[]
+}
+
+model Authority {
+    id          Int             @id @default(autoincrement())
+    name        String
+    description String?
+    roles       RoleAuthority[]
+    users       UserAuthority[]
+}
+
+model User {
+    id          Int             @id @default(autoincrement())
+    name        String
+    avatar      String?
+    roles       UserRole[]
+    authorities UserAuthority[]
+    comments    Comment[]
+    follows     Follow[]
+    histories   History[]
+    Novel       Novel[]
+    isDeleted   Boolean
+    isBanned    Boolean
+}
+
+model Category {
+    id          Int     @id @default(autoincrement())
+    name        String
+    description String?
+}
+
+model Genes {
+    id          Int     @id @default(autoincrement())
+    name        String
+    description String?
+}
+
+model Novel {
+    id            Int       @id @default(autoincrement())
+    name          String
+    description   String?
+    createdAt     DateTime  @default(now())
+    cover         String?
+    author        String
+    status        String
+    view          Int       @default(0)
+    updatedAt     DateTime  @updatedAt
+    rating        Float?    @default(0.0)
+    followerCount Int       @default(0)
+    commentCount  Int       @default(0)
+    userId        Int
+    chapters      Chapter[]
+    ratings       Rating[]
+    views         View[]
+    comments      Comment[]
+    follows       Follow[]
+    histories     History[]
+    user          User      @relation(fields: [userId], references: [id])
+}
+
+model Chapter {
+    id        Int       @id @default(autoincrement())
+    name      String
+    createdAt DateTime  @default(now())
+    novelId   Int
+    novel     Novel     @relation(fields: [novelId], references: [id], onDelete: Cascade)
+    Comment   Comment[]
+}
+
+model Rating {
+    id        Int      @id @default(autoincrement())
+    novelId   Int
+    content   String
+    score     Int      @default(1)
+    createdAt DateTime @default(now())
+    novel     Novel    @relation(fields: [novelId], references: [id], onDelete: Cascade)
+}
+
+model View {
+    id        Int      @id @default(autoincrement())
+    novelId   Int
+    createdAt DateTime @default(now())
+    novel     Novel    @relation(fields: [novelId], references: [id], onDelete: Cascade)
+}
+
+model Comment {
+    id        Int      @id @default(autoincrement())
+    chapterId Int
+    userId    Int
+    content   String
+    createdAt DateTime @default(now())
+    chapter   Chapter  @relation(fields: [chapterId], references: [id], onDelete: Cascade)
+    user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+    Novel     Novel?   @relation(fields: [novelId], references: [id])
+    novelId   Int?
+}
+
+model Follow {
+    id        Int      @id @default(autoincrement())
+    novelId   Int
+    userId    Int
+    createdAt DateTime @default(now())
+    novel     Novel    @relation(fields: [novelId], references: [id], onDelete: Cascade)
+    user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model History {
+    id        Int      @id @default(autoincrement())
+    novelId   Int
+    userId    Int
+    createdAt DateTime @default(now())
+    novel     Novel    @relation(fields: [novelId], references: [id], onDelete: Cascade)
+    user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model UserRole {
+    userId Int
+    roleId Int
+    user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+    role   Role @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+    @@id([userId, roleId])
+}
+
+model UserAuthority {
+    userId      Int
+    authorityId Int
+    user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+    authority   Authority @relation(fields: [authorityId], references: [id], onDelete: Cascade)
+
+    @@id([userId, authorityId])
+}
+
+model RoleAuthority {
+    roleId      Int
+    authorityId Int
+    role        Role      @relation(fields: [roleId], references: [id], onDelete: Cascade)
+    authority   Authority @relation(fields: [authorityId], references: [id], onDelete: Cascade)
+
+    @@id([roleId, authorityId])
+}
