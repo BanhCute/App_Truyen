@@ -12,7 +12,7 @@ const app_controller_1 = require("./app.controller");
 const app_service_1 = require("./app.service");
 const category_module_1 = require("./services/category/category.module");
 const database_module_1 = require("./services/database/database.module");
-const genes_module_1 = require("./services/genes/genes.module");
+const genes_module_1 = require("./services/genes/entities/genes.module");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;

@@ -15,8 +15,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.GenesController = void 0;
 const common_1 = require("@nestjs/common");
 const genes_service_1 = require("./genes.service");
-const create_gene_dto_1 = require("./dto/create-gene.dto");
-const update_gene_dto_1 = require("./dto/update-gene.dto");
+const create_gene_dto_1 = require("../dto/create-gene.dto");
+const update_gene_dto_1 = require("../dto/update-gene.dto");
 let GenesController = class GenesController {
     constructor(genesService) {
         this.genesService = genesService;
@@ -35,11 +35,6 @@ let GenesController = class GenesController {
     }
     remove(id) {
         return this.genesService.remove(+id);
-    }
-    async test() {
-        const result = await this.genesService.findAll();
-        console.log('Test genes:', result);
-        return result;
     }
 };
 exports.GenesController = GenesController;
@@ -78,12 +73,6 @@ __decorate([
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", void 0)
 ], GenesController.prototype, "remove", null);
-__decorate([
-    (0, common_1.Get)('test'),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", []),
-    __metadata("design:returntype", Promise)
-], GenesController.prototype, "test", null);
 exports.GenesController = GenesController = __decorate([
     (0, common_1.Controller)('genes'),
     __metadata("design:paramtypes", [genes_service_1.GenesService])

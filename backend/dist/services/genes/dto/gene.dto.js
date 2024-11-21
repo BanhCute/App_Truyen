@@ -10,19 +10,23 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const class_transformer_1 = require("class-transformer");
+const swagger_1 = require("@nestjs/swagger");
 class GeneDto {
 }
 exports.default = GeneDto;
 __decorate([
     (0, class_transformer_1.Expose)(),
+    (0, swagger_1.ApiProperty)(),
     __metadata("design:type", Number)
 ], GeneDto.prototype, "id", void 0);
 __decorate([
     (0, class_transformer_1.Expose)(),
+    (0, swagger_1.ApiProperty)(),
     __metadata("design:type", String)
 ], GeneDto.prototype, "name", void 0);
 __decorate([
     (0, class_transformer_1.Expose)(),
+    (0, swagger_1.ApiProperty)(),
     __metadata("design:type", String)
 ], GeneDto.prototype, "description", void 0);
 //# sourceMappingURL=gene.dto.js.map
