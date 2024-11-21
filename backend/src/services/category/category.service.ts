@@ -8,6 +8,7 @@ export class CategoryService {
   constructor(private readonly databaseService: DatabaseService) {}
 
   create(createCategoryDto: CreateCategoryDto) {
+    console.log(createCategoryDto);
     return this.databaseService.category.create({
       data: createCategoryDto,
     });

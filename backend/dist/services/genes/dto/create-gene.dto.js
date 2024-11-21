@@ -16,14 +16,22 @@ class CreateGeneDto {
 }
 exports.CreateGeneDto = CreateGeneDto;
 __decorate([
-    (0, swagger_1.ApiProperty)(),
-    (0, class_validator_1.IsString)(),
+    (0, swagger_1.ApiProperty)({ example: 'Isekai', description: 'Tên thể loại' }),
+    (0, class_validator_1.IsString)({ message: 'Tên phải là chuỗi' }),
+    (0, class_validator_1.IsNotEmpty)({ message: 'Tên không được để trống' }),
+    (0, class_validator_1.MinLength)(2, { message: 'Tên phải có ít nhất 2 ký tự' }),
+    (0, class_validator_1.MaxLength)(50, { message: 'Tên không được vượt quá 50 ký tự' }),
     __metadata("design:type", String)
 ], CreateGeneDto.prototype, "name", void 0);
 __decorate([
-    (0, swagger_1.ApiProperty)({ required: false }),
-    (0, class_validator_1.IsString)(),
+    (0, swagger_1.ApiProperty)({
+        example: 'Thể loại dị giới',
+        description: 'Mô tả thể loại',
+        required: false
+    }),
+    (0, class_validator_1.IsString)({ message: 'Mô tả phải là chuỗi' }),
     (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.MaxLength)(200, { message: 'Mô tả không được vượt quá 200 ký tự' }),
     __metadata("design:type", String)
 ], CreateGeneDto.prototype, "description", void 0);
 //# sourceMappingURL=create-gene.dto.js.map

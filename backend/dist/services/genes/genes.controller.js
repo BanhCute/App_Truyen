@@ -17,24 +17,35 @@ const common_1 = require("@nestjs/common");
 const genes_service_1 = require("./genes.service");
 const create_gene_dto_1 = require("./dto/create-gene.dto");
 const update_gene_dto_1 = require("./dto/update-gene.dto");
+const class_transformer_1 = require("class-transformer");
+const gene_dto_1 = require("./dto/gene.dto");
 let GenesController = class GenesController {
     constructor(genesService) {
         this.genesService = genesService;
     }
-    create(createGeneDto) {
-        return this.genesService.create(createGeneDto);
+    async create(createGeneDto) {
+        try {
+            const result = await this.genesService.create(createGeneDto);
+            return (0, class_transformer_1.plainToInstance)(gene_dto_1.default, result);
+        }
+        catch (error) {
+            console.log('Error:', error);
+            throw error;
+        }
     }
     findAll() {
-        return this.genesService.findAll();
+        return this.genesService
+            .findAll()
+            .then((items) => items.map((item) => (0, class_transformer_1.plainToInstance)(gene_dto_1.default, item)));
     }
     findOne(id) {
-        return this.genesService.findOne(+id);
+        return (0, class_transformer_1.plainToInstance)(gene_dto_1.default, this.genesService.findOne(id));
     }
     update(id, updateGeneDto) {
-        return this.genesService.update(+id, updateGeneDto);
+        return (0, class_transformer_1.plainToInstance)(gene_dto_1.default, this.genesService.update(id, updateGeneDto));
     }
     remove(id) {
-        return this.genesService.remove(+id);
+        return (0, class_transformer_1.plainToInstance)(gene_dto_1.default, this.genesService.remove(id));
     }
 };
 exports.GenesController = GenesController;
@@ -43,7 +54,7 @@ __decorate([
     __param(0, (0, common_1.Body)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [create_gene_dto_1.CreateGeneDto]),
-    __metadata("design:returntype", void 0)
+    __metadata("design:returntype", Promise)
 ], GenesController.prototype, "create", null);
 __decorate([
     (0, common_1.Get)(),
@@ -53,24 +64,24 @@ __decorate([
 ], GenesController.prototype, "findAll", null);
 __decorate([
     (0, common_1.Get)(':id'),
-    __param(0, (0, common_1.Param)('id')),
+    __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String]),
+    __metadata("design:paramtypes", [Number]),
     __metadata("design:returntype", void 0)
 ], GenesController.prototype, "findOne", null);
 __decorate([
     (0, common_1.Patch)(':id'),
-    __param(0, (0, common_1.Param)('id')),
+    __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),
     __param(1, (0, common_1.Body)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, update_gene_dto_1.UpdateGeneDto]),
+    __metadata("design:paramtypes", [Number, update_gene_dto_1.UpdateGeneDto]),
     __metadata("design:returntype", void 0)
 ], GenesController.prototype, "update", null);
 __decorate([
     (0, common_1.Delete)(':id'),
-    __param(0, (0, common_1.Param)('id')),
+    __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String]),
+    __metadata("design:paramtypes", [Number]),
     __metadata("design:returntype", void 0)
 ], GenesController.prototype, "remove", null);
 exports.GenesController = GenesController = __decorate([

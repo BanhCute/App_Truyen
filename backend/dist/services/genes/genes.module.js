@@ -10,13 +10,14 @@ exports.GenesModule = void 0;
 const common_1 = require("@nestjs/common");
 const genes_service_1 = require("./genes.service");
 const genes_controller_1 = require("./genes.controller");
+const database_service_1 = require("../database/database.service");
 let GenesModule = class GenesModule {
 };
 exports.GenesModule = GenesModule;
 exports.GenesModule = GenesModule = __decorate([
     (0, common_1.Module)({
         controllers: [genes_controller_1.GenesController],
-        providers: [genes_service_1.GenesService],
+        providers: [genes_service_1.GenesService, database_service_1.DatabaseService],
     })
 ], GenesModule);
 //# sourceMappingURL=genes.module.js.map

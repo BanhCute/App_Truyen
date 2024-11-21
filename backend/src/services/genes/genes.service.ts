@@ -1,26 +1,46 @@
 import { Injectable } from '@nestjs/common';
 import { CreateGeneDto } from './dto/create-gene.dto';
 import { UpdateGeneDto } from './dto/update-gene.dto';
+import { DatabaseService } from 'src/services/database/database.service';
 
 @Injectable()
 export class GenesService {
-  create(createGeneDto: CreateGeneDto) {
-    return 'This action adds a new gene';
+  constructor(private readonly databaseService: DatabaseService) {}
+
+  async create(createGeneDto: CreateGeneDto) {
+    try {
+      return await this.databaseService.genes.create({
+        data: {
+          name: createGeneDto.name,
+          description: createGeneDto.description
+        },
+      });
+    } catch (error) {
+      console.log('Database Error:', error);
+      throw error;
+    }
   }
 
   findAll() {
-    return `This action returns all genes`;
+    return this.databaseService.genes.findMany();
   }
 
   findOne(id: number) {
-    return `This action returns a #${id} gene`;
+    return this.databaseService.genes.findUnique({
+      where: { id },
+    });
   }
 
   update(id: number, updateGeneDto: UpdateGeneDto) {
-    return `This action updates a #${id} gene`;
+    return this.databaseService.genes.update({
+      where: { id },
+      data: updateGeneDto,
+    });
   }
 
   remove(id: number) {
-    return `This action removes a #${id} gene`;
+    return this.databaseService.genes.delete({
+      where: { id },
+    });
   }
 }
