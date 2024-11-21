@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { CreateGeneDto } from '../dto/create-gene.dto';
-import { UpdateGeneDto } from '../dto/update-gene.dto';
+import { CreateGeneDto } from './dto/create-gene.dto';
+import { UpdateGeneDto } from './dto/update-gene.dto';
 
 @Injectable()
 export class GenesService {

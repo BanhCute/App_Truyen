@@ -8,8 +8,8 @@ import {
   Delete,
 } from '@nestjs/common';
 import { GenesService } from './genes.service';
-import { CreateGeneDto } from '../dto/create-gene.dto';
-import { UpdateGeneDto } from '../dto/update-gene.dto';
+import { CreateGeneDto } from './dto/create-gene.dto';
+import { UpdateGeneDto } from './dto/update-gene.dto';
 
 @Controller('genes')
 export class GenesController {
