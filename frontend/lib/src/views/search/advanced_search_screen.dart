@@ -26,7 +26,7 @@ class _AdvancedSearchScreenState extends State<AdvancedSearchScreen> {
   Future<void> fetchCategories() async {
     try {
       final response = await http.get(
-          Uri.parse('https://webnovel-hife.onrender.com/api/v1/categories'));
+          Uri.parse('https://webtruyenfull.onrender.com/api/v1/categories'));
       if (response.statusCode == 200) {
         final List<dynamic> data = json.decode(response.body);
         setState(() {
