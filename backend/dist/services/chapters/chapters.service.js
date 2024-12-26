@@ -19,10 +19,8 @@ let ChaptersService = class ChaptersService {
     async create(createChapterDto) {
         const existingChapter = await this.databaseService.chapter.findFirst({
             where: {
-                AND: [
-                    { name: createChapterDto.name },
-                    { novelId: createChapterDto.novelId },
-                ],
+                novelId: createChapterDto.novelId,
+                name: createChapterDto.name,
             },
         });
         if (existingChapter) {
@@ -77,15 +75,8 @@ let ChaptersService = class ChaptersService {
             if (!currentChapter) {
                 throw new common_1.NotFoundException(`Chapter với ID ${id} không tồn tại`);
             }
-            if (updateChapterDto.id && updateChapterDto.id !== currentChapter.id) {
-                throw new common_1.BadRequestException('Bạn không được phép sửa ID chapter');
-            }
             if ('createdAt' in updateChapterDto) {
-                const currentDate = new Date(currentChapter.createdAt).getTime();
-                const updateDate = new Date(updateChapterDto.createdAt).getTime();
-                if (currentDate !== updateDate) {
-                    throw new common_1.BadRequestException('Bạn không được phép sửa ngày tạo chapter');
-                }
+                throw new common_1.BadRequestException('Bạn không được phép sửa ngày tạo chapter');
             }
             return await this.databaseService.chapter.update({
                 where: { id },

@@ -5,12 +5,6 @@ export declare class CommentsService {
     private readonly databaseService;
     constructor(databaseService: DatabaseService);
     create(createCommentDto: CreateCommentDto, userId: number): Promise<{
-        chapter: {
-            id: number;
-            createdAt: Date;
-            novelId: number;
-            name: string;
-        };
         user: {
             id: number;
             name: string;
@@ -18,21 +12,22 @@ export declare class CommentsService {
             isDeleted: boolean;
             isBanned: boolean;
         };
+        chapter: {
+            id: number;
+            name: string;
+            createdAt: Date;
+            novelId: number;
+            content: string;
+        };
     } & {
         id: number;
-        chapterId: number;
         userId: number;
-        content: string;
         createdAt: Date;
         novelId: number | null;
+        content: string;
+        chapterId: number;
     }>;
     findAll(): Promise<({
-        chapter: {
-            id: number;
-            createdAt: Date;
-            novelId: number;
-            name: string;
-        };
         user: {
             id: number;
             name: string;
@@ -40,36 +35,37 @@ export declare class CommentsService {
             isDeleted: boolean;
             isBanned: boolean;
         };
+        chapter: {
+            id: number;
+            name: string;
+            createdAt: Date;
+            novelId: number;
+            content: string;
+        };
         Novel: {
             id: number;
-            userId: number;
-            createdAt: Date;
             name: string;
+            rating: number | null;
+            view: number;
+            userId: number;
+            updatedAt: Date;
+            createdAt: Date;
             description: string | null;
             cover: string | null;
             author: string;
             status: string;
-            view: number;
-            updatedAt: Date;
-            rating: number | null;
             followerCount: number;
             commentCount: number;
         };
     } & {
         id: number;
-        chapterId: number;
         userId: number;
-        content: string;
         createdAt: Date;
         novelId: number | null;
+        content: string;
+        chapterId: number;
     })[]>;
     findOne(id: number): import("@prisma/client").Prisma.Prisma__CommentClient<{
-        chapter: {
-            id: number;
-            createdAt: Date;
-            novelId: number;
-            name: string;
-        };
         user: {
             id: number;
             name: string;
@@ -77,36 +73,43 @@ export declare class CommentsService {
             isDeleted: boolean;
             isBanned: boolean;
         };
+        chapter: {
+            id: number;
+            name: string;
+            createdAt: Date;
+            novelId: number;
+            content: string;
+        };
         Novel: {
             id: number;
-            userId: number;
-            createdAt: Date;
             name: string;
+            rating: number | null;
+            view: number;
+            userId: number;
+            updatedAt: Date;
+            createdAt: Date;
             description: string | null;
             cover: string | null;
             author: string;
             status: string;
-            view: number;
-            updatedAt: Date;
-            rating: number | null;
             followerCount: number;
             commentCount: number;
         };
     } & {
         id: number;
-        chapterId: number;
         userId: number;
-        content: string;
         createdAt: Date;
         novelId: number | null;
+        content: string;
+        chapterId: number;
     }, null, import("@prisma/client/runtime/library").DefaultArgs>;
     update(id: number, updateCommentDto: UpdateCommentDto): Promise<void>;
     remove(id: number, userId: number): Promise<{
         id: number;
-        chapterId: number;
         userId: number;
-        content: string;
         createdAt: Date;
         novelId: number | null;
+        content: string;
+        chapterId: number;
     }>;
 }

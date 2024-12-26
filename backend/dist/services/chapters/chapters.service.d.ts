@@ -9,6 +9,7 @@ export declare class ChaptersService {
         name: string;
         createdAt: Date;
         novelId: number;
+        content: string;
     }>;
     findAll(): Promise<({
         novel: {
@@ -31,14 +32,15 @@ export declare class ChaptersService {
             userId: number;
             createdAt: Date;
             novelId: number | null;
-            chapterId: number;
             content: string;
+            chapterId: number;
         }[];
     } & {
         id: number;
         name: string;
         createdAt: Date;
         novelId: number;
+        content: string;
     })[]>;
     findOne(id: number): Promise<{
         novel: {
@@ -61,25 +63,28 @@ export declare class ChaptersService {
             userId: number;
             createdAt: Date;
             novelId: number | null;
-            chapterId: number;
             content: string;
+            chapterId: number;
         }[];
     } & {
         id: number;
         name: string;
         createdAt: Date;
         novelId: number;
+        content: string;
     }>;
     update(id: number, updateChapterDto: UpdateChapterDto): Promise<{
         id: number;
         name: string;
         createdAt: Date;
         novelId: number;
+        content: string;
     }>;
     remove(id: number): Promise<{
         id: number;
         name: string;
         createdAt: Date;
         novelId: number;
+        content: string;
     }>;
 }

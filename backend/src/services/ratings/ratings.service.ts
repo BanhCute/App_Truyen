@@ -26,10 +26,7 @@ export class RatingsService {
     // Kiểm tra xem đã đánh giá chưa
     const existingRating = await this.databaseService.rating.findFirst({
       where: {
-        AND: [
-          { novelId: createRatingDto.novelId },
-          { userId: userId },
-        ],
+        AND: [{ novelId: createRatingDto.novelId }, { userId: userId }],
       },
     });
 

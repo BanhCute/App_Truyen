@@ -18,7 +18,7 @@ exports.CreateChapterDto = CreateChapterDto;
 __decorate([
     (0, swagger_1.ApiProperty)({
         example: 'Chapter 1: Bắt đầu cuộc phiêu lưu',
-        description: 'Tên chapter'
+        description: 'Tên chapter',
     }),
     (0, class_validator_1.IsString)({ message: 'Tên chapter phải là chuỗi' }),
     (0, class_validator_1.IsNotEmpty)({ message: 'Tên chapter không được để trống' }),
@@ -29,10 +29,17 @@ __decorate([
 __decorate([
     (0, swagger_1.ApiProperty)({
         example: 1,
-        description: 'ID của novel mà chapter thuộc về'
+        description: 'ID của novel mà chapter thuộc về',
     }),
     (0, class_validator_1.IsNumber)({}, { message: 'ID novel phải là số' }),
     (0, class_validator_1.IsNotEmpty)({ message: 'ID novel không được để trống' }),
     __metadata("design:type", Number)
 ], CreateChapterDto.prototype, "novelId", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)({
+        description: 'Content của novel mà chapter thuộc về',
+    }),
+    (0, class_validator_1.IsNotEmpty)({ message: 'Content novel không được để trống' }),
+    __metadata("design:type", String)
+], CreateChapterDto.prototype, "content", void 0);
 //# sourceMappingURL=create-chapter.dto.js.map

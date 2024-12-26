@@ -7,6 +7,7 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.CloudinaryModule = void 0;
+const cloudinary_controller_1 = require("./cloudinary.controller");
 const cloudinary_service_1 = require("./cloudinary.service");
 const common_1 = require("@nestjs/common");
 let CloudinaryModule = class CloudinaryModule {
@@ -16,6 +17,7 @@ exports.CloudinaryModule = CloudinaryModule = __decorate([
     (0, common_1.Module)({
         providers: [cloudinary_service_1.CloudinaryService],
         exports: [cloudinary_service_1.CloudinaryService],
+        controllers: [cloudinary_controller_1.CloudinaryController],
     })
 ], CloudinaryModule);
 //# sourceMappingURL=cloudinary.module.js.map

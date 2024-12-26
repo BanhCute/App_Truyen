@@ -51,7 +51,7 @@ let GoogleOauthController = class GoogleOauthController {
         }
         return (0, class_transformer_1.plainToInstance)(google_auth_dto_1.GoogleAuthResponse, {
             ...this.jwtService.login(user),
-            user: { ...user, avatar: picture },
+            user: { ...user },
         });
     }
 };

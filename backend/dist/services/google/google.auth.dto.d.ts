@@ -1,5 +1,5 @@
-import { UserResponse } from 'src/services/users/dto/user.response';
+import { SessionResponseDto } from 'src/services/auth/dto/session.dto';
 export declare class GoogleAuthResponse {
     accessToken: string;
-    user: UserResponse;
+    user: SessionResponseDto;
 }

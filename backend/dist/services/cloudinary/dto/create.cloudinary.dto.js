@@ -9,19 +9,14 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.GoogleAuthResponse = void 0;
-const class_transformer_1 = require("class-transformer");
-const session_dto_1 = require("../auth/dto/session.dto");
-class GoogleAuthResponse {
+exports.CreateCloudinaryDto = void 0;
+const nestjs_form_data_1 = require("nestjs-form-data");
+class CreateCloudinaryDto {
 }
-exports.GoogleAuthResponse = GoogleAuthResponse;
+exports.CreateCloudinaryDto = CreateCloudinaryDto;
 __decorate([
-    (0, class_transformer_1.Expose)(),
-    __metadata("design:type", String)
-], GoogleAuthResponse.prototype, "accessToken", void 0);
-__decorate([
-    (0, class_transformer_1.Expose)(),
-    (0, class_transformer_1.Type)(() => session_dto_1.SessionResponseDto),
-    __metadata("design:type", session_dto_1.SessionResponseDto)
-], GoogleAuthResponse.prototype, "user", void 0);
-//# sourceMappingURL=google.auth.dto.js.map
+    (0, nestjs_form_data_1.IsFile)(),
+    (0, nestjs_form_data_1.MaxFileSize)(1e6),
+    __metadata("design:type", nestjs_form_data_1.MemoryStoredFile)
+], CreateCloudinaryDto.prototype, "image", void 0);
+//# sourceMappingURL=create.cloudinary.dto.js.map

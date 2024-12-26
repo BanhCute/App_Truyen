@@ -30,10 +30,11 @@ let NovelController = class NovelController {
             strategy: 'excludeAll',
         }), session.id));
     }
-    findAll() {
-        return this.novelService
+    async findAll() {
+        const data = await this.novelService
             .findAll()
             .then((items) => items.map((item) => (0, class_transformer_1.plainToInstance)(novel_dto_1.default, item)));
+        return data;
     }
     findOne(id) {
         return (0, class_transformer_1.plainToInstance)(novel_dto_1.default, this.novelService.findOne(id));
@@ -60,7 +61,7 @@ __decorate([
     (0, common_1.Get)(),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", []),
-    __metadata("design:returntype", void 0)
+    __metadata("design:returntype", Promise)
 ], NovelController.prototype, "findAll", null);
 __decorate([
     (0, common_1.Get)(':id'),

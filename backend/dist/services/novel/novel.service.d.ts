@@ -7,25 +7,19 @@ export declare class NovelService {
     create(createNovelDto: CreateNovelDto, userId: number): Promise<{
         id: number;
         name: string;
-        description: string | null;
+        rating: number | null;
+        view: number;
+        userId: number;
+        updatedAt: Date;
         createdAt: Date;
+        description: string | null;
         cover: string | null;
         author: string;
         status: string;
-        view: number;
-        updatedAt: Date;
-        rating: number | null;
         followerCount: number;
         commentCount: number;
-        userId: number;
     }>;
     findAll(): import("@prisma/client").Prisma.PrismaPromise<({
-        chapters: {
-            id: number;
-            name: string;
-            createdAt: Date;
-            novelId: number;
-        }[];
         user: {
             id: number;
             name: string;
@@ -33,94 +27,102 @@ export declare class NovelService {
             isDeleted: boolean;
             isBanned: boolean;
         };
-    } & {
-        id: number;
-        name: string;
-        description: string | null;
-        createdAt: Date;
-        cover: string | null;
-        author: string;
-        status: string;
-        view: number;
-        updatedAt: Date;
-        rating: number | null;
-        followerCount: number;
-        commentCount: number;
-        userId: number;
-    })[]>;
-    findOne(id: number): import("@prisma/client").Prisma.Prisma__NovelClient<{
         chapters: {
             id: number;
             name: string;
             createdAt: Date;
             novelId: number;
-        }[];
-        ratings: {
-            id: number;
-            createdAt: Date;
-            userId: number;
-            novelId: number;
             content: string;
-            score: number;
         }[];
+    } & {
+        id: number;
+        name: string;
+        rating: number | null;
+        view: number;
+        userId: number;
+        updatedAt: Date;
+        createdAt: Date;
+        description: string | null;
+        cover: string | null;
+        author: string;
+        status: string;
+        followerCount: number;
+        commentCount: number;
+    })[]>;
+    findOne(id: number): import("@prisma/client").Prisma.Prisma__NovelClient<{
+        user: {
+            id: number;
+            name: string;
+            avatar: string | null;
+            isDeleted: boolean;
+            isBanned: boolean;
+        };
         comments: {
             id: number;
-            createdAt: Date;
             userId: number;
+            createdAt: Date;
             novelId: number | null;
             content: string;
             chapterId: number;
         }[];
-        user: {
+        chapters: {
             id: number;
             name: string;
-            avatar: string | null;
-            isDeleted: boolean;
-            isBanned: boolean;
-        };
+            createdAt: Date;
+            novelId: number;
+            content: string;
+        }[];
+        ratings: {
+            id: number;
+            userId: number;
+            createdAt: Date;
+            novelId: number;
+            content: string;
+            score: number;
+        }[];
     } & {
         id: number;
         name: string;
-        description: string | null;
+        rating: number | null;
+        view: number;
+        userId: number;
+        updatedAt: Date;
         createdAt: Date;
+        description: string | null;
         cover: string | null;
         author: string;
         status: string;
-        view: number;
-        updatedAt: Date;
-        rating: number | null;
         followerCount: number;
         commentCount: number;
-        userId: number;
     }, null, import("@prisma/client/runtime/library").DefaultArgs>;
     update(id: number, updateNovelDto: UpdateNovelDto, userId: number): Promise<{
         id: number;
         name: string;
-        description: string | null;
+        rating: number | null;
+        view: number;
+        userId: number;
+        updatedAt: Date;
         createdAt: Date;
+        description: string | null;
         cover: string | null;
         author: string;
         status: string;
-        view: number;
-        updatedAt: Date;
-        rating: number | null;
         followerCount: number;
         commentCount: number;
-        userId: number;
     }>;
     remove(id: number, userId: number): Promise<{
         id: number;
         name: string;
-        description: string | null;
+        rating: number | null;
+        view: number;
+        userId: number;
+        updatedAt: Date;
         createdAt: Date;
+        description: string | null;
         cover: string | null;
         author: string;
         status: string;
-        view: number;
-        updatedAt: Date;
-        rating: number | null;
         followerCount: number;
         commentCount: number;
-        userId: number;
     }>;
 }
