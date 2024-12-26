@@ -27,13 +27,6 @@ export declare class NovelService {
             isDeleted: boolean;
             isBanned: boolean;
         };
-        chapters: {
-            id: number;
-            name: string;
-            createdAt: Date;
-            novelId: number;
-            content: string;
-        }[];
     } & {
         id: number;
         name: string;
