@@ -29,7 +29,7 @@ export class NovelService {
     return this.databaseService.novel.findMany({
       include: {
         user: true,
-        chapters: true,
+        
       },
     });
   }

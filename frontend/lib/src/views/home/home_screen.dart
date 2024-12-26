@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:frontend/src/views/novel_detail/novel_detail_screen.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -40,8 +41,8 @@ class _HomeScreenState extends State<HomeScreen> {
       isLoading = true;
     });
     try {
-      final response = await http
-          .get(Uri.parse('https://webnovel-hife.onrender.com/api/v1/novels'));
+      final response =
+          await http.get(Uri.parse('${dotenv.get('API_URL')}/novels'));
       final List data = json.decode(response.body);
       setState(() {
         novels = data.map((json) => Novel.fromJson(json)).toList();

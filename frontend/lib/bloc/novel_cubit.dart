@@ -1,4 +1,5 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import '../src/models/novel.dart';
@@ -22,8 +23,7 @@ class NovelCubit extends Cubit<NovelState> {
     emit(NovelState(isLoading: true));
     try {
       final response = await http.get(
-        Uri.parse('https://webnovel-hife.onrender.com/api/v1/novels')
-      );
+          Uri.parse('${dotenv.get('API_URL')}/novels'));
       final List data = json.decode(response.body);
       final novels = data.map((json) => Novel.fromJson(json)).toList();
       emit(NovelState(novels: novels));

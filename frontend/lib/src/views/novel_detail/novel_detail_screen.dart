@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import '../../models/novel.dart';
@@ -31,7 +32,7 @@ class _NovelDetailScreenState extends State<NovelDetailScreen> {
     try {
       // Load chapters
       final chaptersResponse = await http
-          .get(Uri.parse('https://webnovel-hife.onrender.com/api/v1/chapters'));
+          .get(Uri.parse('${dotenv.get('API_URL')}/chapters'));
       final List chaptersData = json.decode(chaptersResponse.body);
       final allChapters =
           chaptersData.map((json) => Chapter.fromJson(json)).toList();
@@ -44,7 +45,7 @@ class _NovelDetailScreenState extends State<NovelDetailScreen> {
 
       // Load categories
       final categoriesResponse = await http.get(
-          Uri.parse('https://webnovel-hife.onrender.com/api/v1/categories'));
+          Uri.parse('${dotenv.get('API_URL')}/categories'));
       final List categoriesData = json.decode(categoriesResponse.body);
       categories = categoriesData.map((cat) => cat['name'].toString()).toList();
 
