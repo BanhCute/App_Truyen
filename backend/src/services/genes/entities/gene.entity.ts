@@ -1,1 +1,1 @@
-export class gene {}
+export class Gene {}

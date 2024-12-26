@@ -7,6 +7,20 @@ datasource db {
     url      = env("DATABASE_URL")
 }
 
+model Account {
+    id         Int       @id @default(autoincrement())
+    userId     Int
+    provider   String
+    providerId String
+    updatedAt  DateTime? @db.Timestamp(6)
+    createdAt  DateTime  @db.Timestamp(6)
+    user       User      @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+    @@index([providerId])
+    @@index([provider])
+    @@index([userId])
+}
+
 model Role {
     id          Int             @id @default(autoincrement())
     name        String
@@ -33,8 +47,10 @@ model User {
     follows     Follow[]
     histories   History[]
     Novel       Novel[]
+    accounts    Account[]
     isDeleted   Boolean
     isBanned    Boolean
+    Rating      Rating[]
 }
 
 model Category {
@@ -77,6 +93,7 @@ model Chapter {
     name      String
     createdAt DateTime  @default(now())
     novelId   Int
+    content   String
     novel     Novel     @relation(fields: [novelId], references: [id], onDelete: Cascade)
     Comment   Comment[]
 }
@@ -84,10 +101,12 @@ model Chapter {
 model Rating {
     id        Int      @id @default(autoincrement())
     novelId   Int
+    userId    Int
     content   String
     score     Int      @default(1)
     createdAt DateTime @default(now())
     novel     Novel    @relation(fields: [novelId], references: [id], onDelete: Cascade)
+    user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model View {

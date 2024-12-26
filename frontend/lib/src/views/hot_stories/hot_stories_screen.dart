@@ -1,36 +1,15 @@
 import 'package:flutter/material.dart';
 import '../../models/truyen.dart';
 import '../../widgets/truyen_card.dart';
+import '../../data/sample_data.dart';
 
 class HotStoriesScreen extends StatelessWidget {
   const HotStoriesScreen({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    // Danh sách truyện hot
-    final List<Truyen> truyenHot = const [
-      Truyen(
-          title: "Doraemon",
-          imageUrl:
-              "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEiUBftbgOZfAhnKmdPGAnmMlUAFZpvzBE0yQQ5L-XnOV_vcVVVRbPFG4b6o5UZYMg4Qe0HQQqesqP6cU91xnbgzQbqrlqdr6qbwPdPuXsKAw-Mucxp3N8xJZu3Rq_53HxRKHbMn4mF2kOlzZkc-IAdWBizIrEsPI4eR54twId_PGkBaIq-Tlxz5IR9K/s1536/DORAEMON%20Vol.2%20-%20FUJIKO%20F%20FUJIO_Page_01_Image_0001.jpg",
-          isHot: true,
-          chapter: 15,
-          updatedAt: "1 Phút Trước"),
-      Truyen(
-          title: "Hunter X Hunter",
-          imageUrl:
-              "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRSVFQx-jWl8oHOluT8-PXxCL_BzmDedSsa6JPfzBwFGiK8zJCF&s",
-          isHot: true,
-          chapter: 167,
-          updatedAt: "2 Phút Trước"),
-      Truyen(
-          title: "Cậu Út Nhà Công Tước Là Sát Thủ Hồi Quy",
-          imageUrl:
-              "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQMxILuwJIS96JtWH9A9G-oaKy3qgs0GndHo8hv1CyfKyPlgjnk",
-          isHot: true,
-          chapter: 256,
-          updatedAt: "5 Phút Trước"),
-    ];
+    // Sử dụng dữ liệu mẫu
+    final List<Truyen> truyenHot = sampleTruyens;
 
     return Scaffold(
       appBar: AppBar(

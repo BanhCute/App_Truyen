@@ -16,19 +16,10 @@ let GenesService = class GenesService {
     constructor(databaseService) {
         this.databaseService = databaseService;
     }
-    async create(createGeneDto) {
-        try {
-            return await this.databaseService.genes.create({
-                data: {
-                    name: createGeneDto.name,
-                    description: createGeneDto.description
-                },
-            });
-        }
-        catch (error) {
-            console.log('Database Error:', error);
-            throw error;
-        }
+    create(createGeneDto) {
+        return this.databaseService.genes.create({
+            data: createGeneDto,
+        });
     }
     findAll() {
         return this.databaseService.genes.findMany();

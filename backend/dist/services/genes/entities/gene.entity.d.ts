@@ -1,2 +1,2 @@
-export declare class gene {
+export declare class Gene {
 }

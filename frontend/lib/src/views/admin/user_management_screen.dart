@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:du_an_1/src/models/user.dart';
+import 'package:frontend/src/models/user.dart';
 
 class UserManagementScreen extends StatelessWidget {
   UserManagementScreen({super.key});
@@ -16,9 +16,21 @@ class UserManagementScreen extends StatelessWidget {
       body: ListView.builder(
         itemCount: users.length,
         itemBuilder: (context, index) {
+          final user = users[index];
+          final roles = user.roles.map((r) => r.roleName).join(', ');
+
           return ListTile(
-            title: Text(users[index].email),
-            subtitle: Text(users[index].role),
+            leading: user.avatar != null
+                ? CircleAvatar(backgroundImage: NetworkImage(user.avatar!))
+                : const CircleAvatar(child: Icon(Icons.person)),
+            title: Text(user.name),
+            subtitle: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (user.email != null) Text(user.email!),
+                Text('Vai trò: $roles'),
+              ],
+            ),
             trailing: PopupMenuButton(
               itemBuilder: (context) => [
                 const PopupMenuItem(

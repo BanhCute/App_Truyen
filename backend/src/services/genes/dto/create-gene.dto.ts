@@ -1,4 +1,10 @@
-import { IsString, IsNotEmpty, IsOptional, MinLength, MaxLength } from 'class-validator';
+import {
+  IsString,
+  IsNotEmpty,
+  IsOptional,
+  MinLength,
+  MaxLength,
+} from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class CreateGeneDto {
@@ -9,10 +15,10 @@ export class CreateGeneDto {
   @MaxLength(50, { message: 'Tên không được vượt quá 50 ký tự' })
   name: string;
 
-  @ApiProperty({ 
-    example: 'Thể loại dị giới', 
+  @ApiProperty({
+    example: 'Thể loại dị giới',
     description: 'Mô tả thể loại',
-    required: false 
+    required: false,
   })
   @IsString({ message: 'Mô tả phải là chuỗi' })
   @IsOptional()

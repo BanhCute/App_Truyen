@@ -5,7 +5,7 @@ import GeneDto from './dto/gene.dto';
 export declare class GenesController {
     private readonly genesService;
     constructor(genesService: GenesService);
-    create(createGeneDto: CreateGeneDto): Promise<GeneDto>;
+    create(createGeneDto: CreateGeneDto): GeneDto;
     findAll(): Promise<GeneDto[]>;
     findOne(id: number): GeneDto;
     update(id: number, updateGeneDto: UpdateGeneDto): GeneDto;

@@ -1,7 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.gene = void 0;
-class gene {
+exports.Gene = void 0;
+class Gene {
 }
-exports.gene = gene;
+exports.Gene = Gene;
 //# sourceMappingURL=gene.entity.js.map

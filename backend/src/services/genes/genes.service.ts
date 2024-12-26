@@ -7,18 +7,10 @@ import { DatabaseService } from 'src/services/database/database.service';
 export class GenesService {
   constructor(private readonly databaseService: DatabaseService) {}
 
-  async create(createGeneDto: CreateGeneDto) {
-    try {
-      return await this.databaseService.genes.create({
-        data: {
-          name: createGeneDto.name,
-          description: createGeneDto.description
-        },
-      });
-    } catch (error) {
-      console.log('Database Error:', error);
-      throw error;
-    }
+  create(createGeneDto: CreateGeneDto) {
+    return this.databaseService.genes.create({
+      data: createGeneDto,
+    });
   }
 
   findAll() {

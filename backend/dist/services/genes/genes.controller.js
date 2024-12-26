@@ -17,21 +17,14 @@ const common_1 = require("@nestjs/common");
 const genes_service_1 = require("./genes.service");
 const create_gene_dto_1 = require("./dto/create-gene.dto");
 const update_gene_dto_1 = require("./dto/update-gene.dto");
-const class_transformer_1 = require("class-transformer");
 const gene_dto_1 = require("./dto/gene.dto");
+const class_transformer_1 = require("class-transformer");
 let GenesController = class GenesController {
     constructor(genesService) {
         this.genesService = genesService;
     }
-    async create(createGeneDto) {
-        try {
-            const result = await this.genesService.create(createGeneDto);
-            return (0, class_transformer_1.plainToInstance)(gene_dto_1.default, result);
-        }
-        catch (error) {
-            console.log('Error:', error);
-            throw error;
-        }
+    create(createGeneDto) {
+        return (0, class_transformer_1.plainToInstance)(gene_dto_1.default, this.genesService.create(createGeneDto));
     }
     findAll() {
         return this.genesService
@@ -54,7 +47,7 @@ __decorate([
     __param(0, (0, common_1.Body)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [create_gene_dto_1.CreateGeneDto]),
-    __metadata("design:returntype", Promise)
+    __metadata("design:returntype", void 0)
 ], GenesController.prototype, "create", null);
 __decorate([
     (0, common_1.Get)(),

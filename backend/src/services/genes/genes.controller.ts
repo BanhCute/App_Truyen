@@ -11,24 +11,21 @@ import {
 import { GenesService } from './genes.service';
 import { CreateGeneDto } from './dto/create-gene.dto';
 import { UpdateGeneDto } from './dto/update-gene.dto';
-import { plainToInstance } from 'class-transformer';
 import GeneDto from './dto/gene.dto';
+import { plainToInstance } from 'class-transformer';
 
 @Controller('genes')
 export class GenesController {
   constructor(private readonly genesService: GenesService) {}
 
   @Post()
-  async create(@Body() createGeneDto: CreateGeneDto) {
-    try {
-      const result = await this.genesService.create(createGeneDto);
-      return plainToInstance(GeneDto, result);
-    } catch (error) {
-      console.log('Error:', error);
-      throw error;
-    }
+  create(@Body() createGeneDto: CreateGeneDto) {
+    return plainToInstance(
+      GeneDto,
+      this.genesService.create(createGeneDto),
+    );
   }
-
+  
   @Get()
   findAll() {
     return this.genesService

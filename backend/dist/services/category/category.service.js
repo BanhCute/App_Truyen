@@ -17,7 +17,6 @@ let CategoryService = class CategoryService {
         this.databaseService = databaseService;
     }
     create(createCategoryDto) {
-        console.log(createCategoryDto);
         return this.databaseService.category.create({
             data: createCategoryDto,
         });

@@ -27,7 +27,7 @@ __decorate([
     (0, swagger_1.ApiProperty)({
         example: 'Thể loại dị giới',
         description: 'Mô tả thể loại',
-        required: false
+        required: false,
     }),
     (0, class_validator_1.IsString)({ message: 'Mô tả phải là chuỗi' }),
     (0, class_validator_1.IsOptional)(),
