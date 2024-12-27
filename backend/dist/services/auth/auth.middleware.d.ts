@@ -8,4 +8,5 @@ export declare class AuthMiddleware implements NestMiddleware {
     private configService;
     constructor(jwtService: JwtService, configService: ConfigService<AppConfig>);
     use(req: Request, res: Response, next: NextFunction): Promise<void>;
+    private extractToken;
 }

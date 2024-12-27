@@ -48,31 +48,30 @@ class SessionCubit extends Cubit<SessionState> {
     final token = (state as Authenticated).session.accessToken;
     print('Getting token from state: $token');
 
-    // Kiểm tra token có hợp lệ không bằng cách gọi API follows
     try {
-      final response = await http.get(
-        Uri.parse('${dotenv.get('API_URL')}/follows'),
-        headers: {
-          'Authorization': 'Bearer $token',
-          'Accept': 'application/json',
-        },
-      );
-
-      print('Token validation response: ${response.statusCode}');
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        return token;
-      } else if (response.statusCode == 401) {
-        print('Token is invalid');
+      // Kiểm tra token có hợp lệ không bằng cách decode JWT
+      final parts = token.split('.');
+      if (parts.length != 3) {
+        print('Invalid token format');
         await signOut();
         return null;
-      } else {
-        // Các lỗi khác không liên quan đến token, vẫn trả về token
-        return token;
       }
+
+      final payload = json
+          .decode(utf8.decode(base64Url.decode(base64Url.normalize(parts[1]))));
+
+      final expiry = DateTime.fromMillisecondsSinceEpoch(payload['exp'] * 1000);
+      if (DateTime.now().isAfter(expiry)) {
+        print('Token has expired');
+        await signOut();
+        return null;
+      }
+
+      return token;
     } catch (e) {
       print('Error validating token: $e');
-      // Lỗi kết nối không liên quan đến token, vẫn trả về token
-      return token;
+      await signOut();
+      return null;
     }
   }
 

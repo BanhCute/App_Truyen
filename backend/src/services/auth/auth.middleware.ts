@@ -12,25 +12,40 @@ export class AuthMiddleware implements NestMiddleware {
   ) {}
 
   async use(req: Request, res: Response, next: NextFunction) {
-    const token = req?.cookies?.jwt;
+    // Lấy token từ cookie hoặc header Authorization
+    const token = this.extractToken(req);
 
     if (!token) {
-      request['user'] = null;
+      req['user'] = null;
       return next();
     }
+
     try {
       const { sub, ...payload } = await this.jwtService.verifyAsync(token, {
         secret: this.configService.get<string>('auth.jwt.secret'),
       });
 
-      //@ts-ignore
       req['user'] = { ...payload, id: +sub };
-      request['user'] = { ...payload, id: +sub };
     } catch (error) {
-      //TODO: Secure
+      // Xóa cookie nếu token không hợp lệ
       res.clearCookie('jwt');
+      req['user'] = null;
     }
 
     next();
+  }
+
+  private extractToken(req: Request): string | null {
+    // Thử lấy từ cookie
+    const cookieToken = req?.cookies?.jwt;
+    if (cookieToken) return cookieToken;
+
+    // Thử lấy từ header Authorization
+    const authHeader = req.headers.authorization;
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      return authHeader.substring(7); // Bỏ 'Bearer ' ở đầu
+    }
+
+    return null;
   }
 }
