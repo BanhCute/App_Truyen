@@ -29,9 +29,10 @@ let FollowsController = class FollowsController {
         const session = (0, auth_utils_1.getSession)(req);
         return (0, class_transformer_1.plainToInstance)(follows_dto_1.default, this.followsService.create(createFollowDto, session.id));
     }
-    findAll() {
+    findAll(req) {
+        const session = (0, auth_utils_1.getSession)(req);
         return this.followsService
-            .findAll()
+            .findAll(session.id)
             .then((items) => items.map((item) => (0, class_transformer_1.plainToInstance)(follows_dto_1.default, item)));
     }
     findOne(id) {
@@ -57,8 +58,9 @@ __decorate([
 ], FollowsController.prototype, "create", null);
 __decorate([
     (0, common_1.Get)(),
+    __param(0, (0, common_1.Req)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", []),
+    __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", void 0)
 ], FollowsController.prototype, "findAll", null);
 __decorate([

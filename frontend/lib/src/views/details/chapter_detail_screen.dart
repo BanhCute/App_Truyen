@@ -42,11 +42,13 @@ class _ChapterDetailScreenState extends State<ChapterDetailScreen> {
   Future<void> _loadFollowStatus() async {
     try {
       final isFollowing = await FollowService.isFollowing(widget.novel.id);
-      setState(() {
-        _isFollowing = isFollowing;
-      });
+      if (mounted) {
+        setState(() {
+          _isFollowing = isFollowing;
+        });
+      }
     } catch (e) {
-      // Xử lý lỗi nếu cần
+      print('Error checking follow status: $e');
     }
   }
 
@@ -57,10 +59,10 @@ class _ChapterDetailScreenState extends State<ChapterDetailScreen> {
       } else {
         await FollowService.followNovel(widget.novel.id);
       }
-      setState(() {
-        _isFollowing = !_isFollowing;
-      });
       if (mounted) {
+        setState(() {
+          _isFollowing = !_isFollowing;
+        });
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
@@ -72,9 +74,9 @@ class _ChapterDetailScreenState extends State<ChapterDetailScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Có lỗi xảy ra. Vui lòng thử lại sau.'),
-            duration: Duration(seconds: 2),
+          SnackBar(
+            content: Text(e.toString().replaceAll('Exception: ', '')),
+            duration: const Duration(seconds: 2),
           ),
         );
       }

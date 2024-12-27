@@ -6,7 +6,7 @@ export declare class FollowsController {
     private readonly followsService;
     constructor(followsService: FollowsService);
     create(createFollowDto: CreateFollowDto, req: Request): FollowDto;
-    findAll(): Promise<FollowDto[]>;
+    findAll(req: Request): Promise<FollowDto[]>;
     findOne(id: number): FollowDto;
     remove(id: number, req: Request): FollowDto;
     removeByNovelId(novelId: number, req: Request): Promise<FollowDto>;

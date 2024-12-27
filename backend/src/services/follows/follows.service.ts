@@ -44,11 +44,17 @@ export class FollowsService {
     });
   }
 
-  findAll() {
+  findAll(userId: number) {
     return this.databaseService.follow.findMany({
+      where: {
+        userId: userId,
+      },
+      distinct: ['novelId'],
+      orderBy: {
+        createdAt: 'desc',
+      },
       include: {
         novel: true,
-        user: true,
       },
     });
   }

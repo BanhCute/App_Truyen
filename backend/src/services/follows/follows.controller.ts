@@ -34,9 +34,10 @@ export class FollowsController {
   }
 
   @Get()
-  findAll() {
+  findAll(@Req() req: Request) {
+    const session = getSession(req);
     return this.followsService
-      .findAll()
+      .findAll(session.id)
       .then((items) => items.map((item) => plainToInstance(FollowDto, item)));
   }
 
