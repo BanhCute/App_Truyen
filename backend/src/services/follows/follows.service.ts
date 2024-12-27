@@ -1,4 +1,9 @@
-import { Injectable, BadRequestException, NotFoundException, ForbiddenException } from '@nestjs/common';
+import {
+  Injectable,
+  BadRequestException,
+  NotFoundException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { DatabaseService } from '../database/database.service';
 import { CreateFollowDto } from './dto/create-follow.dto';
 import { UpdateFollowDto } from './dto/update-follow.dto';
@@ -14,16 +19,15 @@ export class FollowsService {
     });
 
     if (!novel) {
-      throw new NotFoundException(`Novel với ID ${createFollowDto.novelId} không tồn tại`);
+      throw new NotFoundException(
+        `Novel với ID ${createFollowDto.novelId} không tồn tại`,
+      );
     }
 
     // Kiểm tra xem đã follow chưa
     const existingFollow = await this.databaseService.follow.findFirst({
       where: {
-        AND: [
-          { novelId: createFollowDto.novelId },
-          { userId: userId },
-        ],
+        AND: [{ novelId: createFollowDto.novelId }, { userId: userId }],
       },
     });
 
@@ -36,10 +40,6 @@ export class FollowsService {
         novelId: createFollowDto.novelId,
         userId: userId,
         createdAt: new Date(),
-      },
-      include: {
-        novel: true,
-        user: true,
       },
     });
   }
@@ -89,6 +89,25 @@ export class FollowsService {
       include: {
         novel: true,
         user: true,
+      },
+    });
+  }
+
+  async removeByNovelId(novelId: number, userId: number) {
+    const follow = await this.databaseService.follow.findFirst({
+      where: {
+        novelId,
+        userId,
+      },
+    });
+
+    if (!follow) {
+      throw new NotFoundException('Follow not found');
+    }
+
+    return this.databaseService.follow.delete({
+      where: {
+        id: follow.id,
       },
     });
   }

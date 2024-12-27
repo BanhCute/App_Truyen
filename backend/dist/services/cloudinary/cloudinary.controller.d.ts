@@ -3,5 +3,9 @@ import { CreateCloudinaryDto } from 'src/services/cloudinary/dto/create.cloudina
 export declare class CloudinaryController {
     private readonly cloudinaryService;
     constructor(cloudinaryService: CloudinaryService);
-    create(createCloudinaryDto: CreateCloudinaryDto): Promise<import("cloudinary").UploadApiResponse>;
+    create(createCloudinaryDto: CreateCloudinaryDto): Promise<CloudinaryResponse>;
 }
+declare class CloudinaryResponse {
+    url: string;
+}
+export {};

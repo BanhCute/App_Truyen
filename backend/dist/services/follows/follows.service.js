@@ -25,10 +25,7 @@ let FollowsService = class FollowsService {
         }
         const existingFollow = await this.databaseService.follow.findFirst({
             where: {
-                AND: [
-                    { novelId: createFollowDto.novelId },
-                    { userId: userId },
-                ],
+                AND: [{ novelId: createFollowDto.novelId }, { userId: userId }],
             },
         });
         if (existingFollow) {
@@ -39,10 +36,6 @@ let FollowsService = class FollowsService {
                 novelId: createFollowDto.novelId,
                 userId: userId,
                 createdAt: new Date(),
-            },
-            include: {
-                novel: true,
-                user: true,
             },
         });
     }
@@ -82,6 +75,22 @@ let FollowsService = class FollowsService {
             include: {
                 novel: true,
                 user: true,
+            },
+        });
+    }
+    async removeByNovelId(novelId, userId) {
+        const follow = await this.databaseService.follow.findFirst({
+            where: {
+                novelId,
+                userId,
+            },
+        });
+        if (!follow) {
+            throw new common_1.NotFoundException('Follow not found');
+        }
+        return this.databaseService.follow.delete({
+            where: {
+                id: follow.id,
             },
         });
     }

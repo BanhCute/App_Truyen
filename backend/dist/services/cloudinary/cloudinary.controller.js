@@ -17,12 +17,13 @@ const common_1 = require("@nestjs/common");
 const cloudinary_service_1 = require("./cloudinary.service");
 const nestjs_form_data_1 = require("nestjs-form-data");
 const create_cloudinary_dto_1 = require("./dto/create.cloudinary.dto");
+const class_transformer_1 = require("class-transformer");
 let CloudinaryController = class CloudinaryController {
     constructor(cloudinaryService) {
         this.cloudinaryService = cloudinaryService;
     }
     async create(createCloudinaryDto) {
-        return this.cloudinaryService.uploadImage('images', createCloudinaryDto.image.buffer);
+        return (0, class_transformer_1.plainToInstance)(CloudinaryResponse, this.cloudinaryService.uploadImage('images', createCloudinaryDto.image.buffer));
     }
 };
 exports.CloudinaryController = CloudinaryController;
@@ -38,4 +39,10 @@ exports.CloudinaryController = CloudinaryController = __decorate([
     (0, common_1.Controller)('cloudinary'),
     __metadata("design:paramtypes", [cloudinary_service_1.CloudinaryService])
 ], CloudinaryController);
+class CloudinaryResponse {
+}
+__decorate([
+    (0, class_transformer_1.Expose)(),
+    __metadata("design:type", String)
+], CloudinaryResponse.prototype, "url", void 0);
 //# sourceMappingURL=cloudinary.controller.js.map

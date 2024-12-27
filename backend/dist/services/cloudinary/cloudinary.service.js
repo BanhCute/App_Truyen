@@ -28,7 +28,7 @@ let CloudinaryService = class CloudinaryService {
         if (!imageBuffer) {
             throw new common_1.BadRequestException('Image is invalid');
         }
-        return await new Promise((resolve, reject) => {
+        const result = await new Promise((resolve, reject) => {
             cloudinary_1.v2.uploader
                 .upload_stream({ folder, format: 'jpg', public_id: publicId }, (error, result) => {
                 if (result) {
@@ -38,6 +38,7 @@ let CloudinaryService = class CloudinaryService {
             })
                 .end(imageBuffer);
         });
+        return { url: result.secure_url };
     }
     async deleteImage(url) {
         return await new Promise((resolve, reject) => {

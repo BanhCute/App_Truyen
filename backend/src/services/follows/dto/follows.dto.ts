@@ -14,10 +14,4 @@ export default class FollowDto {
 
   @Expose()
   createdAt: Date;
-
-  @Expose()
-  novel: NovelDto;
-
-  @Expose()
-  user: UserResponse;
 }

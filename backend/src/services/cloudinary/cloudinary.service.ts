@@ -19,16 +19,21 @@ export class CloudinaryService {
       throw new BadRequestException('Image is invalid');
     }
 
-    return await new Promise<UploadApiResponse>((resolve, reject) => {
+    const result = await new Promise<UploadApiResponse>((resolve, reject) => {
       cloudinary.uploader
-        .upload_stream({ folder, format: 'jpg', public_id: publicId }, (error, result) => {
-          if (result) {
-            return resolve(result);
-          }
-          return reject(new BadRequestException(error?.message));
-        })
+        .upload_stream(
+          { folder, format: 'jpg', public_id: publicId },
+          (error, result) => {
+            if (result) {
+              return resolve(result);
+            }
+            return reject(new BadRequestException(error?.message));
+          },
+        )
         .end(imageBuffer);
     });
+
+    return { url: result.secure_url };
   }
 
   async deleteImage(url: string) {

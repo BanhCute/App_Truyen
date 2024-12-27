@@ -20,6 +20,7 @@ const follows_dto_1 = require("./dto/follows.dto");
 const class_transformer_1 = require("class-transformer");
 const swagger_1 = require("@nestjs/swagger");
 const auth_utils_1 = require("../auth/auth.utils");
+const auth_guard_1 = require("../auth/auth.guard");
 let FollowsController = class FollowsController {
     constructor(followsService) {
         this.followsService = followsService;
@@ -39,6 +40,10 @@ let FollowsController = class FollowsController {
     remove(id, req) {
         const session = (0, auth_utils_1.getSession)(req);
         return (0, class_transformer_1.plainToInstance)(follows_dto_1.default, this.followsService.remove(id, session.id));
+    }
+    async removeByNovelId(novelId, req) {
+        const session = (0, auth_utils_1.getSession)(req);
+        return (0, class_transformer_1.plainToInstance)(follows_dto_1.default, await this.followsService.removeByNovelId(novelId, session.id));
     }
 };
 exports.FollowsController = FollowsController;
@@ -71,9 +76,18 @@ __decorate([
     __metadata("design:paramtypes", [Number, Object]),
     __metadata("design:returntype", void 0)
 ], FollowsController.prototype, "remove", null);
+__decorate([
+    (0, common_1.Delete)('novel/:novelId'),
+    __param(0, (0, common_1.Param)('novelId', common_1.ParseIntPipe)),
+    __param(1, (0, common_1.Req)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Number, Object]),
+    __metadata("design:returntype", Promise)
+], FollowsController.prototype, "removeByNovelId", null);
 exports.FollowsController = FollowsController = __decorate([
     (0, swagger_1.ApiTags)('follows'),
     (0, common_1.Controller)('follows'),
+    (0, common_1.UseGuards)(auth_guard_1.AuthGuard),
     __metadata("design:paramtypes", [follows_service_1.FollowsService])
 ], FollowsController);
 //# sourceMappingURL=follows.controller.js.map

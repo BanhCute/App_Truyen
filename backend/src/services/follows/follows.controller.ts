@@ -7,6 +7,7 @@ import {
   Delete,
   ParseIntPipe,
   Req,
+  UseGuards,
 } from '@nestjs/common';
 import { FollowsService } from './follows.service';
 import { CreateFollowDto } from './dto/create-follow.dto';
@@ -15,9 +16,11 @@ import { plainToInstance } from 'class-transformer';
 import { ApiTags } from '@nestjs/swagger';
 import { Request } from 'express';
 import { getSession } from '../auth/auth.utils';
+import { AuthGuard } from '../auth/auth.guard';
 
 @ApiTags('follows')
 @Controller('follows')
+@UseGuards(AuthGuard)
 export class FollowsController {
   constructor(private readonly followsService: FollowsService) {}
 
@@ -45,6 +48,21 @@ export class FollowsController {
   @Delete(':id')
   remove(@Param('id', ParseIntPipe) id: number, @Req() req: Request) {
     const session = getSession(req);
-    return plainToInstance(FollowDto, this.followsService.remove(id, session.id));
+    return plainToInstance(
+      FollowDto,
+      this.followsService.remove(id, session.id),
+    );
+  }
+
+  @Delete('novel/:novelId')
+  async removeByNovelId(
+    @Param('novelId', ParseIntPipe) novelId: number,
+    @Req() req: Request,
+  ) {
+    const session = getSession(req);
+    return plainToInstance(
+      FollowDto,
+      await this.followsService.removeByNovelId(novelId, session.id),
+    );
   }
 }

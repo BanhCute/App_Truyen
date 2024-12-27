@@ -9,4 +9,5 @@ export declare class FollowsController {
     findAll(): Promise<FollowDto[]>;
     findOne(id: number): FollowDto;
     remove(id: number, req: Request): FollowDto;
+    removeByNovelId(novelId: number, req: Request): Promise<FollowDto>;
 }

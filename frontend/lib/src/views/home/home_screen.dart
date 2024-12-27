@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:frontend/models/session.dart';
 import 'package:frontend/src/views/novel_detail/novel_detail_screen.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -14,6 +15,8 @@ import 'widgets/recommended_novels.dart';
 import 'widgets/recent_novels.dart';
 import 'widgets/marquee_text.dart';
 import '../../services/reading_history_service.dart';
+import '../admin/upload_novel_screen.dart';
+import '../admin/select_novel_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -64,11 +67,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   List<Novel> get recentNovels {
     var sorted = List<Novel>.from(novels);
-    sorted.sort((a, b) {
-      var dateA = DateTime.parse(a.updatedAt);
-      var dateB = DateTime.parse(b.updatedAt);
-      return dateB.compareTo(dateA);
-    });
+    sorted.sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
     return sorted;
   }
 
@@ -265,7 +264,8 @@ class _HomeScreenState extends State<HomeScreen> {
                         );
                       },
                       onDismissed: (direction) async {
-                        await ReadingHistoryService.removeFromHistory(novel.id);
+                        await ReadingHistoryService.removeFromHistory(
+                            int.parse(novel.id));
                         setState(() {});
 
                         ScaffoldMessenger.of(context).showSnackBar(
@@ -327,7 +327,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
                             if (confirm == true) {
                               await ReadingHistoryService.removeFromHistory(
-                                  novel.id);
+                                  int.parse(novel.id));
                               setState(() {});
 
                               if (mounted) {
@@ -395,7 +395,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                           const Text('Đã xóa toàn bộ lịch sử'),
                                       duration: const Duration(seconds: 2),
                                       action: SnackBarAction(
-                                        label: 'Hoàn tác',
+                                        label: 'Hoàn t��c',
                                         onPressed: () async {
                                           for (var novel
                                               in oldHistory.reversed) {
@@ -447,15 +447,46 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                     const SizedBox(height: 16),
                     if (state.session.user?.isAdmin == true) ...[
-                      ElevatedButton.icon(
-                        icon: const Icon(Icons.add),
-                        label: const Text('Đăng truyện mới'),
-                        onPressed: () {
-                          // TODO: Navigate to upload novel screen
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.green,
-                        ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: [
+                          ElevatedButton.icon(
+                            icon: const Icon(Icons.add),
+                            label: const Text('Đăng truyện mới'),
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => BlocProvider.value(
+                                    value: context.read<SessionCubit>(),
+                                    child: const UploadNovelScreen(),
+                                  ),
+                                ),
+                              );
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.green,
+                            ),
+                          ),
+                          ElevatedButton.icon(
+                            icon: const Icon(Icons.add_circle),
+                            label: const Text('Thêm chương'),
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => BlocProvider.value(
+                                    value: context.read<SessionCubit>(),
+                                    child: const SelectNovelScreen(),
+                                  ),
+                                ),
+                              );
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.blue,
+                            ),
+                          ),
+                        ],
                       ),
                       const SizedBox(height: 16),
                     ],

@@ -25,21 +25,29 @@ class Truyen {
 }
 
 class Chapter {
-  final String id;
-  final int number;
-  final String title;
+  final int id;
+  final String name;
   final String content;
-  final List<Comment> comments;
-  final DateTime publishDate;
+  final String createdAt;
+  final int novelId;
 
-  const Chapter({
+  Chapter({
     required this.id,
-    required this.number,
-    required this.title,
+    required this.name,
     required this.content,
-    required this.comments,
-    required this.publishDate,
+    required this.createdAt,
+    required this.novelId,
   });
+
+  factory Chapter.fromJson(Map<String, dynamic> json) {
+    return Chapter(
+      id: json['id'],
+      name: json['name'],
+      content: json['content'],
+      createdAt: json['createdAt'],
+      novelId: json['novelId'],
+    );
+  }
 }
 
 class Comment {

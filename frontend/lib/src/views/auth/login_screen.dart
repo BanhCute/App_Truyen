@@ -1,5 +1,7 @@
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:frontend/bloc/session_cubit.dart';
 import 'package:flutter/material.dart';
+import 'package:frontend/models/session.dart';
 import 'package:frontend/src/views/home/home_screen.dart';
 import 'package:provider/provider.dart';
 
@@ -7,6 +9,10 @@ import '../../providers/theme_provider.dart';
 
 import '../../../components/google_button.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:google_sign_in/google_sign_in.dart';
+import 'dart:convert';
+import 'dart:io';
+import 'package:http/http.dart' as http;
 
 class LoginScreen extends StatefulWidget {
   final bool canPop;
@@ -21,6 +27,72 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
+  bool _isLoading = false;
+
+  Future<void> _handleGoogleSignIn() async {
+    try {
+      setState(() => _isLoading = true);
+
+      // Tạo instance mới của GoogleSignIn
+      final GoogleSignIn googleSignIn = GoogleSignIn(
+        scopes: ['email', 'profile'],
+        signInOption: SignInOption.standard,
+        clientId:
+            '1000163321141-s1t9qk9k2h7qtqj7uc4dh4kc7l6do2hd.apps.googleusercontent.com',
+      );
+
+      // Clear cache và đăng xuất
+      await googleSignIn.disconnect();
+      await googleSignIn.signOut();
+
+      // Đợi một chút để đảm bảo cache đã được xóa
+      await Future.delayed(const Duration(milliseconds: 300));
+
+      // Hiển thị dialog chọn tài khoản
+      final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
+
+      if (googleUser == null) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Đăng nhập bị hủy')),
+          );
+        }
+        return;
+      }
+
+      // Tiếp tục với flow đăng nhập hiện tại
+      final GoogleSignInAuthentication googleAuth =
+          await googleUser.authentication;
+      final response = await http.post(
+        Uri.parse('${dotenv.get('API_URL')}/auth/google'),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({
+          'token': googleAuth.idToken,
+        }),
+      );
+
+      if (response.statusCode == 201) {
+        final sessionData = json.decode(response.body);
+        if (mounted) {
+          context.read<SessionCubit>().signIn(Session.fromJson(sessionData));
+        }
+      } else {
+        throw Exception('Failed to sign in with Google');
+      }
+    } catch (e) {
+      print('Error signing in with Google: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Đăng nhập thất bại')),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDarkMode = context.watch<ThemeProvider>().isDarkMode;

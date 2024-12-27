@@ -1,84 +1,181 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:google_sign_in/google_sign_in.dart';
-import 'package:dio/dio.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:frontend/models/user.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../models/session.dart';
+export '../models/session.dart';
+import 'package:http/http.dart' as http;
 import 'dart:convert';
-import '../src/models/user.dart';
-
-class Session {
-  final User? user;
-
-  Session({this.user});
-
-  factory Session.fromJson(Map<String, dynamic> json) {
-    return Session(
-      user: json['user'] != null ? User.fromJson(json['user']) : null,
-    );
-  }
-}
-
-abstract class SessionState {}
-
-class SessionLoading extends SessionState {}
-
-class Unauthenticated extends SessionState {}
-
-class Authenticated extends SessionState {
-  final Session session;
-
-  Authenticated(this.session);
-}
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 
 class SessionCubit extends Cubit<SessionState> {
-  final GoogleSignIn googleSignIn = GoogleSignIn(scopes: ['email']);
-  final dio = Dio();
+  final GoogleSignIn _googleSignIn = GoogleSignIn(scopes: ['email']);
 
   SessionCubit() : super(Unauthenticated()) {
-    dio.options.baseUrl = dotenv.env['API_URL'] ?? '';
+    checkAuthStatus();
   }
 
-  Future<void> signInWithGoogle() async {
-    emit(SessionLoading());
+  Future<bool> isTokenValid(String token) async {
+    // Luôn trả về true vì chúng ta sẽ tin tưởng token cho đến khi API trả về 401
+    return true;
+  }
 
+  Future<void> checkAuthStatus() async {
     try {
-      final googleUser = await googleSignIn.signIn();
-      if (googleUser != null) {
-        final auth = await googleUser.authentication;
-        String? idToken = auth.idToken;
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('token');
+      final userData = prefs.getString('user_data');
 
-        if (idToken != null) {
-          final response = await dio.post(
-            '/auth/google',
-            data: {'idToken': idToken},
-          );
-
-          print('API Response: ${response.data}'); // Debug print
-
-          try {
-            // Nếu response.data là String, parse nó thành Map
-            final Map<String, dynamic> userData = response.data is String
-                ? json.decode(response.data)
-                : response.data;
-
-            emit(Authenticated(Session.fromJson(userData)));
-          } catch (e) {
-            print('Error parsing response: $e');
-            emit(Unauthenticated());
-          }
-        } else {
-          emit(Unauthenticated());
-        }
-      } else {
-        emit(Unauthenticated());
+      if (token != null && userData != null) {
+        final user = json.decode(userData);
+        emit(Authenticated(Session(
+          accessToken: token,
+          user: User.fromJson(user),
+        )));
       }
-    } catch (error) {
-      print('Error during Google Sign-In: ${error.toString()}');
+    } catch (e) {
+      print('Error checking auth status: $e');
+      emit(Unauthenticated());
+    }
+  }
+
+  Future<String?> getValidToken() async {
+    if (state is! Authenticated) {
+      print('Not authenticated');
+      return null;
+    }
+
+    final token = (state as Authenticated).session.accessToken;
+    print('Getting token from state: $token');
+
+    // Kiểm tra token có hợp lệ không bằng cách gọi API follows
+    try {
+      final response = await http.get(
+        Uri.parse('${dotenv.get('API_URL')}/follows'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Accept': 'application/json',
+        },
+      );
+
+      print('Token validation response: ${response.statusCode}');
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return token;
+      } else if (response.statusCode == 401) {
+        print('Token is invalid');
+        await signOut();
+        return null;
+      } else {
+        // Các lỗi khác không liên quan đến token, vẫn trả về token
+        return token;
+      }
+    } catch (e) {
+      print('Error validating token: $e');
+      // Lỗi kết nối không liên quan đến token, vẫn trả về token
+      return token;
+    }
+  }
+
+  Future<void> signIn(Session session) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('token', session.accessToken);
+      await prefs.setString('user_data', json.encode(session.user.toJson()));
+      print('Saved token to SharedPreferences: ${session.accessToken}');
+      emit(Authenticated(session));
+    } catch (e) {
+      print('Error saving session: $e');
       emit(Unauthenticated());
     }
   }
 
   Future<void> signOut() async {
-    await googleSignIn.signOut();
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove('token');
+      await prefs.remove('user_data');
+    } catch (e) {
+      print('Error clearing session: $e');
+    }
     emit(Unauthenticated());
+  }
+
+  Future<void> signInWithGoogle(String idToken) async {
+    try {
+      final response = await http.post(
+        Uri.parse('${dotenv.get('API_URL')}/auth/google'),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({'idToken': idToken}),
+      );
+
+      if (response.statusCode == 201) {
+        final data = json.decode(response.body);
+        final session = Session(
+          accessToken: data['accessToken'],
+          user: User.fromJson(data['user']),
+        );
+        await signIn(session);
+      } else {
+        throw Exception('Failed to sign in with Google');
+      }
+    } catch (e) {
+      print('Error signing in with Google: $e');
+      emit(Unauthenticated());
+    }
+  }
+
+  Future<void> saveSession(Session session) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('token', session.accessToken);
+    print('Saved token: ${session.accessToken}');
+    emit(Authenticated(session));
+  }
+
+  Future<void> clearSession() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('token');
+    print('Cleared token');
+    emit(Unauthenticated());
+  }
+
+  Future<void> loadSession() async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token');
+    print('Loaded token: $token');
+
+    if (token != null && token.isNotEmpty) {
+      try {
+        // Kiểm tra token có hợp lệ không
+        final parts = token.split('.');
+        if (parts.length != 3) {
+          print('Invalid token format');
+          await clearSession();
+          return;
+        }
+
+        final payload = json.decode(
+            utf8.decode(base64Url.decode(base64Url.normalize(parts[1]))));
+
+        final expiry =
+            DateTime.fromMillisecondsSinceEpoch(payload['exp'] * 1000);
+        if (DateTime.now().isAfter(expiry)) {
+          print('Token has expired');
+          await clearSession();
+          return;
+        }
+
+        // Token hợp lệ, tạo session
+        final session = Session(
+          accessToken: token,
+          user: User.fromJson(payload),
+        );
+        emit(Authenticated(session));
+      } catch (e) {
+        print('Error loading session: $e');
+        await clearSession();
+      }
+    } else {
+      emit(Unauthenticated());
+    }
   }
 }

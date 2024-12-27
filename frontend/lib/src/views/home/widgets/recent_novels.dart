@@ -92,7 +92,7 @@ class RecentNovels extends StatelessWidget {
                       ],
                     ),
                     Text(
-                      getTimeAgo(novel.updatedAt),
+                      getTimeAgo(novel.updatedAt.toString()),
                       style: TextStyle(
                         fontSize: 12,
                         color: Theme.of(context).brightness == Brightness.dark

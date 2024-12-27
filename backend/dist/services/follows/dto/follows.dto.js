@@ -10,8 +10,6 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const class_transformer_1 = require("class-transformer");
-const novel_dto_1 = require("../../novel/dto/novel.dto");
-const user_response_1 = require("../../users/dto/user.response");
 class FollowDto {
 }
 exports.default = FollowDto;
@@ -31,12 +29,4 @@ __decorate([
     (0, class_transformer_1.Expose)(),
     __metadata("design:type", Date)
 ], FollowDto.prototype, "createdAt", void 0);
-__decorate([
-    (0, class_transformer_1.Expose)(),
-    __metadata("design:type", novel_dto_1.default)
-], FollowDto.prototype, "novel", void 0);
-__decorate([
-    (0, class_transformer_1.Expose)(),
-    __metadata("design:type", user_response_1.UserResponse)
-], FollowDto.prototype, "user", void 0);
 //# sourceMappingURL=follows.dto.js.map

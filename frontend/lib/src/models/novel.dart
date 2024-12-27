@@ -1,49 +1,48 @@
+import 'chapter.dart';
+
 class Novel {
-  final int id;
+  final String id;
   final String name;
   final String description;
-  final String createdAt;
-  final String cover;
   final String author;
-  final String status;
+  final String cover;
+  final List<String> categories;
+  final DateTime createdAt;
+  final DateTime updatedAt;
+  final double rating;
   final int view;
-  final String updatedAt;
-  final int rating;
   final int followerCount;
-  final int commentCount;
-  final int userId;
+  final String status;
 
   Novel({
     required this.id,
     required this.name,
     required this.description,
-    required this.createdAt,
-    required this.cover,
     required this.author,
-    required this.status,
-    required this.view,
+    required this.cover,
+    required this.categories,
+    required this.createdAt,
     required this.updatedAt,
-    required this.rating,
-    required this.followerCount,
-    required this.commentCount,
-    required this.userId,
+    this.rating = 0,
+    this.view = 0,
+    this.followerCount = 0,
+    this.status = 'Đang cập nhật',
   });
 
   factory Novel.fromJson(Map<String, dynamic> json) {
     return Novel(
-      id: json['id'],
+      id: json['id'].toString(),
       name: json['name'],
       description: json['description'],
-      createdAt: json['createdAt'],
-      cover: json['cover'],
       author: json['author'],
-      status: json['status'],
-      view: json['view'],
-      updatedAt: json['updatedAt'],
-      rating: json['rating'],
-      followerCount: json['followerCount'],
-      commentCount: json['commentCount'],
-      userId: json['userId'],
+      cover: json['cover'],
+      categories: List<String>.from(json['categories'] ?? []),
+      createdAt: DateTime.parse(json['createdAt']),
+      updatedAt: DateTime.parse(json['updatedAt']),
+      rating: (json['rating'] ?? 0).toDouble(),
+      view: json['view'] ?? 0,
+      followerCount: json['followerCount'] ?? 0,
+      status: json['status'] ?? 'Đang cập nhật',
     );
   }
 
@@ -52,16 +51,15 @@ class Novel {
       'id': id,
       'name': name,
       'description': description,
-      'createdAt': createdAt,
-      'cover': cover,
       'author': author,
-      'status': status,
-      'view': view,
-      'updatedAt': updatedAt,
+      'cover': cover,
+      'categories': categories,
+      'createdAt': createdAt.toIso8601String(),
+      'updatedAt': updatedAt.toIso8601String(),
       'rating': rating,
+      'view': view,
       'followerCount': followerCount,
-      'commentCount': commentCount,
-      'userId': userId,
+      'status': status,
     };
   }
 }
