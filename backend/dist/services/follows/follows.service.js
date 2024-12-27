@@ -48,9 +48,6 @@ let FollowsService = class FollowsService {
             orderBy: {
                 createdAt: 'desc',
             },
-            include: {
-                novel: true,
-            },
         });
     }
     async findOne(id) {

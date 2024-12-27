@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 import '../../../bloc/session_cubit.dart';
 import '../../models/follow.dart';
 import '../../models/novel.dart';
@@ -14,7 +17,7 @@ class FollowedNovelsScreen extends StatefulWidget {
 }
 
 class _FollowedNovelsScreenState extends State<FollowedNovelsScreen> {
-  List<Follow> follows = [];
+  List<Novel> novels = [];
   bool isLoading = true;
 
   @override
@@ -26,12 +29,30 @@ class _FollowedNovelsScreenState extends State<FollowedNovelsScreen> {
 
   Future<void> loadFollowedNovels() async {
     try {
-      final followedNovels = await FollowService.getFollowedNovels();
-      if (mounted) {
-        setState(() {
-          follows = followedNovels;
-          isLoading = false;
-        });
+      // Lấy danh sách follows
+      final follows = await FollowService.getFollowedNovels();
+
+      // Lấy thông tin novel cho mỗi follow
+      final response = await http.get(
+        Uri.parse('${dotenv.get('API_URL')}/novels'),
+      );
+
+      if (response.statusCode == 200) {
+        final List allNovels = json.decode(response.body);
+        final followedNovels = allNovels
+            .where((novel) =>
+                follows.any((f) => f.novelId.toString() == novel['id']))
+            .map((json) => Novel.fromJson(json))
+            .toList();
+
+        if (mounted) {
+          setState(() {
+            novels = followedNovels;
+            isLoading = false;
+          });
+        }
+      } else {
+        throw Exception('Không thể lấy thông tin truyện');
       }
     } catch (e) {
       print('Error loading followed novels: $e');
@@ -86,14 +107,14 @@ class _FollowedNovelsScreenState extends State<FollowedNovelsScreen> {
       ),
       body: isLoading
           ? const Center(child: CircularProgressIndicator())
-          : follows.isEmpty
+          : novels.isEmpty
               ? const Center(
                   child: Text('Bạn chưa theo dõi truyện nào'),
                 )
               : ListView.builder(
-                  itemCount: follows.length,
+                  itemCount: novels.length,
                   itemBuilder: (context, index) {
-                    final follow = follows[index];
+                    final novel = novels[index];
                     return Card(
                       margin: const EdgeInsets.symmetric(
                           horizontal: 16, vertical: 8),
@@ -101,7 +122,7 @@ class _FollowedNovelsScreenState extends State<FollowedNovelsScreen> {
                         leading: ClipRRect(
                           borderRadius: BorderRadius.circular(4),
                           child: Image.network(
-                            follow.novel.cover,
+                            novel.cover,
                             width: 50,
                             height: 70,
                             fit: BoxFit.cover,
@@ -109,18 +130,18 @@ class _FollowedNovelsScreenState extends State<FollowedNovelsScreen> {
                                 const Icon(Icons.error),
                           ),
                         ),
-                        title: Text(follow.novel.name),
-                        subtitle: Text('Tác giả: ${follow.novel.author}'),
+                        title: Text(novel.name),
+                        subtitle: Text('Tác giả: ${novel.author}'),
                         trailing: IconButton(
                           icon: const Icon(Icons.favorite, color: Colors.red),
-                          onPressed: () => unfollowNovel(follow.novel.id),
+                          onPressed: () => unfollowNovel(novel.id),
                         ),
                         onTap: () {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
                               builder: (context) =>
-                                  NovelDetailScreen(novel: follow.novel),
+                                  NovelDetailScreen(novel: novel),
                             ),
                           ).then((_) =>
                               loadFollowedNovels()); // Reload sau khi quay lại

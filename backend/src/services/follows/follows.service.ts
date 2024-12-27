@@ -53,9 +53,6 @@ export class FollowsService {
       orderBy: {
         createdAt: 'desc',
       },
-      include: {
-        novel: true,
-      },
     });
   }
 
