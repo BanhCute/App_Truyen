@@ -17,6 +17,7 @@ import 'widgets/marquee_text.dart';
 import '../../services/reading_history_service.dart';
 import '../admin/upload_novel_screen.dart';
 import '../admin/select_novel_screen.dart';
+import '../follows/followed_novels_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -196,7 +197,35 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildPage(int index) {
     switch (index) {
       case 1:
-        return const Center(child: Text('Truyện đang theo dõi'));
+        return BlocBuilder<SessionCubit, SessionState>(
+          builder: (context, state) {
+            if (state is Authenticated) {
+              return const FollowedNovelsScreen();
+            }
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.favorite_border, size: 100),
+                  const SizedBox(height: 16),
+                  const Text('Vui lòng đăng nhập để xem truyện đang theo dõi'),
+                  const SizedBox(height: 16),
+                  ElevatedButton(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const LoginScreen(canPop: true),
+                        ),
+                      );
+                    },
+                    child: const Text('Đăng nhập'),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
       case 2:
         return FutureBuilder<List<Novel>>(
           future: ReadingHistoryService.getHistory(),
@@ -395,7 +424,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                           const Text('Đã xóa toàn bộ lịch sử'),
                                       duration: const Duration(seconds: 2),
                                       action: SnackBarAction(
-                                        label: 'Hoàn t��c',
+                                        label: 'Hoàn tác',
                                         onPressed: () async {
                                           for (var novel
                                               in oldHistory.reversed) {

@@ -71,9 +71,9 @@ class _NovelDetailScreenState extends State<NovelDetailScreen> {
       print('Error toggling follow: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Có lỗi xảy ra. Vui lòng thử lại sau.'),
-            duration: Duration(seconds: 2),
+          SnackBar(
+            content: Text(e.toString().replaceAll('Exception: ', '')),
+            duration: const Duration(seconds: 2),
           ),
         );
       }

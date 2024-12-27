@@ -1,14 +1,18 @@
+import 'novel.dart';
+
 class Follow {
-  final String id;
-  final String userId;
-  final String novelId;
+  final int id;
+  final int userId;
+  final int novelId;
   final DateTime createdAt;
+  final Novel novel;
 
   Follow({
     required this.id,
     required this.userId,
     required this.novelId,
     required this.createdAt,
+    required this.novel,
   });
 
   factory Follow.fromJson(Map<String, dynamic> json) {
@@ -17,6 +21,7 @@ class Follow {
       userId: json['userId'],
       novelId: json['novelId'],
       createdAt: DateTime.parse(json['createdAt']),
+      novel: Novel.fromJson(json['novel']),
     );
   }
 
@@ -26,6 +31,7 @@ class Follow {
       'userId': userId,
       'novelId': novelId,
       'createdAt': createdAt.toIso8601String(),
+      'novel': novel.toJson(),
     };
   }
 }
