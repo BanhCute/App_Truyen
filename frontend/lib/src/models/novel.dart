@@ -31,14 +31,16 @@ class Novel {
 
   factory Novel.fromJson(Map<String, dynamic> json) {
     return Novel(
-      id: json['id'].toString(),
-      name: json['name'],
-      description: json['description'],
-      author: json['author'],
-      cover: json['cover'],
+      id: json['id']?.toString() ?? '',
+      name: json['name'] ?? '',
+      description: json['description'] ?? '',
+      author: json['author'] ?? '',
+      cover: json['cover'] ?? '',
       categories: List<String>.from(json['categories'] ?? []),
-      createdAt: DateTime.parse(json['createdAt']),
-      updatedAt: DateTime.parse(json['updatedAt']),
+      createdAt:
+          DateTime.parse(json['createdAt'] ?? DateTime.now().toIso8601String()),
+      updatedAt:
+          DateTime.parse(json['updatedAt'] ?? DateTime.now().toIso8601String()),
       rating: (json['rating'] ?? 0).toDouble(),
       view: json['view'] ?? 0,
       followerCount: json['followerCount'] ?? 0,

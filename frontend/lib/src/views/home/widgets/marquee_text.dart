@@ -41,18 +41,26 @@ class _MarqueeTextState extends State<MarqueeText>
     try {
       if (_scrollController.hasClients &&
           _scrollController.position.maxScrollExtent > 0) {
-        _animationController.repeat();
+        _animationController.forward();
 
         _animationController.addListener(() {
           if (_scrollController.hasClients) {
             try {
-              _scrollController.jumpTo(
-                _animationController.value *
-                    _scrollController.position.maxScrollExtent,
-              );
+              final scrollPosition = _animationController.value *
+                  _scrollController.position.maxScrollExtent;
+              if (scrollPosition >= 0) {
+                _scrollController.jumpTo(scrollPosition);
+              }
             } catch (e) {
               print('Error during scroll: $e');
             }
+          }
+        });
+
+        _animationController.addStatusListener((status) {
+          if (status == AnimationStatus.completed) {
+            _animationController.reset();
+            _animationController.forward();
           }
         });
       }

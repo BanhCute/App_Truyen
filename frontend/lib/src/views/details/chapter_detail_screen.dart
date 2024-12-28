@@ -6,6 +6,7 @@ import '../../services/follow_service.dart';
 import '../../services/comment_service.dart';
 import '../../../bloc/session_cubit.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../services/reading_history_service.dart';
 
 class ChapterDetailScreen extends StatefulWidget {
   final Novel novel;
@@ -37,6 +38,8 @@ class _ChapterDetailScreenState extends State<ChapterDetailScreen> {
     super.initState();
     _loadFollowStatus();
     _loadComments();
+    ReadingHistoryService.addToHistory(widget.novel,
+        lastChapter: widget.chapter);
   }
 
   Future<void> _loadFollowStatus() async {
@@ -134,23 +137,29 @@ class _ChapterDetailScreenState extends State<ChapterDetailScreen> {
                 _showControls = !_showControls;
               });
             },
-            child: InteractiveViewer(
-              child: Center(
-                child: Image.network(
-                  widget.chapter.content,
-                  fit: BoxFit.contain,
-                  loadingBuilder: (context, child, loadingProgress) {
-                    if (loadingProgress == null) return child;
-                    return Center(
-                      child: CircularProgressIndicator(
-                        value: loadingProgress.expectedTotalBytes != null
-                            ? loadingProgress.cumulativeBytesLoaded /
-                                loadingProgress.expectedTotalBytes!
-                            : null,
+            child: SingleChildScrollView(
+              child: Column(
+                children: widget.chapter.content.split('\n').map((imageUrl) {
+                  return InteractiveViewer(
+                    child: Center(
+                      child: Image.network(
+                        imageUrl,
+                        fit: BoxFit.contain,
+                        loadingBuilder: (context, child, loadingProgress) {
+                          if (loadingProgress == null) return child;
+                          return Center(
+                            child: CircularProgressIndicator(
+                              value: loadingProgress.expectedTotalBytes != null
+                                  ? loadingProgress.cumulativeBytesLoaded /
+                                      loadingProgress.expectedTotalBytes!
+                                  : null,
+                            ),
+                          );
+                        },
                       ),
-                    );
-                  },
-                ),
+                    ),
+                  );
+                }).toList(),
               ),
             ),
           ),
@@ -274,6 +283,11 @@ class _ChapterDetailScreenState extends State<ChapterDetailScreen> {
                                   ),
                                 ),
                               );
+                              ReadingHistoryService.addToHistory(
+                                widget.novel,
+                                lastChapter:
+                                    widget.allChapters[widget.currentIndex - 1],
+                              );
                             },
                           ),
                         const Spacer(),
@@ -293,6 +307,11 @@ class _ChapterDetailScreenState extends State<ChapterDetailScreen> {
                                     allChapters: widget.allChapters,
                                   ),
                                 ),
+                              );
+                              ReadingHistoryService.addToHistory(
+                                widget.novel,
+                                lastChapter:
+                                    widget.allChapters[widget.currentIndex + 1],
                               );
                             },
                           ),
@@ -361,6 +380,11 @@ class ChapterListBottomSheet extends StatelessWidget {
                             allChapters: allChapters,
                           ),
                         ),
+                      );
+                      // Cập nhật lịch sử đọc khi chọn chương từ danh sách
+                      ReadingHistoryService.addToHistory(
+                        novel,
+                        lastChapter: chapter,
                       );
                     }
                   },

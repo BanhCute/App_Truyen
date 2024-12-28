@@ -139,6 +139,119 @@ class _NovelDetailScreenState extends State<NovelDetailScreen> {
     }
   }
 
+  Widget _buildFollowButton() {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.8),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: FutureBuilder<bool>(
+        future: FollowService.isFollowing(widget.novel.id),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const SizedBox(
+              width: 24,
+              height: 24,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            );
+          }
+
+          final isFollowing = snapshot.data ?? false;
+
+          return Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              IconButton(
+                icon: Icon(
+                  isFollowing ? Icons.favorite : Icons.favorite_border,
+                  color: isFollowing ? Colors.red : Colors.grey[700],
+                ),
+                tooltip: isFollowing ? 'Đang theo dõi' : 'Theo dõi',
+                onPressed: () async {
+                  try {
+                    if (!isFollowing) {
+                      await FollowService.followNovel(widget.novel.id);
+                      if (mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Đã thêm vào danh sách theo dõi'),
+                            duration: Duration(seconds: 2),
+                          ),
+                        );
+                      }
+                      setState(() {});
+                    }
+                  } catch (e) {
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content:
+                              Text(e.toString().replaceAll('Exception: ', '')),
+                          duration: const Duration(seconds: 2),
+                        ),
+                      );
+                    }
+                  }
+                },
+              ),
+              if (isFollowing)
+                IconButton(
+                  icon: Icon(Icons.remove_circle_outline,
+                      color: Colors.grey[700]),
+                  tooltip: 'Bỏ theo dõi',
+                  onPressed: () async {
+                    try {
+                      await FollowService.unfollowNovel(widget.novel.id);
+                      if (mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: const Text('Đã bỏ theo dõi truyện'),
+                            duration: const Duration(seconds: 3),
+                            action: SnackBarAction(
+                              label: 'Hoàn tác',
+                              onPressed: () async {
+                                try {
+                                  await FollowService.followNovel(
+                                      widget.novel.id);
+                                  setState(() {});
+                                } catch (e) {
+                                  if (mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text(e
+                                            .toString()
+                                            .replaceAll('Exception: ', '')),
+                                        duration: const Duration(seconds: 2),
+                                      ),
+                                    );
+                                  }
+                                }
+                              },
+                            ),
+                          ),
+                        );
+                      }
+                      setState(() {});
+                    } catch (e) {
+                      if (mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                                e.toString().replaceAll('Exception: ', '')),
+                            duration: const Duration(seconds: 2),
+                          ),
+                        );
+                      }
+                    }
+                  },
+                ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -163,26 +276,7 @@ class _NovelDetailScreenState extends State<NovelDetailScreen> {
                         : Colors.black,
                   ),
                   actions: [
-                    IconButton(
-                      icon: Icon(
-                        isFollowing ? Icons.favorite : Icons.favorite_border,
-                        color: isFollowing ? Colors.red : null,
-                      ),
-                      onPressed: () {
-                        final state = context.read<SessionCubit>().state;
-                        if (state is Authenticated) {
-                          toggleFollow();
-                        } else {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content:
-                                  Text('Vui lòng đăng nhập để theo dõi truyện'),
-                              duration: Duration(seconds: 2),
-                            ),
-                          );
-                        }
-                      },
-                    ),
+                    _buildFollowButton(),
                   ],
                   flexibleSpace: FlexibleSpaceBar(
                     background: Image.network(

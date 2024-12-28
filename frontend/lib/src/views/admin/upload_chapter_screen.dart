@@ -160,7 +160,7 @@ class _UploadChapterScreenState extends State<UploadChapterScreen> {
         body: json.encode({
           'name': _nameController.text,
           'content': imageUrls.join('\n'),
-          'novelId': widget.novel.id,
+          'novelId': int.parse(widget.novel.id.toString()),
         }),
       );
 

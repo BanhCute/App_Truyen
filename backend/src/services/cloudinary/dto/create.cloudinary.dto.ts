@@ -1,7 +1,13 @@
-import { IsFile, MaxFileSize, MemoryStoredFile } from 'nestjs-form-data';
+import {
+  IsFile,
+  MaxFileSize,
+  MemoryStoredFile,
+  HasMimeType,
+} from 'nestjs-form-data';
 
 export class CreateCloudinaryDto {
   @IsFile()
-  @MaxFileSize(1e6)
-  image: MemoryStoredFile;
+  @MaxFileSize(5e6)
+  @HasMimeType(['image/jpeg', 'image/png', 'image/webp'])
+  images: MemoryStoredFile[];
 }

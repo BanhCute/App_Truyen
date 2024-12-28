@@ -11,17 +11,18 @@ export class CloudinaryController {
   @Post()
   @FormDataRequest()
   async create(@Body() createCloudinaryDto: CreateCloudinaryDto) {
-    return plainToInstance(
-      CloudinaryResponse,
-      this.cloudinaryService.uploadImage(
-        'images',
-        createCloudinaryDto.image.buffer,
-      ),
+    const uploadPromises = createCloudinaryDto.images.map((image) =>
+      this.cloudinaryService.uploadImage('images', image.buffer),
     );
+
+    const results = await Promise.all(uploadPromises);
+    return plainToInstance(CloudinaryResponse, {
+      urls: results.map((r) => r.url),
+    });
   }
 }
 
 class CloudinaryResponse {
   @Expose()
-  public url: string;
+  public urls: string[];
 }
