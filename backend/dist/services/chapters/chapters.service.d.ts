@@ -15,24 +15,24 @@ export declare class ChaptersService {
         novel: {
             id: number;
             name: string;
-            rating: number | null;
-            view: number;
-            userId: number;
-            updatedAt: Date;
             createdAt: Date;
             description: string | null;
             cover: string | null;
             author: string;
             status: string;
+            view: number;
+            updatedAt: Date;
+            rating: number | null;
             followerCount: number;
             commentCount: number;
+            userId: number;
         };
         Comment: {
             id: number;
-            userId: number;
             createdAt: Date;
             novelId: number | null;
             content: string;
+            userId: number;
             chapterId: number;
         }[];
     } & {
@@ -46,24 +46,24 @@ export declare class ChaptersService {
         novel: {
             id: number;
             name: string;
-            rating: number | null;
-            view: number;
-            userId: number;
-            updatedAt: Date;
             createdAt: Date;
             description: string | null;
             cover: string | null;
             author: string;
             status: string;
+            view: number;
+            updatedAt: Date;
+            rating: number | null;
             followerCount: number;
             commentCount: number;
+            userId: number;
         };
         Comment: {
             id: number;
-            userId: number;
             createdAt: Date;
             novelId: number | null;
             content: string;
+            userId: number;
             chapterId: number;
         }[];
     } & {

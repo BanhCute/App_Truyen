@@ -90,7 +90,10 @@ export class ChaptersService {
 
       return await this.databaseService.chapter.update({
         where: { id },
-        data: { name: updateChapterDto.name },
+        data: {
+          name: updateChapterDto.name,
+          content: updateChapterDto.content,
+        },
       });
     } catch (error) {
       if (

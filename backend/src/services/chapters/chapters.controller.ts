@@ -3,7 +3,7 @@ import {
   Get,
   Post,
   Body,
-  Patch,
+  Put,
   Param,
   Delete,
   ParseIntPipe,
@@ -36,7 +36,7 @@ export class ChaptersController {
     return plainToInstance(ChapterDto, chapter);
   }
 
-  @Patch(':id')
+  @Put(':id')
   async update(
     @Param('id', ParseIntPipe) id: number,
     @Body() updateChapterDto: UpdateChapterDto,

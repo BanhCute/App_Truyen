@@ -66,7 +66,7 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], ChaptersController.prototype, "findOne", null);
 __decorate([
-    (0, common_1.Patch)(':id'),
+    (0, common_1.Put)(':id'),
     __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),
     __param(1, (0, common_1.Body)()),
     __metadata("design:type", Function),
