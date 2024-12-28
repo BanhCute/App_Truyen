@@ -10,6 +10,7 @@ import 'package:path_provider/path_provider.dart';
 import '../../models/novel.dart';
 import 'dart:convert';
 import 'dart:io';
+import 'package:http_parser/http_parser.dart';
 
 class UploadChapterScreen extends StatefulWidget {
   final Novel novel;
@@ -23,9 +24,18 @@ class UploadChapterScreen extends StatefulWidget {
 class _UploadChapterScreenState extends State<UploadChapterScreen> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
-  List<File> _chapterImages = [];
+  final _picker = ImagePicker();
+  List<XFile> _chapterImages = [];
   bool _isLoading = false;
   double _uploadProgress = 0.0;
+
+  Future<String> getToken() async {
+    final state = context.read<SessionCubit>().state;
+    if (state is! Authenticated) {
+      throw Exception('Vui lòng đăng nhập');
+    }
+    return state.session.accessToken;
+  }
 
   Future<void> _pickImages() async {
     try {
@@ -34,7 +44,7 @@ class _UploadChapterScreenState extends State<UploadChapterScreen> {
 
       if (pickedFiles.isNotEmpty) {
         setState(() {
-          _chapterImages.addAll(pickedFiles.map((file) => File(file.path)));
+          _chapterImages.addAll(pickedFiles);
         });
       }
     } catch (e) {
@@ -57,166 +67,105 @@ class _UploadChapterScreenState extends State<UploadChapterScreen> {
     return File(result?.path ?? file.path);
   }
 
-  Future<List<String>> _uploadImages() async {
-    if (_chapterImages.isEmpty) return [];
-    List<String> uploadedUrls = [];
+  Future<List<String>> uploadImages(List<XFile> images) async {
+    if (images.isEmpty) {
+      throw Exception('Vui lòng chọn ít nhất 1 ảnh');
+    }
 
     try {
-      final state = context.read<SessionCubit>().state;
-      if (state is! Authenticated) {
-        print('Not authenticated');
-        return [];
-      }
-      final token = state.session.accessToken;
-
-      // Nén tất cả ảnh
-      setState(() {
-        _uploadProgress = 0.1;
-      });
-
-      List<File> compressedImages = [];
-      for (var i = 0; i < _chapterImages.length; i++) {
-        final compressed = await _compressImage(_chapterImages[i]);
-        compressedImages.add(compressed);
-        setState(() {
-          _uploadProgress = 0.1 + (0.3 * (i + 1) / _chapterImages.length);
-        });
-      }
-
-      // Tạo form data với nhiều file
-      var request = http.MultipartRequest(
+      final request = http.MultipartRequest(
         'POST',
         Uri.parse('${dotenv.get('API_URL')}/cloudinary'),
       );
 
-      request.headers.addAll({
-        'Authorization': 'Bearer $token',
-        'Accept': 'application/json',
-      });
+      final token = await getToken();
+      request.headers['Authorization'] = 'Bearer $token';
 
-      // Thêm tất cả ảnh vào request
-      for (var i = 0; i < compressedImages.length; i++) {
-        final file = compressedImages[i];
-        request.files.add(
-          await http.MultipartFile.fromPath('image', file.path),
+      for (var image in images) {
+        final bytes = await image.readAsBytes();
+        final multipartFile = http.MultipartFile.fromBytes(
+          'image',
+          bytes,
+          filename: image.name,
+          contentType: MediaType('image', 'jpeg'),
         );
-        setState(() {
-          _uploadProgress = 0.4 + (0.5 * (i + 1) / compressedImages.length);
-        });
+        request.files.add(multipartFile);
       }
 
-      // Gửi request
-      var streamedResponse = await request.send();
-      var response = await http.Response.fromStream(streamedResponse);
+      final response = await request.send();
+      final responseData = await response.stream.bytesToString();
+      print('Response status: ${response.statusCode}');
+      print('Response data: $responseData');
 
       if (response.statusCode == 201) {
-        var data = json.decode(response.body);
-        if (data['urls'] != null) {
-          uploadedUrls = List<String>.from(data['urls']);
-        }
+        final data = json.decode(responseData);
+        return List<String>.from(data['urls']);
       } else {
-        print('Upload failed with status ${response.statusCode}');
-        print('Error response: ${response.body}');
-        throw Exception('Lỗi khi tải ảnh lên: ${response.body}');
-      }
-
-      setState(() {
-        _uploadProgress = 1.0;
-      });
-
-      // Xóa các file đã nén
-      for (var file in compressedImages) {
-        if (await file.exists()) {
-          await file.delete();
-        }
+        throw Exception(
+            'Upload failed with status ${response.statusCode}: $responseData');
       }
     } catch (e) {
-      print('Error in _uploadImages: $e');
+      print('Error uploading images: $e');
       rethrow;
     }
+  }
 
-    return uploadedUrls;
+  Future<void> _handleSubmit() async {
+    if (_formKey.currentState!.validate()) {
+      setState(() {
+        _isLoading = true;
+      });
+
+      try {
+        List<String> imageUrls = [];
+        if (_chapterImages.isNotEmpty) {
+          imageUrls = await uploadImages(_chapterImages);
+        }
+
+        final token = await getToken();
+        final response = await http.post(
+          Uri.parse('${dotenv.get('API_URL')}/chapters'),
+          headers: {
+            'Authorization': 'Bearer $token',
+            'Content-Type': 'application/json',
+          },
+          body: json.encode({
+            'name': _nameController.text,
+            'content': imageUrls.join('\n'),
+            'novelId': widget.novel.id,
+          }),
+        );
+
+        if (response.statusCode == 201) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Thêm chương thành công')),
+            );
+            Navigator.pop(context);
+          }
+        } else {
+          throw Exception(json.decode(response.body)['message']);
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Lỗi: ${e.toString()}')),
+          );
+        }
+      } finally {
+        if (mounted) {
+          setState(() {
+            _isLoading = false;
+          });
+        }
+      }
+    }
   }
 
   void _removeImage(int index) {
     setState(() {
       _chapterImages.removeAt(index);
     });
-  }
-
-  Future<void> _submitForm() async {
-    if (!_formKey.currentState!.validate()) return;
-    if (_chapterImages.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Vui lòng thêm ít nhất một ảnh')),
-      );
-      return;
-    }
-
-    setState(() {
-      _isLoading = true;
-      _uploadProgress = 0.0;
-    });
-
-    try {
-      final state = context.read<SessionCubit>().state;
-      if (state is! Authenticated) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Vui lòng đăng nhập để thêm chương')),
-        );
-        return;
-      }
-      final token = state.session.accessToken;
-
-      // Upload all images
-      final imageUrls = await _uploadImages();
-      if (imageUrls.isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Lỗi khi tải ảnh lên')),
-        );
-        return;
-      }
-
-      // Create chapter with all image URLs
-      final response = await http.post(
-        Uri.parse('${dotenv.get('API_URL')}/chapters'),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $token',
-        },
-        body: json.encode({
-          'name': _nameController.text,
-          'content': imageUrls.join('\n'),
-          'novelId': int.parse(widget.novel.id.toString()),
-        }),
-      );
-
-      if (response.statusCode == 201) {
-        if (mounted) {
-          Navigator.pop(context);
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Thêm chương thành công!')),
-          );
-        }
-      } else {
-        print('Failed to create chapter: ${response.body}');
-        throw Exception('Failed to create chapter');
-      }
-    } catch (e) {
-      print('Error creating chapter: $e');
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Có lỗi xảy ra: ${e.toString()}')),
-        );
-      }
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-          _uploadProgress = 0.0;
-        });
-      }
-    }
   }
 
   @override
@@ -287,47 +236,54 @@ class _UploadChapterScreenState extends State<UploadChapterScreen> {
                               ),
                             ),
                             const SizedBox(height: 8),
-                            ...List.generate(
-                              _chapterImages.length,
-                              (index) => Padding(
-                                padding: const EdgeInsets.only(bottom: 16),
-                                child: Container(
-                                  width: double.infinity,
-                                  decoration: BoxDecoration(
-                                    border:
-                                        Border.all(color: Colors.grey.shade300),
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  child: Stack(
-                                    children: [
-                                      ClipRRect(
-                                        borderRadius: BorderRadius.circular(8),
-                                        child: Image.file(
-                                          _chapterImages[index],
-                                          width: double.infinity,
-                                          fit: BoxFit.fitWidth,
-                                        ),
-                                      ),
-                                      Positioned(
-                                        right: 8,
-                                        top: 8,
-                                        child: CircleAvatar(
-                                          radius: 16,
-                                          backgroundColor: Colors.red,
-                                          child: IconButton(
-                                            padding: EdgeInsets.zero,
-                                            iconSize: 20,
-                                            icon: const Icon(Icons.close,
-                                                color: Colors.white),
-                                            onPressed: () =>
-                                                _removeImage(index),
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
+                            GridView.builder(
+                              shrinkWrap: true,
+                              physics: const NeverScrollableScrollPhysics(),
+                              gridDelegate:
+                                  const SliverGridDelegateWithFixedCrossAxisCount(
+                                crossAxisCount: 3,
+                                crossAxisSpacing: 8,
+                                mainAxisSpacing: 8,
                               ),
+                              itemCount: _chapterImages.length,
+                              itemBuilder: (context, index) {
+                                return Stack(
+                                  children: [
+                                    ClipRRect(
+                                      borderRadius: BorderRadius.circular(8),
+                                      child: Image.file(
+                                        File(_chapterImages[index].path),
+                                        width: double.infinity,
+                                        height: double.infinity,
+                                        fit: BoxFit.cover,
+                                      ),
+                                    ),
+                                    Positioned(
+                                      top: 4,
+                                      right: 4,
+                                      child: Container(
+                                        decoration: BoxDecoration(
+                                          color: Colors.black.withOpacity(0.5),
+                                          shape: BoxShape.circle,
+                                        ),
+                                        child: IconButton(
+                                          icon: const Icon(
+                                            Icons.close,
+                                            color: Colors.white,
+                                            size: 20,
+                                          ),
+                                          onPressed: () => _removeImage(index),
+                                          constraints: const BoxConstraints(
+                                            minWidth: 30,
+                                            minHeight: 30,
+                                          ),
+                                          padding: EdgeInsets.zero,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                );
+                              },
                             ),
                           ],
                           const SizedBox(height: 16),
@@ -341,7 +297,7 @@ class _UploadChapterScreenState extends State<UploadChapterScreen> {
                   child: SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
-                      onPressed: _submitForm,
+                      onPressed: _handleSubmit,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF1B3A57),
                         padding: const EdgeInsets.symmetric(vertical: 16),

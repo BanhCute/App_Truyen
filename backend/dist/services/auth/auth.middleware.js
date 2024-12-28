@@ -26,7 +26,7 @@ let AuthMiddleware = class AuthMiddleware {
         }
         try {
             const { sub, ...payload } = await this.jwtService.verifyAsync(token, {
-                secret: this.configService.get('auth.jwt.secret'),
+                secret: this.configService.get('auth')?.jwt?.secret,
             });
             req['user'] = { ...payload, id: +sub };
         }

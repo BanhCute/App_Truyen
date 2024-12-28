@@ -1,11 +1,7 @@
 import { ConfigService } from '@nestjs/config';
-import { AppConfig } from 'src/config/configuration';
+import { UploadApiResponse } from 'cloudinary';
 export declare class CloudinaryService {
-    private readonly configService;
-    constructor(configService: ConfigService<AppConfig>);
-    uploadImage(folder: string, imageBuffer: Buffer, publicId?: string): Promise<{
-        url: string;
-    }>;
-    deleteImage(url: string): Promise<unknown>;
-    randomPublicId(): string;
+    private configService;
+    constructor(configService: ConfigService);
+    uploadImage(folder: string, buffer: Buffer): Promise<UploadApiResponse>;
 }

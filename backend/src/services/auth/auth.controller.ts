@@ -10,6 +10,6 @@ export class AuthController {
   logout(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
     res.clearCookie('jwt');
 
-    return res.redirect(`${this.configService.get('url.frontend')}`);
+    return res.redirect(`${this.configService.get('url')?.frontend}`);
   }
 }

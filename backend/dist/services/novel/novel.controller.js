@@ -47,6 +47,14 @@ let NovelController = class NovelController {
         const session = (0, auth_utils_1.getSession)(req);
         return (0, class_transformer_1.plainToInstance)(novel_dto_1.default, this.novelService.remove(id, session.id));
     }
+    async addCategories(id, categoryIds, req) {
+        const session = (0, auth_utils_1.getSession)(req);
+        return this.novelService.addCategories(id, categoryIds, session.id);
+    }
+    async removeCategory(id, categoryId, req) {
+        const session = (0, auth_utils_1.getSession)(req);
+        return this.novelService.removeCategory(id, categoryId, session.id);
+    }
 };
 exports.NovelController = NovelController;
 __decorate([
@@ -87,6 +95,24 @@ __decorate([
     __metadata("design:paramtypes", [Number, Object]),
     __metadata("design:returntype", void 0)
 ], NovelController.prototype, "remove", null);
+__decorate([
+    (0, common_1.Post)(':id/categories'),
+    __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),
+    __param(1, (0, common_1.Body)('categoryIds')),
+    __param(2, (0, common_1.Req)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Number, Array, Object]),
+    __metadata("design:returntype", Promise)
+], NovelController.prototype, "addCategories", null);
+__decorate([
+    (0, common_1.Delete)(':id/categories/:categoryId'),
+    __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),
+    __param(1, (0, common_1.Param)('categoryId', common_1.ParseIntPipe)),
+    __param(2, (0, common_1.Req)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Number, Number, Object]),
+    __metadata("design:returntype", Promise)
+], NovelController.prototype, "removeCategory", null);
 exports.NovelController = NovelController = __decorate([
     (0, common_1.Controller)('novels'),
     __metadata("design:paramtypes", [novel_service_1.NovelService])

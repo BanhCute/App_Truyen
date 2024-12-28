@@ -18,12 +18,25 @@ const cloudinary_service_1 = require("./cloudinary.service");
 const nestjs_form_data_1 = require("nestjs-form-data");
 const create_cloudinary_dto_1 = require("./dto/create.cloudinary.dto");
 const class_transformer_1 = require("class-transformer");
+const auth_guard_1 = require("../auth/auth.guard");
 let CloudinaryController = class CloudinaryController {
     constructor(cloudinaryService) {
         this.cloudinaryService = cloudinaryService;
     }
     async create(createCloudinaryDto) {
-        return (0, class_transformer_1.plainToInstance)(CloudinaryResponse, this.cloudinaryService.uploadImage('images', createCloudinaryDto.image.buffer));
+        try {
+            console.log('Uploading images:', createCloudinaryDto.image.length);
+            const uploadPromises = createCloudinaryDto.image.map((file) => this.cloudinaryService.uploadImage('images', file.buffer));
+            const results = await Promise.all(uploadPromises);
+            console.log('Upload results:', results);
+            return (0, class_transformer_1.plainToInstance)(CloudinaryResponse, {
+                urls: results.map((r) => r.secure_url),
+            });
+        }
+        catch (error) {
+            console.error('Error uploading to cloudinary:', error);
+            throw error;
+        }
     }
 };
 exports.CloudinaryController = CloudinaryController;
@@ -37,12 +50,13 @@ __decorate([
 ], CloudinaryController.prototype, "create", null);
 exports.CloudinaryController = CloudinaryController = __decorate([
     (0, common_1.Controller)('cloudinary'),
+    (0, common_1.UseGuards)(auth_guard_1.AuthGuard),
     __metadata("design:paramtypes", [cloudinary_service_1.CloudinaryService])
 ], CloudinaryController);
 class CloudinaryResponse {
 }
 __decorate([
     (0, class_transformer_1.Expose)(),
-    __metadata("design:type", String)
-], CloudinaryResponse.prototype, "url", void 0);
+    __metadata("design:type", Array)
+], CloudinaryResponse.prototype, "urls", void 0);
 //# sourceMappingURL=cloudinary.controller.js.map

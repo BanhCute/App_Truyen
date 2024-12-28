@@ -23,7 +23,7 @@ export class GithubOauthController {
     const user = req.user as unknown as SessionDto;
 
     if (!user) {
-      return res.redirect(`${this.configService.get('url.frontend')}`);
+      return res.redirect(`${this.configService.get('url')?.frontend}`);
     }
 
     const { accessToken } = this.jwtAuthService.login(user);
@@ -31,6 +31,6 @@ export class GithubOauthController {
     // TODO: Redirect to last page
     res.cookie('jwt', accessToken, { httpOnly: true, secure: false });
 
-    return res.redirect(`${this.configService.get('url.frontend')}`);
+    return res.redirect(`${this.configService.get('url')?.frontend}`);
   }
 }

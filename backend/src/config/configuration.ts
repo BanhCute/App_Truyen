@@ -1,47 +1,59 @@
 export interface AppConfig {
   port: number;
-  'url.frontend'?: string;
-  'auth.jwt.secret'?: string;
-  'auth.jwt.expiresInSeconds'?: number;
-  'auth.github.clientId'?: string;
-  'auth.github.clientSecret'?: string;
-  'auth.github.callbackURL'?: string;
-  'cloudinary.secret': string;
-  'cloudinary.key': string;
-  'cloudinary.cloudName': string;
+  url: {
+    frontend: string;
+  };
+  database: {
+    url: string;
+  };
+  auth: {
+    jwt: {
+      secret: string;
+      expiresIn: string;
+    };
+    google: {
+      clientId: string;
+    };
+    github: {
+      clientId: string;
+      clientSecret: string;
+      callbackURL: string;
+    };
+  };
+  cloudinary: {
+    cloudName: string;
+    apiKey: string;
+    apiSecret: string;
+  };
 }
 
-(BigInt.prototype as any).toJSON = function () {
-  return this.toString();
-};
-
-const appConfig = () => ({
-  port: parseInt(process.env.PORT || '8080'),
+export default () => ({
+  port: parseInt(process.env.PORT, 10) || 3000,
   url: {
-    frontend: 'http://localhost:3000',
+    frontend: process.env.FRONTEND_URL || 'http://localhost:3000',
+  },
+  database: {
+    url: process.env.DATABASE_URL,
   },
   auth: {
     jwt: {
-      secret: process.env.JWT_SECRET as string,
-      expiresInSeconds: parseInt(
-        process.env.JWT_EXPIRATION_TIME_SECONDS ?? '900',
-      ),
-    },
-    github: {
-      clientId: process.env.GITHUB_OAUTH_CLIENT_ID as string,
-      clientSecret: process.env.GITHUB_OAUTH_CLIENT_SECRET as string,
-      callbackURL: process.env.GITHUB_OAUTH_CALLBACK_URL as string,
+      secret: process.env.JWT_SECRET,
+      expiresIn: process.env.JWT_EXPIRATION_TIME_SECONDS
+        ? `${process.env.JWT_EXPIRATION_TIME_SECONDS}s`
+        : '3d',
     },
     google: {
-      clientId: process.env.GOOGLE_OAUTH_CLIENT_ID as string,
-      clientSecret: process.env.GOOGLE_OAUTH_CLIENT_SECRET as string,
+      clientId: process.env.GOOGLE_OAUTH_CLIENT_ID,
+    },
+    github: {
+      clientId: process.env.GITHUB_OAUTH_CLIENT_ID,
+      clientSecret: process.env.GITHUB_OAUTH_CLIENT_SECRET,
+      callbackURL: process.env.GITHUB_OAUTH_CALLBACK_URL,
     },
   },
   cloudinary: {
-    secret: process.env.CLOUDINARY_SECRET as string,
-    key: process.env.CLOUDINARY_KEY as string,
-    cloudName: process.env.CLOUDINARY_CLOUD_NAME as string,
+    cloudName: process.env.CLOUDINARY_CLOUD_NAME,
+    apiKey: process.env.CLOUDINARY_KEY,
+    apiSecret: process.env.CLOUDINARY_SECRET,
   },
 });
-
-export default appConfig;

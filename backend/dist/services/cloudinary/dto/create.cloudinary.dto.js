@@ -15,8 +15,9 @@ class CreateCloudinaryDto {
 }
 exports.CreateCloudinaryDto = CreateCloudinaryDto;
 __decorate([
-    (0, nestjs_form_data_1.IsFile)(),
-    (0, nestjs_form_data_1.MaxFileSize)(1e6),
-    __metadata("design:type", nestjs_form_data_1.MemoryStoredFile)
+    (0, nestjs_form_data_1.IsFile)({ each: true }),
+    (0, nestjs_form_data_1.MaxFileSize)(5e6, { each: true }),
+    (0, nestjs_form_data_1.HasMimeType)(['image/jpeg', 'image/png', 'image/webp'], { each: true }),
+    __metadata("design:type", Array)
 ], CreateCloudinaryDto.prototype, "image", void 0);
 //# sourceMappingURL=create.cloudinary.dto.js.map

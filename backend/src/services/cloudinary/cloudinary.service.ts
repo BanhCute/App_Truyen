@@ -1,55 +1,49 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { UploadApiResponse, v2 as cloudinary } from 'cloudinary';
-import { AppConfig } from 'src/config/configuration';
-import { extractPublicId } from 'cloudinary-build-url';
-import * as crypto from 'crypto';
+import { v2 as cloudinary, UploadApiResponse } from 'cloudinary';
+import { Readable } from 'stream';
 
 @Injectable()
 export class CloudinaryService {
-  constructor(private readonly configService: ConfigService<AppConfig>) {
+  constructor(private configService: ConfigService) {
     cloudinary.config({
-      api_secret: configService.get<string>('cloudinary.secret'),
-      api_key: configService.get<string>('cloudinary.key'),
-      cloud_name: configService.get<string>('cloudinary.cloudName'),
+      cloud_name: this.configService.get<string>('cloudinary.cloudName'),
+      api_key: this.configService.get<string>('cloudinary.apiKey'),
+      api_secret: this.configService.get<string>('cloudinary.apiSecret'),
     });
   }
-  async uploadImage(folder: string, imageBuffer: Buffer, publicId?: string) {
-    if (!imageBuffer) {
-      throw new BadRequestException('Image is invalid');
-    }
 
-    const result = await new Promise<UploadApiResponse>((resolve, reject) => {
-      cloudinary.uploader
-        .upload_stream(
-          { folder, format: 'jpg', public_id: publicId },
-          (error, result) => {
-            if (result) {
-              return resolve(result);
-            }
-            return reject(new BadRequestException(error?.message));
+  async uploadImage(
+    folder: string,
+    buffer: Buffer,
+  ): Promise<UploadApiResponse> {
+    try {
+      console.log('Starting upload to cloudinary...');
+      return new Promise((resolve, reject) => {
+        const uploadStream = cloudinary.uploader.upload_stream(
+          {
+            folder,
+            resource_type: 'auto',
           },
-        )
-        .end(imageBuffer);
-    });
+          (error, result) => {
+            if (error) {
+              console.error('Cloudinary upload error:', error);
+              reject(error);
+            } else {
+              console.log('Cloudinary upload success:', result.secure_url);
+              resolve(result);
+            }
+          },
+        );
 
-    return { url: result.secure_url };
-  }
-
-  async deleteImage(url: string) {
-    return await new Promise((resolve, reject) => {
-      const publicId = extractPublicId(url);
-      cloudinary.api.delete_resources([publicId], (error, result) => {
-        if (result) {
-          return resolve(result);
-        }
-        return reject(error);
+        const readableStream = new Readable();
+        readableStream.push(buffer);
+        readableStream.push(null);
+        readableStream.pipe(uploadStream);
       });
-    });
-  }
-
-  randomPublicId() {
-    const buf = new Uint8Array(1);
-    return crypto.getRandomValues(buf).toString();
+    } catch (error) {
+      console.error('Error in uploadImage:', error);
+      throw error;
+    }
   }
 }

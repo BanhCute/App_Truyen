@@ -7,82 +7,65 @@ export declare class NovelService {
     create(createNovelDto: CreateNovelDto, userId: number): Promise<{
         id: number;
         name: string;
-        rating: number | null;
+        rating: number;
         view: number;
         userId: number;
         updatedAt: Date;
         createdAt: Date;
-        description: string | null;
-        cover: string | null;
+        description: string;
+        cover: string;
         author: string;
         status: string;
         followerCount: number;
         commentCount: number;
     }>;
-    findAll(): import("@prisma/client").Prisma.PrismaPromise<({
+    findAll(): import("@prisma/client").Prisma.PrismaPromise<{
+        id: number;
+        name: string;
         user: {
             id: number;
             name: string;
-            avatar: string | null;
-            isDeleted: boolean;
-            isBanned: boolean;
+            avatar: string;
         };
-    } & {
-        id: number;
-        name: string;
-        rating: number | null;
+        rating: number;
         view: number;
         userId: number;
         updatedAt: Date;
         createdAt: Date;
-        description: string | null;
-        cover: string | null;
+        description: string;
+        categories: {
+            category: {
+                id: number;
+                name: string;
+            };
+        }[];
+        cover: string;
         author: string;
         status: string;
         followerCount: number;
         commentCount: number;
-    })[]>;
+    }[]>;
     findOne(id: number): import("@prisma/client").Prisma.Prisma__NovelClient<{
+        id: number;
+        name: string;
         user: {
             id: number;
             name: string;
-            avatar: string | null;
-            isDeleted: boolean;
-            isBanned: boolean;
+            avatar: string;
         };
-        comments: {
-            id: number;
-            userId: number;
-            createdAt: Date;
-            novelId: number | null;
-            content: string;
-            chapterId: number;
-        }[];
-        chapters: {
-            id: number;
-            name: string;
-            createdAt: Date;
-            novelId: number;
-            content: string;
-        }[];
-        ratings: {
-            id: number;
-            userId: number;
-            createdAt: Date;
-            novelId: number;
-            content: string;
-            score: number;
-        }[];
-    } & {
-        id: number;
-        name: string;
-        rating: number | null;
+        rating: number;
         view: number;
         userId: number;
         updatedAt: Date;
         createdAt: Date;
-        description: string | null;
-        cover: string | null;
+        description: string;
+        categories: {
+            category: {
+                id: number;
+                name: string;
+            };
+        }[];
+        cover: string;
         author: string;
         status: string;
         followerCount: number;
@@ -91,13 +74,13 @@ export declare class NovelService {
     update(id: number, updateNovelDto: UpdateNovelDto, userId: number): Promise<{
         id: number;
         name: string;
-        rating: number | null;
+        rating: number;
         view: number;
         userId: number;
         updatedAt: Date;
         createdAt: Date;
-        description: string | null;
-        cover: string | null;
+        description: string;
+        cover: string;
         author: string;
         status: string;
         followerCount: number;
@@ -105,17 +88,23 @@ export declare class NovelService {
     }>;
     remove(id: number, userId: number): Promise<{
         id: number;
-        name: string;
-        rating: number | null;
-        view: number;
-        userId: number;
-        updatedAt: Date;
-        createdAt: Date;
-        description: string | null;
-        cover: string | null;
-        author: string;
-        status: string;
-        followerCount: number;
-        commentCount: number;
+    }>;
+    addCategories(id: number, categoryIds: number[], userId: number): Promise<{
+        id: number;
+        categories: {
+            category: {
+                id: number;
+                name: string;
+            };
+        }[];
+    }>;
+    removeCategory(id: number, categoryId: number, userId: number): Promise<{
+        id: number;
+        categories: {
+            category: {
+                id: number;
+                name: string;
+            };
+        }[];
     }>;
 }

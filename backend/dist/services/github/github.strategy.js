@@ -18,9 +18,9 @@ const users_service_1 = require("../users/users.service");
 let GithubOauthStrategy = class GithubOauthStrategy extends (0, passport_1.PassportStrategy)(passport_github_1.Strategy, 'github') {
     constructor(configService, usersService) {
         super({
-            clientID: configService.get('auth.github.clientId'),
-            clientSecret: configService.get('auth.github.clientSecret'),
-            callbackURL: configService.get('auth.github.callbackURL'),
+            clientID: configService.get('auth')?.github?.clientId,
+            clientSecret: configService.get('auth')?.github?.clientSecret,
+            callbackURL: configService.get('auth')?.github?.callbackURL,
             scope: ['public_profile'],
         });
         this.configService = configService;

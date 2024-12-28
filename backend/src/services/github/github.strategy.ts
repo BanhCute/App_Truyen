@@ -14,9 +14,9 @@ export class GithubOauthStrategy extends PassportStrategy(Strategy, 'github') {
     private usersService: UsersService,
   ) {
     super({
-      clientID: configService.get<string>('auth.github.clientId'),
-      clientSecret: configService.get<string>('auth.github.clientSecret'),
-      callbackURL: configService.get<string>('auth.github.callbackURL'),
+      clientID: configService.get('auth')?.github?.clientId,
+      clientSecret: configService.get('auth')?.github?.clientSecret,
+      callbackURL: configService.get('auth')?.github?.callbackURL,
       scope: ['public_profile'],
     });
   }

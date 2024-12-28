@@ -21,7 +21,7 @@ let AuthController = class AuthController {
     }
     logout(req, res) {
         res.clearCookie('jwt');
-        return res.redirect(`${this.configService.get('url.frontend')}`);
+        return res.redirect(`${this.configService.get('url')?.frontend}`);
     }
 };
 exports.AuthController = AuthController;

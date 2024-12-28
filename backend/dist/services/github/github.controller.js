@@ -26,11 +26,11 @@ let GithubOauthController = class GithubOauthController {
     async githubAuthCallback(req, res) {
         const user = req.user;
         if (!user) {
-            return res.redirect(`${this.configService.get('url.frontend')}`);
+            return res.redirect(`${this.configService.get('url')?.frontend}`);
         }
         const { accessToken } = this.jwtAuthService.login(user);
         res.cookie('jwt', accessToken, { httpOnly: true, secure: false });
-        return res.redirect(`${this.configService.get('url.frontend')}`);
+        return res.redirect(`${this.configService.get('url')?.frontend}`);
     }
 };
 exports.GithubOauthController = GithubOauthController;

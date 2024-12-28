@@ -17,9 +17,12 @@ const passport_jwt_1 = require("passport-jwt");
 let JwtStrategy = class JwtStrategy extends (0, passport_1.PassportStrategy)(passport_jwt_1.Strategy) {
     constructor(configService) {
         super({
-            jwtFromRequest: passport_jwt_1.ExtractJwt.fromExtractors([passport_jwt_1.ExtractJwt.fromAuthHeaderAsBearerToken(), (request) => request?.cookies?.jwt]),
+            jwtFromRequest: passport_jwt_1.ExtractJwt.fromExtractors([
+                passport_jwt_1.ExtractJwt.fromAuthHeaderAsBearerToken(),
+                (request) => request?.cookies?.jwt,
+            ]),
             ignoreExpiration: false,
-            secretOrKey: configService.get('auth.jwt.secret'),
+            secretOrKey: configService.get('auth')?.jwt?.secret,
         });
         this.configService = configService;
     }

@@ -5,7 +5,8 @@ import 'package:frontend/models/session.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../models/novel.dart';
-import 'upload_chapter_screen.dart';
+import '../../models/chapter.dart';
+import 'edit_chapter_screen.dart';
 import 'dart:convert';
 
 class SelectNovelScreen extends StatefulWidget {
@@ -17,16 +18,16 @@ class SelectNovelScreen extends StatefulWidget {
 }
 
 class _SelectNovelScreenState extends State<SelectNovelScreen> {
-  List<Novel> novels = [];
+  List<Chapter> chapters = [];
   bool isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    _loadNovels();
+    _loadChapters();
   }
 
-  Future<void> _loadNovels() async {
+  Future<void> _loadChapters() async {
     try {
       final state = context.read<SessionCubit>().state;
       if (state is! Authenticated) {
@@ -38,7 +39,7 @@ class _SelectNovelScreenState extends State<SelectNovelScreen> {
       final token = state.session.accessToken;
 
       final response = await http.get(
-        Uri.parse('${dotenv.get('API_URL')}/novels'),
+        Uri.parse('${dotenv.get('API_URL')}/chapters'),
         headers: {
           'Authorization': 'Bearer $token',
         },
@@ -47,14 +48,27 @@ class _SelectNovelScreenState extends State<SelectNovelScreen> {
       if (response.statusCode == 200) {
         final List data = json.decode(response.body);
         setState(() {
-          novels = data.map((json) => Novel.fromJson(json)).toList();
+          chapters = data
+              .where((chapter) =>
+                  chapter['novelId'].toString() == widget.selectedNovel?.id)
+              .map((json) => Chapter.fromJson(json))
+              .toList();
+          chapters.sort((a, b) {
+            try {
+              final aNum = int.parse(a.name.replaceAll(RegExp(r'[^0-9]'), ''));
+              final bNum = int.parse(b.name.replaceAll(RegExp(r'[^0-9]'), ''));
+              return aNum.compareTo(bNum);
+            } catch (e) {
+              return 0;
+            }
+          });
           isLoading = false;
         });
       } else {
-        throw Exception('Failed to load novels');
+        throw Exception('Failed to load chapters');
       }
     } catch (e) {
-      print('Error loading novels: $e');
+      print('Error loading chapters: $e');
       setState(() {
         isLoading = false;
       });
@@ -65,45 +79,36 @@ class _SelectNovelScreenState extends State<SelectNovelScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Chọn truyện để thêm chương'),
+        title: Text('Chọn chương - ${widget.selectedNovel?.name ?? ""}'),
         backgroundColor: const Color(0xFF1B3A57),
       ),
       body: isLoading
           ? const Center(child: CircularProgressIndicator())
-          : novels.isEmpty
-              ? const Center(child: Text('Chưa có truyện nào'))
+          : chapters.isEmpty
+              ? const Center(child: Text('Chưa có chương nào'))
               : ListView.builder(
-                  itemCount: novels.length,
+                  itemCount: chapters.length,
                   itemBuilder: (context, index) {
-                    final novel = novels[index];
+                    final chapter = chapters[index];
                     return Card(
                       margin: const EdgeInsets.symmetric(
                           horizontal: 16, vertical: 8),
                       child: ListTile(
-                        leading: ClipRRect(
-                          borderRadius: BorderRadius.circular(4),
-                          child: Image.network(
-                            novel.cover,
-                            width: 50,
-                            height: 70,
-                            fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) =>
-                                const Icon(Icons.error),
-                          ),
-                        ),
-                        title: Text(novel.name),
-                        subtitle: Text(novel.author),
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => BlocProvider.value(
-                                value: context.read<SessionCubit>(),
-                                child: UploadChapterScreen(novel: novel),
+                        title: Text(chapter.name),
+                        trailing: IconButton(
+                          icon: const Icon(Icons.edit),
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => BlocProvider.value(
+                                  value: context.read<SessionCubit>(),
+                                  child: EditChapterScreen(chapter: chapter),
+                                ),
                               ),
-                            ),
-                          );
-                        },
+                            );
+                          },
+                        ),
                       ),
                     );
                   },

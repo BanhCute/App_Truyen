@@ -1,39 +1,57 @@
 export interface AppConfig {
     port: number;
-    'url.frontend'?: string;
-    'auth.jwt.secret'?: string;
-    'auth.jwt.expiresInSeconds'?: number;
-    'auth.github.clientId'?: string;
-    'auth.github.clientSecret'?: string;
-    'auth.github.callbackURL'?: string;
-    'cloudinary.secret': string;
-    'cloudinary.key': string;
-    'cloudinary.cloudName': string;
-}
-declare const appConfig: () => {
-    port: number;
     url: {
         frontend: string;
+    };
+    database: {
+        url: string;
     };
     auth: {
         jwt: {
             secret: string;
-            expiresInSeconds: number;
+            expiresIn: string;
+        };
+        google: {
+            clientId: string;
         };
         github: {
             clientId: string;
             clientSecret: string;
             callbackURL: string;
         };
+    };
+    cloudinary: {
+        cloudName: string;
+        apiKey: string;
+        apiSecret: string;
+    };
+}
+declare const _default: () => {
+    port: number;
+    url: {
+        frontend: string;
+    };
+    database: {
+        url: string;
+    };
+    auth: {
+        jwt: {
+            secret: string;
+            expiresIn: string;
+        };
         google: {
             clientId: string;
+        };
+        github: {
+            clientId: string;
             clientSecret: string;
+            callbackURL: string;
         };
     };
     cloudinary: {
-        secret: string;
-        key: string;
         cloudName: string;
+        apiKey: string;
+        apiSecret: string;
     };
 };
-export default appConfig;
+export default _default;

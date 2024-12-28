@@ -26,91 +26,246 @@ let NovelService = class NovelService {
                 followerCount: 0,
                 commentCount: 0,
             },
+            select: {
+                id: true,
+                name: true,
+                description: true,
+                author: true,
+                cover: true,
+                status: true,
+                view: true,
+                rating: true,
+                followerCount: true,
+                commentCount: true,
+                createdAt: true,
+                updatedAt: true,
+                userId: true,
+            },
         });
     }
     findAll() {
         return this.databaseService.novel.findMany({
-            include: {
-                user: true,
+            select: {
+                id: true,
+                name: true,
+                description: true,
+                author: true,
+                cover: true,
+                status: true,
+                view: true,
+                rating: true,
+                followerCount: true,
+                commentCount: true,
+                createdAt: true,
+                updatedAt: true,
+                userId: true,
+                user: {
+                    select: {
+                        id: true,
+                        name: true,
+                        avatar: true,
+                    },
+                },
+                categories: {
+                    select: {
+                        category: {
+                            select: {
+                                id: true,
+                                name: true,
+                            },
+                        },
+                    },
+                },
             },
         });
     }
     findOne(id) {
         return this.databaseService.novel.findUnique({
             where: { id },
-            include: {
-                user: true,
-                chapters: true,
-                comments: true,
-                ratings: true,
+            select: {
+                id: true,
+                name: true,
+                description: true,
+                author: true,
+                cover: true,
+                status: true,
+                view: true,
+                rating: true,
+                followerCount: true,
+                commentCount: true,
+                createdAt: true,
+                updatedAt: true,
+                userId: true,
+                user: {
+                    select: {
+                        id: true,
+                        name: true,
+                        avatar: true,
+                    },
+                },
+                categories: {
+                    select: {
+                        category: {
+                            select: {
+                                id: true,
+                                name: true,
+                            },
+                        },
+                    },
+                },
             },
         });
     }
     async update(id, updateNovelDto, userId) {
-        const novel = await this.findOne(id);
+        const novel = await this.databaseService.novel.findUnique({
+            where: { id },
+            select: {
+                id: true,
+                userId: true,
+            },
+        });
+        if (!novel) {
+            throw new common_1.NotFoundException('Không tìm thấy truyện');
+        }
         if (novel.userId !== userId) {
-            throw new common_1.ForbiddenException('Bạn không có quyền sửa novel này');
+            throw new common_1.ForbiddenException('Bạn không có quyền cập nhật truyện này');
         }
-        try {
-            const currentNovel = await this.databaseService.novel.findUnique({
-                where: { id },
-            });
-            if (!currentNovel) {
-                throw new common_1.NotFoundException(`Novel với ID ${id} không tồn tại`);
-            }
-            if (updateNovelDto.id && updateNovelDto.id !== currentNovel.id) {
-                throw new common_1.BadRequestException('Bạn không được phép sửa ID của truyện');
-            }
-            if ('createdAt' in updateNovelDto) {
-                const currentDate = new Date(currentNovel.createdAt).getTime();
-                const updateDate = new Date(updateNovelDto.createdAt).getTime();
-                if (currentDate !== updateDate) {
-                    throw new common_1.BadRequestException('Bạn không được phép sửa ngày tạo của truyện');
-                }
-            }
-            if ('view' in updateNovelDto &&
-                updateNovelDto.view !== currentNovel.view) {
-                throw new common_1.BadRequestException('Bạn không được phép sửa số lượt xem của truyện');
-            }
-            if ('updatedAt' in updateNovelDto) {
-                const currentDate = new Date(currentNovel.updatedAt).getTime();
-                const updateDate = new Date(updateNovelDto.updatedAt).getTime();
-                if (currentDate !== updateDate) {
-                    throw new common_1.BadRequestException('Bạn không được phép sửa ngày cập nhật của truyện');
-                }
-            }
-            if ('rating' in updateNovelDto &&
-                updateNovelDto.rating !== currentNovel.rating) {
-                throw new common_1.BadRequestException('Bạn không được phép sửa điểm đánh giá của truyện');
-            }
-            if ('followerCount' in updateNovelDto &&
-                updateNovelDto.followerCount !== currentNovel.followerCount) {
-                throw new common_1.BadRequestException('Bạn không được phép sửa số người theo dõi truyện');
-            }
-            if ('commentCount' in updateNovelDto &&
-                updateNovelDto.commentCount !== currentNovel.commentCount) {
-                throw new common_1.BadRequestException('Bạn không được phép sửa số lượng bình luận');
-            }
-            return await this.databaseService.novel.update({
-                where: { id },
-                data: updateNovelDto,
-            });
-        }
-        catch (error) {
-            if (error instanceof common_1.BadRequestException ||
-                error instanceof common_1.NotFoundException) {
-                throw error;
-            }
-            throw new common_1.BadRequestException('Không thể sửa UserId.');
-        }
+        return this.databaseService.novel.update({
+            where: { id },
+            data: updateNovelDto,
+            select: {
+                id: true,
+                name: true,
+                description: true,
+                author: true,
+                cover: true,
+                status: true,
+                view: true,
+                rating: true,
+                followerCount: true,
+                commentCount: true,
+                createdAt: true,
+                updatedAt: true,
+                userId: true,
+            },
+        });
     }
     async remove(id, userId) {
-        const novel = await this.findOne(id);
+        const novel = await this.databaseService.novel.findUnique({
+            where: { id },
+            select: {
+                id: true,
+                userId: true,
+            },
+        });
+        if (!novel) {
+            throw new common_1.NotFoundException('Không tìm thấy truyện');
+        }
         if (novel.userId !== userId) {
-            throw new common_1.ForbiddenException('Bạn không có quyền xóa novel này');
+            throw new common_1.ForbiddenException('Bạn không có quyền xóa truyện này');
         }
         return this.databaseService.novel.delete({
             where: { id },
+            select: {
+                id: true,
+            },
+        });
+    }
+    async addCategories(id, categoryIds, userId) {
+        const novel = await this.databaseService.novel.findUnique({
+            where: { id },
+            select: {
+                id: true,
+                userId: true,
+                categories: {
+                    select: {
+                        categoryId: true,
+                    },
+                },
+            },
+        });
+        if (!novel) {
+            throw new common_1.NotFoundException('Không tìm thấy truyện');
+        }
+        if (novel.userId !== userId) {
+            throw new common_1.ForbiddenException('Bạn không có quyền thêm thể loại cho truyện này');
+        }
+        const categories = await this.databaseService.category.findMany({
+            where: {
+                id: {
+                    in: categoryIds,
+                },
+            },
+            select: {
+                id: true,
+            },
+        });
+        if (categories.length !== categoryIds.length) {
+            throw new common_1.BadRequestException('Một số thể loại không tồn tại');
+        }
+        const existingCategoryIds = novel.categories.map((nc) => nc.categoryId);
+        const newCategoryIds = categoryIds.filter((id) => !existingCategoryIds.includes(id));
+        await this.databaseService.novelCategory.createMany({
+            data: newCategoryIds.map((categoryId) => ({
+                novelId: id,
+                categoryId,
+            })),
+            skipDuplicates: true,
+        });
+        return this.databaseService.novel.findUnique({
+            where: { id },
+            select: {
+                id: true,
+                categories: {
+                    select: {
+                        category: {
+                            select: {
+                                id: true,
+                                name: true,
+                            },
+                        },
+                    },
+                },
+            },
+        });
+    }
+    async removeCategory(id, categoryId, userId) {
+        const novel = await this.databaseService.novel.findUnique({
+            where: { id },
+            select: {
+                id: true,
+                userId: true,
+            },
+        });
+        if (!novel) {
+            throw new common_1.NotFoundException('Không tìm thấy truyện');
+        }
+        if (novel.userId !== userId) {
+            throw new common_1.ForbiddenException('Bạn không có quyền xóa thể loại của truyện này');
+        }
+        await this.databaseService.novelCategory.delete({
+            where: {
+                novelId_categoryId: {
+                    novelId: id,
+                    categoryId,
+                },
+            },
+        });
+        return this.databaseService.novel.findUnique({
+            where: { id },
+            select: {
+                id: true,
+                categories: {
+                    select: {
+                        category: {
+                            select: {
+                                id: true,
+                                name: true,
+                            },
+                        },
+                    },
+                },
+            },
         });
     }
 };

@@ -1,33 +1,33 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-BigInt.prototype.toJSON = function () {
-    return this.toString();
-};
-const appConfig = () => ({
-    port: parseInt(process.env.PORT || '8080'),
+exports.default = () => ({
+    port: parseInt(process.env.PORT, 10) || 3000,
     url: {
-        frontend: 'http://localhost:3000',
+        frontend: process.env.FRONTEND_URL || 'http://localhost:3000',
+    },
+    database: {
+        url: process.env.DATABASE_URL,
     },
     auth: {
         jwt: {
             secret: process.env.JWT_SECRET,
-            expiresInSeconds: parseInt(process.env.JWT_EXPIRATION_TIME_SECONDS ?? '900'),
+            expiresIn: process.env.JWT_EXPIRATION_TIME_SECONDS
+                ? `${process.env.JWT_EXPIRATION_TIME_SECONDS}s`
+                : '3d',
+        },
+        google: {
+            clientId: process.env.GOOGLE_OAUTH_CLIENT_ID,
         },
         github: {
             clientId: process.env.GITHUB_OAUTH_CLIENT_ID,
             clientSecret: process.env.GITHUB_OAUTH_CLIENT_SECRET,
             callbackURL: process.env.GITHUB_OAUTH_CALLBACK_URL,
         },
-        google: {
-            clientId: process.env.GOOGLE_OAUTH_CLIENT_ID,
-            clientSecret: process.env.GOOGLE_OAUTH_CLIENT_SECRET,
-        },
     },
     cloudinary: {
-        secret: process.env.CLOUDINARY_SECRET,
-        key: process.env.CLOUDINARY_KEY,
         cloudName: process.env.CLOUDINARY_CLOUD_NAME,
+        apiKey: process.env.CLOUDINARY_KEY,
+        apiSecret: process.env.CLOUDINARY_SECRET,
     },
 });
-exports.default = appConfig;
 //# sourceMappingURL=configuration.js.map

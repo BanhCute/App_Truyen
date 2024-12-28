@@ -13,47 +13,43 @@ exports.CloudinaryService = void 0;
 const common_1 = require("@nestjs/common");
 const config_1 = require("@nestjs/config");
 const cloudinary_1 = require("cloudinary");
-const cloudinary_build_url_1 = require("cloudinary-build-url");
-const crypto = require("crypto");
+const stream_1 = require("stream");
 let CloudinaryService = class CloudinaryService {
     constructor(configService) {
         this.configService = configService;
         cloudinary_1.v2.config({
-            api_secret: configService.get('cloudinary.secret'),
-            api_key: configService.get('cloudinary.key'),
-            cloud_name: configService.get('cloudinary.cloudName'),
+            cloud_name: this.configService.get('cloudinary.cloudName'),
+            api_key: this.configService.get('cloudinary.apiKey'),
+            api_secret: this.configService.get('cloudinary.apiSecret'),
         });
     }
-    async uploadImage(folder, imageBuffer, publicId) {
-        if (!imageBuffer) {
-            throw new common_1.BadRequestException('Image is invalid');
-        }
-        const result = await new Promise((resolve, reject) => {
-            cloudinary_1.v2.uploader
-                .upload_stream({ folder, format: 'jpg', public_id: publicId }, (error, result) => {
-                if (result) {
-                    return resolve(result);
-                }
-                return reject(new common_1.BadRequestException(error?.message));
-            })
-                .end(imageBuffer);
-        });
-        return { url: result.secure_url };
-    }
-    async deleteImage(url) {
-        return await new Promise((resolve, reject) => {
-            const publicId = (0, cloudinary_build_url_1.extractPublicId)(url);
-            cloudinary_1.v2.api.delete_resources([publicId], (error, result) => {
-                if (result) {
-                    return resolve(result);
-                }
-                return reject(error);
+    async uploadImage(folder, buffer) {
+        try {
+            console.log('Starting upload to cloudinary...');
+            return new Promise((resolve, reject) => {
+                const uploadStream = cloudinary_1.v2.uploader.upload_stream({
+                    folder,
+                    resource_type: 'auto',
+                }, (error, result) => {
+                    if (error) {
+                        console.error('Cloudinary upload error:', error);
+                        reject(error);
+                    }
+                    else {
+                        console.log('Cloudinary upload success:', result.secure_url);
+                        resolve(result);
+                    }
+                });
+                const readableStream = new stream_1.Readable();
+                readableStream.push(buffer);
+                readableStream.push(null);
+                readableStream.pipe(uploadStream);
             });
-        });
-    }
-    randomPublicId() {
-        const buf = new Uint8Array(1);
-        return crypto.getRandomValues(buf).toString();
+        }
+        catch (error) {
+            console.error('Error in uploadImage:', error);
+            throw error;
+        }
     }
 };
 exports.CloudinaryService = CloudinaryService;
