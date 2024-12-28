@@ -20,6 +20,9 @@ let CloudinaryService = class CloudinaryService {
         const cloudName = this.configService.get('cloudinary')?.cloudName;
         const apiKey = this.configService.get('cloudinary')?.apiKey;
         const apiSecret = this.configService.get('cloudinary')?.apiSecret;
+        if (!cloudName || !apiKey || !apiSecret) {
+            throw new Error('Missing Cloudinary configuration');
+        }
         console.log('Cloudinary Config:', {
             cloudName,
             apiKey: apiKey ? 'exists' : 'missing',
@@ -32,32 +35,43 @@ let CloudinaryService = class CloudinaryService {
         });
     }
     async uploadImage(folder, buffer) {
-        try {
-            console.log('Starting upload to cloudinary...', { folder });
-            return new Promise((resolve, reject) => {
-                const uploadStream = cloudinary_1.v2.uploader.upload_stream({
-                    folder,
-                    resource_type: 'auto',
-                }, (error, result) => {
-                    if (error) {
-                        console.error('Cloudinary upload error:', error);
-                        reject(error);
-                    }
-                    else {
-                        console.log('Cloudinary upload success:', result.secure_url);
-                        resolve(result);
-                    }
+        const maxRetries = 3;
+        let lastError = null;
+        for (let attempt = 1; attempt <= maxRetries; attempt++) {
+            try {
+                console.log(`Upload attempt ${attempt}/${maxRetries} to cloudinary...`, { folder });
+                const result = await new Promise((resolve, reject) => {
+                    const uploadStream = cloudinary_1.v2.uploader.upload_stream({
+                        folder,
+                        resource_type: 'auto',
+                        timeout: 60000,
+                    }, (error, result) => {
+                        if (error) {
+                            console.error(`Attempt ${attempt}: Cloudinary upload error:`, error);
+                            reject(error);
+                        }
+                        else {
+                            console.log(`Attempt ${attempt}: Cloudinary upload success:`, result.secure_url);
+                            resolve(result);
+                        }
+                    });
+                    const readableStream = new stream_1.Readable();
+                    readableStream.push(buffer);
+                    readableStream.push(null);
+                    readableStream.pipe(uploadStream);
                 });
-                const readableStream = new stream_1.Readable();
-                readableStream.push(buffer);
-                readableStream.push(null);
-                readableStream.pipe(uploadStream);
-            });
+                return result;
+            }
+            catch (error) {
+                console.error(`Attempt ${attempt}: Error in uploadImage:`, error);
+                lastError = error;
+                if (attempt === maxRetries) {
+                    throw new common_1.HttpException('Failed to upload image after multiple attempts', common_1.HttpStatus.BAD_GATEWAY);
+                }
+                await new Promise((resolve) => setTimeout(resolve, 1000 * attempt));
+            }
         }
-        catch (error) {
-            console.error('Error in uploadImage:', error);
-            throw error;
-        }
+        throw lastError;
     }
 };
 exports.CloudinaryService = CloudinaryService;
