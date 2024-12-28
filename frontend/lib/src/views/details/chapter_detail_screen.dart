@@ -131,194 +131,131 @@ class _ChapterDetailScreenState extends State<ChapterDetailScreen> {
       body: Stack(
         children: [
           // Nội dung chapter
-          GestureDetector(
-            onTap: () {
-              setState(() {
-                _showControls = !_showControls;
-              });
-            },
-            child: SingleChildScrollView(
-              child: Column(
-                children: widget.chapter.content.split('\n').map((imageUrl) {
-                  return InteractiveViewer(
-                    child: Center(
+          Positioned.fill(
+            child: GestureDetector(
+              onTap: () {
+                setState(() {
+                  _showControls = !_showControls;
+                });
+              },
+              child: Container(
+                color: Colors.black,
+                child: ListView.builder(
+                  itemCount: widget.chapter.content.split('\n').length,
+                  itemBuilder: (context, index) {
+                    final imageUrl = widget.chapter.content.split('\n')[index];
+                    return Container(
+                      margin: const EdgeInsets.only(bottom: 1),
                       child: Image.network(
                         imageUrl,
-                        fit: BoxFit.contain,
+                        fit: BoxFit.fitWidth,
+                        width: MediaQuery.of(context).size.width,
                         loadingBuilder: (context, child, loadingProgress) {
                           if (loadingProgress == null) return child;
-                          return Center(
-                            child: CircularProgressIndicator(
-                              value: loadingProgress.expectedTotalBytes != null
-                                  ? loadingProgress.cumulativeBytesLoaded /
-                                      loadingProgress.expectedTotalBytes!
-                                  : null,
+                          return SizedBox(
+                            height: 200,
+                            child: Center(
+                              child: CircularProgressIndicator(
+                                value: loadingProgress.expectedTotalBytes !=
+                                        null
+                                    ? loadingProgress.cumulativeBytesLoaded /
+                                        loadingProgress.expectedTotalBytes!
+                                    : null,
+                              ),
+                            ),
+                          );
+                        },
+                        errorBuilder: (context, error, stackTrace) {
+                          return const SizedBox(
+                            height: 200,
+                            child: Center(
+                              child: Text(
+                                'Không thể tải ảnh',
+                                style: TextStyle(color: Colors.red),
+                              ),
                             ),
                           );
                         },
                       ),
-                    ),
-                  );
-                }).toList(),
+                    );
+                  },
+                ),
               ),
             ),
           ),
 
           // Controls overlay
           if (_showControls)
-            Container(
-              color: Colors.black26,
-              child: Column(
-                children: [
-                  // AppBar
-                  AppBar(
-                    backgroundColor: Colors.transparent,
-                    elevation: 0,
-                    title: Text(
-                      widget.chapter.name,
-                      style: const TextStyle(color: Colors.white, shadows: [
-                        Shadow(
-                          offset: Offset(1.0, 1.0),
-                          blurRadius: 3.0,
-                          color: Color.fromARGB(255, 0, 0, 0),
-                        ),
-                      ]),
-                    ),
-                    leading: IconButton(
-                      icon: const Icon(Icons.arrow_back, shadows: [
-                        Shadow(
-                          offset: Offset(1.0, 1.0),
-                          blurRadius: 3.0,
-                          color: Color.fromARGB(255, 0, 0, 0),
-                        ),
-                      ]),
-                      onPressed: () => Navigator.pop(context),
-                    ),
-                    actions: [
-                      // Nút theo dõi
-                      BlocBuilder<SessionCubit, SessionState>(
-                        builder: (context, state) {
-                          return IconButton(
-                            icon: Icon(
-                              _isFollowing
-                                  ? Icons.favorite
-                                  : Icons.favorite_border,
-                              color: _isFollowing ? Colors.red : Colors.white,
-                              shadows: const [
-                                Shadow(
-                                  offset: Offset(1.0, 1.0),
-                                  blurRadius: 3.0,
-                                  color: Color.fromARGB(255, 0, 0, 0),
-                                ),
-                              ],
-                            ),
-                            onPressed: () {
-                              if (state is Authenticated) {
-                                _toggleFollow();
-                              } else {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text(
-                                        'Vui lòng đăng nhập để theo dõi truyện'),
-                                    duration: Duration(seconds: 2),
-                                  ),
-                                );
-                              }
-                            },
-                          );
-                        },
-                      ),
-                      // Nút danh sách chapter
-                      IconButton(
-                        icon: const Icon(Icons.list),
-                        onPressed: () {
-                          showModalBottomSheet(
-                            context: context,
-                            builder: (context) => ChapterListBottomSheet(
-                              novel: widget.novel,
-                              currentChapterIndex: widget.currentIndex,
-                              allChapters: widget.allChapters,
-                            ),
-                          );
-                        },
-                      ),
-                      // Nút bình luận
-                      IconButton(
-                        icon: const Icon(Icons.comment),
-                        onPressed: () {
-                          showModalBottomSheet(
-                            context: context,
-                            isScrollControlled: true,
-                            builder: (context) => CommentBottomSheet(
-                              comments: _comments,
-                              isLoading: _isLoadingComments,
-                              commentController: _commentController,
-                              onSubmit: _addComment,
-                            ),
-                          );
-                        },
-                      ),
-                    ],
-                  ),
-
-                  // Navigation buttons
-                  Expanded(
+            Positioned(
+              top: 0,
+              left: 0,
+              right: 0,
+              child: Container(
+                color: Colors.black.withOpacity(0.5),
+                child: SafeArea(
+                  child: Container(
+                    height: 56,
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
                     child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        if (widget.currentIndex > 0)
-                          IconButton(
-                            icon: const Icon(Icons.arrow_back_ios,
-                                color: Colors.white),
-                            onPressed: () {
-                              Navigator.pushReplacement(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => ChapterDetailScreen(
-                                    novel: widget.novel,
-                                    chapter: widget
-                                        .allChapters[widget.currentIndex - 1],
-                                    currentIndex: widget.currentIndex - 1,
-                                    allChapters: widget.allChapters,
-                                  ),
-                                ),
-                              );
-                              ReadingHistoryService.addToHistory(
-                                widget.novel,
-                                lastChapter:
-                                    widget.allChapters[widget.currentIndex - 1],
-                              );
-                            },
+                        IconButton(
+                          icon:
+                              const Icon(Icons.arrow_back, color: Colors.white),
+                          onPressed: () => Navigator.pop(context),
+                        ),
+                        Expanded(
+                          child: Text(
+                            widget.chapter.name,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                            overflow: TextOverflow.ellipsis,
                           ),
-                        const Spacer(),
-                        if (widget.currentIndex < widget.allChapters.length - 1)
-                          IconButton(
-                            icon: const Icon(Icons.arrow_forward_ios,
-                                color: Colors.white),
-                            onPressed: () {
-                              Navigator.pushReplacement(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => ChapterDetailScreen(
-                                    novel: widget.novel,
-                                    chapter: widget
-                                        .allChapters[widget.currentIndex + 1],
-                                    currentIndex: widget.currentIndex + 1,
-                                    allChapters: widget.allChapters,
-                                  ),
-                                ),
-                              );
-                              ReadingHistoryService.addToHistory(
-                                widget.novel,
-                                lastChapter:
-                                    widget.allChapters[widget.currentIndex + 1],
-                              );
-                            },
-                          ),
+                        ),
+                        BlocBuilder<SessionCubit, SessionState>(
+                          builder: (context, state) {
+                            return IconButton(
+                              icon: Icon(
+                                _isFollowing
+                                    ? Icons.favorite
+                                    : Icons.favorite_border,
+                                color: _isFollowing ? Colors.red : Colors.white,
+                              ),
+                              onPressed: () {
+                                if (state is Authenticated) {
+                                  _toggleFollow();
+                                } else {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text(
+                                          'Vui lòng đăng nhập để theo dõi truyện'),
+                                      duration: Duration(seconds: 2),
+                                    ),
+                                  );
+                                }
+                              },
+                            );
+                          },
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.list, color: Colors.white),
+                          onPressed: () {
+                            showModalBottomSheet(
+                              context: context,
+                              builder: (context) => ChapterListBottomSheet(
+                                novel: widget.novel,
+                                currentChapterIndex: widget.currentIndex,
+                                allChapters: widget.allChapters,
+                              ),
+                            );
+                          },
+                        ),
                       ],
                     ),
                   ),
-                ],
+                ),
               ),
             ),
         ],

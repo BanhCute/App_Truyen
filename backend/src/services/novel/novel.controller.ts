@@ -67,4 +67,24 @@ export class NovelController {
     const session = getSession(req);
     return plainToInstance(NovelDto, this.novelService.remove(id, session.id));
   }
+
+  @Post(':id/categories')
+  async addCategories(
+    @Param('id', ParseIntPipe) id: number,
+    @Body('categoryIds') categoryIds: number[],
+    @Req() req: Request,
+  ) {
+    const session = getSession(req);
+    return this.novelService.addCategories(id, categoryIds, session.id);
+  }
+
+  @Delete(':id/categories/:categoryId')
+  async removeCategory(
+    @Param('id', ParseIntPipe) id: number,
+    @Param('categoryId', ParseIntPipe) categoryId: number,
+    @Req() req: Request,
+  ) {
+    const session = getSession(req);
+    return this.novelService.removeCategory(id, categoryId, session.id);
+  }
 }

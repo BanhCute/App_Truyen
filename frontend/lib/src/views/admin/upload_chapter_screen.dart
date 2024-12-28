@@ -242,97 +242,118 @@ class _UploadChapterScreenState extends State<UploadChapterScreen> {
                 ],
               ),
             )
-          : SingleChildScrollView(
-              padding: const EdgeInsets.all(16),
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    TextFormField(
-                      controller: _nameController,
-                      decoration: const InputDecoration(
-                        labelText: 'Tên chương',
-                        border: OutlineInputBorder(),
-                      ),
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Vui lòng nhập tên chương';
-                        }
-                        return null;
-                      },
-                    ),
-                    const SizedBox(height: 16),
-                    ElevatedButton.icon(
-                      onPressed: _pickImages,
-                      icon: const Icon(Icons.add_photo_alternate),
-                      label: const Text('Thêm ảnh'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.green,
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    if (_chapterImages.isNotEmpty) ...[
-                      Text(
-                        'Đã chọn ${_chapterImages.length} ảnh:',
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      ListView.builder(
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        itemCount: _chapterImages.length,
-                        itemBuilder: (context, index) {
-                          return Card(
-                            margin: const EdgeInsets.only(bottom: 8),
-                            child: Stack(
-                              children: [
-                                Image.file(
-                                  _chapterImages[index],
-                                  height: 200,
+          : Column(
+              children: [
+                Expanded(
+                  child: SingleChildScrollView(
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Form(
+                            key: _formKey,
+                            child: TextFormField(
+                              controller: _nameController,
+                              decoration: const InputDecoration(
+                                labelText: 'Tên chương',
+                                border: OutlineInputBorder(),
+                              ),
+                              validator: (value) {
+                                if (value == null || value.isEmpty) {
+                                  return 'Vui lòng nhập tên chương';
+                                }
+                                return null;
+                              },
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          ElevatedButton.icon(
+                            onPressed: _pickImages,
+                            icon: const Icon(Icons.add_photo_alternate),
+                            label: const Text('Thêm ảnh'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.green,
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          if (_chapterImages.isNotEmpty) ...[
+                            Text(
+                              'Ảnh đã chọn (${_chapterImages.length}):',
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            ...List.generate(
+                              _chapterImages.length,
+                              (index) => Padding(
+                                padding: const EdgeInsets.only(bottom: 16),
+                                child: Container(
                                   width: double.infinity,
-                                  fit: BoxFit.contain,
-                                ),
-                                Positioned(
-                                  right: 8,
-                                  top: 8,
-                                  child: CircleAvatar(
-                                    backgroundColor: Colors.red,
-                                    child: IconButton(
-                                      icon: const Icon(Icons.close,
-                                          color: Colors.white),
-                                      onPressed: () => _removeImage(index),
-                                    ),
+                                  decoration: BoxDecoration(
+                                    border:
+                                        Border.all(color: Colors.grey.shade300),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Stack(
+                                    children: [
+                                      ClipRRect(
+                                        borderRadius: BorderRadius.circular(8),
+                                        child: Image.file(
+                                          _chapterImages[index],
+                                          width: double.infinity,
+                                          fit: BoxFit.fitWidth,
+                                        ),
+                                      ),
+                                      Positioned(
+                                        right: 8,
+                                        top: 8,
+                                        child: CircleAvatar(
+                                          radius: 16,
+                                          backgroundColor: Colors.red,
+                                          child: IconButton(
+                                            padding: EdgeInsets.zero,
+                                            iconSize: 20,
+                                            icon: const Icon(Icons.close,
+                                                color: Colors.white),
+                                            onPressed: () =>
+                                                _removeImage(index),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ),
-                              ],
+                              ),
                             ),
-                          );
-                        },
-                      ),
-                    ],
-                    const SizedBox(height: 24),
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF1B3A57),
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                        ),
-                        onPressed: _submitForm,
-                        child: const Text(
-                          'Thêm chương',
-                          style: TextStyle(fontSize: 16),
-                        ),
+                          ],
+                          const SizedBox(height: 16),
+                        ],
                       ),
                     ),
-                  ],
+                  ),
                 ),
-              ),
+                Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: _submitForm,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF1B3A57),
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                      ),
+                      child: const Text(
+                        'Thêm chương',
+                        style: TextStyle(fontSize: 16),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
     );
   }

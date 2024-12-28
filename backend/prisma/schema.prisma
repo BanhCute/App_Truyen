@@ -54,9 +54,10 @@ model User {
 }
 
 model Category {
-    id          Int     @id @default(autoincrement())
+    id          Int            @id @default(autoincrement())
     name        String
     description String?
+    novels      NovelCategory[]
 }
 
 model Genes {
@@ -66,18 +67,18 @@ model Genes {
 }
 
 model Novel {
-    id            Int       @id @default(autoincrement())
+    id            Int             @id @default(autoincrement())
     name          String
     description   String?
-    createdAt     DateTime  @default(now())
+    createdAt     DateTime        @default(now())
     cover         String?
     author        String
     status        String
-    view          Int       @default(0)
-    updatedAt     DateTime  @updatedAt
-    rating        Float?    @default(0.0)
-    followerCount Int       @default(0)
-    commentCount  Int       @default(0)
+    view          Int             @default(0)
+    updatedAt     DateTime        @updatedAt
+    rating        Float?          @default(0.0)
+    followerCount Int             @default(0)
+    commentCount  Int             @default(0)
     userId        Int
     chapters      Chapter[]
     ratings       Rating[]
@@ -85,7 +86,8 @@ model Novel {
     comments      Comment[]
     follows       Follow[]
     histories     History[]
-    user          User      @relation(fields: [userId], references: [id])
+    user          User            @relation(fields: [userId], references: [id])
+    categories    NovelCategory[]
 }
 
 model Chapter {
@@ -171,4 +173,14 @@ model RoleAuthority {
     authority   Authority @relation(fields: [authorityId], references: [id], onDelete: Cascade)
 
     @@id([roleId, authorityId])
+}
+
+model NovelCategory {
+    id         Int      @id @default(autoincrement())
+    novelId    Int
+    categoryId Int
+    novel      Novel    @relation(fields: [novelId], references: [id], onDelete: Cascade)
+    category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+    @@unique([novelId, categoryId])
 }

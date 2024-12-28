@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'views/home/home_screen.dart';
 import 'providers/theme_provider.dart';
+import 'views/auth/login_screen.dart';
 
 class MyApp extends StatelessWidget {
   const MyApp({Key? key}) : super(key: key);
@@ -14,7 +15,11 @@ class MyApp extends StatelessWidget {
           title: 'Truyen Full',
           debugShowCheckedModeBanner: false,
           theme: themeProvider.theme,
-          home: HomeScreen(),
+          initialRoute: '/',
+          routes: {
+            '/': (context) => const HomeScreen(),
+            '/login': (context) => const LoginScreen(),
+          },
         );
       },
     );
