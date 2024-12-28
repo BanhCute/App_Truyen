@@ -5,6 +5,8 @@ import 'package:frontend/models/session.dart';
 import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_image_compress/flutter_image_compress.dart';
+import 'package:path_provider/path_provider.dart';
 import '../../models/novel.dart';
 import 'dart:convert';
 import 'dart:io';
@@ -23,6 +25,7 @@ class _UploadChapterScreenState extends State<UploadChapterScreen> {
   final _nameController = TextEditingController();
   List<File> _chapterImages = [];
   bool _isLoading = false;
+  double _uploadProgress = 0.0;
 
   Future<void> _pickImages() async {
     try {
@@ -39,6 +42,21 @@ class _UploadChapterScreenState extends State<UploadChapterScreen> {
     }
   }
 
+  Future<File> _compressImage(File file) async {
+    final dir = await getTemporaryDirectory();
+    final targetPath =
+        '${dir.path}/${DateTime.now().millisecondsSinceEpoch}.jpg';
+
+    var result = await FlutterImageCompress.compressAndGetFile(
+      file.path,
+      targetPath,
+      quality: 70,
+      format: CompressFormat.jpeg,
+    );
+
+    return File(result?.path ?? file.path);
+  }
+
   Future<List<String>> _uploadImages() async {
     if (_chapterImages.isEmpty) return [];
     List<String> uploadedUrls = [];
@@ -50,65 +68,73 @@ class _UploadChapterScreenState extends State<UploadChapterScreen> {
         return [];
       }
       final token = state.session.accessToken;
-      print('Token: $token');
 
-      for (var image in _chapterImages) {
-        try {
-          var request = http.MultipartRequest(
-            'POST',
-            Uri.parse('${dotenv.get('API_URL')}/cloudinary'),
-          );
+      // Nén tất cả ảnh
+      setState(() {
+        _uploadProgress = 0.1;
+      });
 
-          // Thêm form field 'image'
-          var multipartFile =
-              await http.MultipartFile.fromPath('image', image.path);
-          request.files.add(multipartFile);
+      List<File> compressedImages = [];
+      for (var i = 0; i < _chapterImages.length; i++) {
+        final compressed = await _compressImage(_chapterImages[i]);
+        compressedImages.add(compressed);
+        setState(() {
+          _uploadProgress = 0.1 + (0.3 * (i + 1) / _chapterImages.length);
+        });
+      }
 
-          // Thêm headers
-          request.headers.addAll({
-            'Authorization': 'Bearer $token',
-            'Accept': 'application/json',
-          });
+      // Tạo form data với nhiều file
+      var request = http.MultipartRequest(
+        'POST',
+        Uri.parse('${dotenv.get('API_URL')}/cloudinary'),
+      );
 
-          // Thêm form fields
-          request.fields.addAll({'type': 'chapter', 'folder': 'images'});
+      request.headers.addAll({
+        'Authorization': 'Bearer $token',
+        'Accept': 'application/json',
+      });
 
-          print('Uploading image: ${image.path}');
-          print('Request URL: ${request.url}');
-          print('Request headers: ${request.headers}');
-          print('File field name: ${multipartFile.field}');
-          print('File length: ${multipartFile.length}');
+      // Thêm tất cả ảnh vào request
+      for (var i = 0; i < compressedImages.length; i++) {
+        final file = compressedImages[i];
+        request.files.add(
+          await http.MultipartFile.fromPath('image', file.path),
+        );
+        setState(() {
+          _uploadProgress = 0.4 + (0.5 * (i + 1) / compressedImages.length);
+        });
+      }
 
-          var streamedResponse = await request.send();
-          var response = await http.Response.fromStream(streamedResponse);
+      // Gửi request
+      var streamedResponse = await request.send();
+      var response = await http.Response.fromStream(streamedResponse);
 
-          print('Response status: ${response.statusCode}');
-          print('Response body: ${response.body}');
+      if (response.statusCode == 201) {
+        var data = json.decode(response.body);
+        if (data['urls'] != null) {
+          uploadedUrls = List<String>.from(data['urls']);
+        }
+      } else {
+        print('Upload failed with status ${response.statusCode}');
+        print('Error response: ${response.body}');
+        throw Exception('Lỗi khi tải ảnh lên: ${response.body}');
+      }
 
-          if (response.statusCode == 201) {
-            var data = json.decode(response.body);
-            print('Parsed response data: $data');
-            if (data['url'] != null) {
-              uploadedUrls.add(data['url']);
-              print('Added URL: ${data['url']}');
-            } else {
-              print('URL not found in response data');
-            }
-          } else {
-            print('Upload failed with status ${response.statusCode}');
-            print('Error response: ${response.body}');
-          }
-        } catch (e, stackTrace) {
-          print('Error uploading single image: $e');
-          print('Stack trace: $stackTrace');
+      setState(() {
+        _uploadProgress = 1.0;
+      });
+
+      // Xóa các file đã nén
+      for (var file in compressedImages) {
+        if (await file.exists()) {
+          await file.delete();
         }
       }
-    } catch (e, stackTrace) {
+    } catch (e) {
       print('Error in _uploadImages: $e');
-      print('Stack trace: $stackTrace');
+      rethrow;
     }
 
-    print('Final uploaded URLs: $uploadedUrls');
     return uploadedUrls;
   }
 
@@ -129,6 +155,7 @@ class _UploadChapterScreenState extends State<UploadChapterScreen> {
 
     setState(() {
       _isLoading = true;
+      _uploadProgress = 0.0;
     });
 
     try {
@@ -179,13 +206,14 @@ class _UploadChapterScreenState extends State<UploadChapterScreen> {
       print('Error creating chapter: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Có lỗi xảy ra khi thêm chương')),
+          SnackBar(content: Text('Có lỗi xảy ra: ${e.toString()}')),
         );
       }
     } finally {
       if (mounted) {
         setState(() {
           _isLoading = false;
+          _uploadProgress = 0.0;
         });
       }
     }
@@ -199,7 +227,21 @@ class _UploadChapterScreenState extends State<UploadChapterScreen> {
         backgroundColor: const Color(0xFF1B3A57),
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  CircularProgressIndicator(
+                    value: _uploadProgress,
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Đang tải lên... ${(_uploadProgress * 100).toInt()}%',
+                    style: const TextStyle(fontSize: 16),
+                  ),
+                ],
+              ),
+            )
           : SingleChildScrollView(
               padding: const EdgeInsets.all(16),
               child: Form(

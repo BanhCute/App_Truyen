@@ -11,8 +11,8 @@ export class CloudinaryController {
   @Post()
   @FormDataRequest()
   async create(@Body() createCloudinaryDto: CreateCloudinaryDto) {
-    const uploadPromises = createCloudinaryDto.images.map((image) =>
-      this.cloudinaryService.uploadImage('images', image.buffer),
+    const uploadPromises = createCloudinaryDto.image.map((file) =>
+      this.cloudinaryService.uploadImage('images', file.buffer),
     );
 
     const results = await Promise.all(uploadPromises);
