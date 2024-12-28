@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:frontend/src/views/admin/upload_chapter_screen.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:provider/provider.dart';
@@ -18,6 +19,8 @@ import '../admin/select_novel_screen.dart';
 import '../follows/followed_novels_screen.dart';
 import '../../models/reading_history.dart';
 import '../novel_detail/novel_detail_screen.dart';
+import '../admin/manage_novel_categories_screen.dart';
+import '../admin/manage_categories_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -466,8 +469,10 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                     const SizedBox(height: 16),
                     if (state.session.user?.isAdmin == true) ...[
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      Wrap(
+                        alignment: WrapAlignment.center,
+                        spacing: 16,
+                        runSpacing: 16,
                         children: [
                           ElevatedButton.icon(
                             icon: const Icon(Icons.add),
@@ -485,29 +490,158 @@ class _HomeScreenState extends State<HomeScreen> {
                             },
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Colors.green,
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 16, vertical: 12),
                             ),
                           ),
                           ElevatedButton.icon(
-                            icon: const Icon(Icons.add_circle),
-                            label: const Text('Thêm chương'),
+                            icon: const Icon(Icons.category),
+                            label: const Text('Quản lý thể loại'),
                             onPressed: () {
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (context) => BlocProvider.value(
-                                    value: context.read<SessionCubit>(),
-                                    child: const SelectNovelScreen(),
-                                  ),
+                                  builder: (context) =>
+                                      const ManageCategoriesScreen(),
                                 ),
                               );
                             },
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.blue,
+                              backgroundColor: Colors.orange,
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 16, vertical: 12),
                             ),
                           ),
                         ],
                       ),
+                      const SizedBox(height: 24),
+                      Text(
+                        'Truyện của bạn',
+                        style: Theme.of(context).textTheme.titleLarge,
+                      ),
                       const SizedBox(height: 16),
+                      Expanded(
+                        child: SingleChildScrollView(
+                          child: Column(
+                            children: novels
+                                .where((n) => n.userId == state.session.user.id)
+                                .map((novel) => Card(
+                                      margin: const EdgeInsets.symmetric(
+                                          vertical: 8, horizontal: 16),
+                                      child: ExpansionTile(
+                                        leading: ClipRRect(
+                                          borderRadius:
+                                              BorderRadius.circular(4),
+                                          child: Image.network(
+                                            novel.cover,
+                                            width: 50,
+                                            height: 70,
+                                            fit: BoxFit.cover,
+                                            errorBuilder:
+                                                (context, error, stackTrace) =>
+                                                    const Icon(Icons.error),
+                                          ),
+                                        ),
+                                        title: Text(novel.name),
+                                        subtitle: Text(
+                                            'Số chương: ${novel.chapters?.length ?? 0}'),
+                                        children: [
+                                          Padding(
+                                            padding: const EdgeInsets.all(16.0),
+                                            child: Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.stretch,
+                                              children: [
+                                                ElevatedButton.icon(
+                                                  icon: const Icon(
+                                                      Icons.add_circle),
+                                                  label: const Text(
+                                                      'Thêm chương mới'),
+                                                  onPressed: () {
+                                                    Navigator.push(
+                                                      context,
+                                                      MaterialPageRoute(
+                                                        builder: (context) =>
+                                                            BlocProvider.value(
+                                                          value: context.read<
+                                                              SessionCubit>(),
+                                                          child:
+                                                              UploadChapterScreen(
+                                                                  novel: novel),
+                                                        ),
+                                                      ),
+                                                    );
+                                                  },
+                                                  style:
+                                                      ElevatedButton.styleFrom(
+                                                    backgroundColor:
+                                                        Colors.blue,
+                                                  ),
+                                                ),
+                                                const SizedBox(height: 8),
+                                                ElevatedButton.icon(
+                                                  icon: const Icon(
+                                                      Icons.category),
+                                                  label: const Text(
+                                                      'Quản lý thể loại'),
+                                                  onPressed: () {
+                                                    Navigator.push(
+                                                      context,
+                                                      MaterialPageRoute(
+                                                        builder: (context) =>
+                                                            BlocProvider.value(
+                                                          value: context.read<
+                                                              SessionCubit>(),
+                                                          child:
+                                                              ManageNovelCategoriesScreen(
+                                                                  novel: novel),
+                                                        ),
+                                                      ),
+                                                    );
+                                                  },
+                                                  style:
+                                                      ElevatedButton.styleFrom(
+                                                    backgroundColor:
+                                                        Colors.orange,
+                                                  ),
+                                                ),
+                                                const SizedBox(height: 8),
+                                                ElevatedButton.icon(
+                                                  icon: const Icon(Icons.edit),
+                                                  label:
+                                                      const Text('Sửa chương'),
+                                                  onPressed: () {
+                                                    Navigator.push(
+                                                      context,
+                                                      MaterialPageRoute(
+                                                        builder: (context) =>
+                                                            BlocProvider.value(
+                                                          value: context.read<
+                                                              SessionCubit>(),
+                                                          child:
+                                                              SelectNovelScreen(
+                                                                  selectedNovel:
+                                                                      novel),
+                                                        ),
+                                                      ),
+                                                    );
+                                                  },
+                                                  style:
+                                                      ElevatedButton.styleFrom(
+                                                    backgroundColor:
+                                                        Colors.green,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ))
+                                .toList(),
+                          ),
+                        ),
+                      ),
                     ],
                     ElevatedButton(
                       onPressed: () {

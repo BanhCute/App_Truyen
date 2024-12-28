@@ -13,6 +13,8 @@ class Novel {
   final int view;
   final int followerCount;
   final String status;
+  final int userId;
+  final List<Chapter>? chapters;
 
   Novel({
     required this.id,
@@ -23,10 +25,12 @@ class Novel {
     required this.categories,
     required this.createdAt,
     required this.updatedAt,
+    required this.userId,
     this.rating = 0,
     this.view = 0,
     this.followerCount = 0,
     this.status = 'Đang cập nhật',
+    this.chapters,
   });
 
   factory Novel.fromJson(Map<String, dynamic> json) {
@@ -45,6 +49,12 @@ class Novel {
       view: json['view'] ?? 0,
       followerCount: json['followerCount'] ?? 0,
       status: json['status'] ?? 'Đang cập nhật',
+      userId: json['userId'] ?? 0,
+      chapters: json['chapters'] != null
+          ? (json['chapters'] as List)
+              .map((chapter) => Chapter.fromJson(chapter))
+              .toList()
+          : null,
     );
   }
 
@@ -62,6 +72,8 @@ class Novel {
       'view': view,
       'followerCount': followerCount,
       'status': status,
+      'userId': userId,
+      'chapters': chapters,
     };
   }
 }

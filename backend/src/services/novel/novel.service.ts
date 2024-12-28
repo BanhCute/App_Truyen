@@ -22,16 +22,55 @@ export class NovelService {
         followerCount: 0,
         commentCount: 0,
       },
+      select: {
+        id: true,
+        name: true,
+        description: true,
+        author: true,
+        cover: true,
+        status: true,
+        view: true,
+        rating: true,
+        followerCount: true,
+        commentCount: true,
+        createdAt: true,
+        updatedAt: true,
+        userId: true,
+      },
     });
   }
 
   findAll() {
     return this.databaseService.novel.findMany({
-      include: {
-        user: true,
+      select: {
+        id: true,
+        name: true,
+        description: true,
+        author: true,
+        cover: true,
+        status: true,
+        view: true,
+        rating: true,
+        followerCount: true,
+        commentCount: true,
+        createdAt: true,
+        updatedAt: true,
+        userId: true,
+        user: {
+          select: {
+            id: true,
+            name: true,
+            avatar: true,
+          },
+        },
         categories: {
-          include: {
-            category: true,
+          select: {
+            category: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
           },
         },
       },
@@ -41,14 +80,35 @@ export class NovelService {
   findOne(id: number) {
     return this.databaseService.novel.findUnique({
       where: { id },
-      include: {
-        user: true,
-        chapters: true,
-        comments: true,
-        ratings: true,
+      select: {
+        id: true,
+        name: true,
+        description: true,
+        author: true,
+        cover: true,
+        status: true,
+        view: true,
+        rating: true,
+        followerCount: true,
+        commentCount: true,
+        createdAt: true,
+        updatedAt: true,
+        userId: true,
+        user: {
+          select: {
+            id: true,
+            name: true,
+            avatar: true,
+          },
+        },
         categories: {
-          include: {
-            category: true,
+          select: {
+            category: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
           },
         },
       },
@@ -58,6 +118,10 @@ export class NovelService {
   async update(id: number, updateNovelDto: UpdateNovelDto, userId: number) {
     const novel = await this.databaseService.novel.findUnique({
       where: { id },
+      select: {
+        id: true,
+        userId: true,
+      },
     });
 
     if (!novel) {
@@ -71,12 +135,31 @@ export class NovelService {
     return this.databaseService.novel.update({
       where: { id },
       data: updateNovelDto,
+      select: {
+        id: true,
+        name: true,
+        description: true,
+        author: true,
+        cover: true,
+        status: true,
+        view: true,
+        rating: true,
+        followerCount: true,
+        commentCount: true,
+        createdAt: true,
+        updatedAt: true,
+        userId: true,
+      },
     });
   }
 
   async remove(id: number, userId: number) {
     const novel = await this.databaseService.novel.findUnique({
       where: { id },
+      select: {
+        id: true,
+        userId: true,
+      },
     });
 
     if (!novel) {
@@ -89,14 +172,23 @@ export class NovelService {
 
     return this.databaseService.novel.delete({
       where: { id },
+      select: {
+        id: true,
+      },
     });
   }
 
   async addCategories(id: number, categoryIds: number[], userId: number) {
     const novel = await this.databaseService.novel.findUnique({
       where: { id },
-      include: {
-        categories: true,
+      select: {
+        id: true,
+        userId: true,
+        categories: {
+          select: {
+            categoryId: true,
+          },
+        },
       },
     });
 
@@ -116,6 +208,9 @@ export class NovelService {
         id: {
           in: categoryIds,
         },
+      },
+      select: {
+        id: true,
       },
     });
 
@@ -139,10 +234,16 @@ export class NovelService {
 
     return this.databaseService.novel.findUnique({
       where: { id },
-      include: {
+      select: {
+        id: true,
         categories: {
-          include: {
-            category: true,
+          select: {
+            category: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
           },
         },
       },
@@ -152,6 +253,10 @@ export class NovelService {
   async removeCategory(id: number, categoryId: number, userId: number) {
     const novel = await this.databaseService.novel.findUnique({
       where: { id },
+      select: {
+        id: true,
+        userId: true,
+      },
     });
 
     if (!novel) {
@@ -175,10 +280,16 @@ export class NovelService {
 
     return this.databaseService.novel.findUnique({
       where: { id },
-      include: {
+      select: {
+        id: true,
         categories: {
-          include: {
-            category: true,
+          select: {
+            category: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
           },
         },
       },
