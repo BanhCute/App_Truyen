@@ -17,15 +17,23 @@ const stream_1 = require("stream");
 let CloudinaryService = class CloudinaryService {
     constructor(configService) {
         this.configService = configService;
+        const cloudName = this.configService.get('cloudinary')?.cloudName;
+        const apiKey = this.configService.get('cloudinary')?.apiKey;
+        const apiSecret = this.configService.get('cloudinary')?.apiSecret;
+        console.log('Cloudinary Config:', {
+            cloudName,
+            apiKey: apiKey ? 'exists' : 'missing',
+            apiSecret: apiSecret ? 'exists' : 'missing',
+        });
         cloudinary_1.v2.config({
-            cloud_name: this.configService.get('cloudinary.cloudName'),
-            api_key: this.configService.get('cloudinary.apiKey'),
-            api_secret: this.configService.get('cloudinary.apiSecret'),
+            cloud_name: cloudName,
+            api_key: apiKey,
+            api_secret: apiSecret,
         });
     }
     async uploadImage(folder, buffer) {
         try {
-            console.log('Starting upload to cloudinary...');
+            console.log('Starting upload to cloudinary...', { folder });
             return new Promise((resolve, reject) => {
                 const uploadStream = cloudinary_1.v2.uploader.upload_stream({
                     folder,

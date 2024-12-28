@@ -25,17 +25,24 @@ let CloudinaryController = class CloudinaryController {
     }
     async create(createCloudinaryDto) {
         try {
-            console.log('Uploading images:', createCloudinaryDto.image.length);
+            console.log('Received upload request:', {
+                imageCount: createCloudinaryDto.image?.length,
+                firstImageSize: createCloudinaryDto.image?.[0]?.size,
+            });
+            if (!createCloudinaryDto.image ||
+                createCloudinaryDto.image.length === 0) {
+                throw new common_1.HttpException('No images provided', common_1.HttpStatus.BAD_REQUEST);
+            }
             const uploadPromises = createCloudinaryDto.image.map((file) => this.cloudinaryService.uploadImage('images', file.buffer));
             const results = await Promise.all(uploadPromises);
-            console.log('Upload results:', results);
+            console.log('Upload completed:', results.length);
             return (0, class_transformer_1.plainToInstance)(CloudinaryResponse, {
                 urls: results.map((r) => r.secure_url),
             });
         }
         catch (error) {
-            console.error('Error uploading to cloudinary:', error);
-            throw error;
+            console.error('Error in cloudinary controller:', error);
+            throw new common_1.HttpException(error.message || 'Upload failed', error.status || common_1.HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 };
