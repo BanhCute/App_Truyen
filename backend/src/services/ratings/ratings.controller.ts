@@ -7,6 +7,8 @@ import {
   ParseIntPipe,
   Req,
   Put,
+  ClassSerializerInterceptor,
+  UseInterceptors,
 } from '@nestjs/common';
 import { RatingsService } from './ratings.service';
 import { CreateRatingDto } from './dto/create-rating.dto';
@@ -19,35 +21,29 @@ import { UpdateRatingDto } from './dto/update-rating.dto';
 
 @ApiTags('ratings')
 @Controller('ratings')
+@UseInterceptors(ClassSerializerInterceptor)
 export class RatingsController {
   constructor(private readonly ratingsService: RatingsService) {}
 
   @Post()
   create(@Body() createRatingDto: CreateRatingDto, @Req() req: Request) {
     const session = getSession(req);
-    return plainToInstance(
-      RatingDto,
-      this.ratingsService.create(createRatingDto, session.id),
-    );
+    return this.ratingsService.create(createRatingDto, session.id);
   }
 
   @Get()
   findAll() {
-    return this.ratingsService
-      .findAll()
-      .then((items) => items.map((item) => plainToInstance(RatingDto, item)));
+    return this.ratingsService.findAll();
   }
 
   @Get('novel/:novelId/with-user')
   findAllByNovelWithUser(@Param('novelId', ParseIntPipe) novelId: number) {
-    return this.ratingsService
-      .findAllByNovelWithUser(novelId)
-      .then((items) => items.map((item) => plainToInstance(RatingDto, item)));
+    return this.ratingsService.findAllByNovelWithUser(novelId);
   }
 
   @Get(':id')
   findOne(@Param('id', ParseIntPipe) id: number) {
-    return plainToInstance(RatingDto, this.ratingsService.findOne(id));
+    return this.ratingsService.findOne(id);
   }
 
   @Put(':id')
@@ -57,9 +53,6 @@ export class RatingsController {
     @Req() req: Request,
   ) {
     const session = getSession(req);
-    return plainToInstance(
-      RatingDto,
-      this.ratingsService.update(id, updateRatingDto, session.id),
-    );
+    return this.ratingsService.update(id, updateRatingDto, session.id);
   }
 }

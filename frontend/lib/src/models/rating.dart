@@ -51,7 +51,7 @@ class Rating {
 
     // Lấy thông tin từ user object
     final name = user!['name']?.toString();
-
+  
     // Trả về tên nếu có
     if (name != null && name.isNotEmpty) return name;
 

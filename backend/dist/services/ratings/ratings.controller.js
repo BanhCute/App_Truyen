@@ -16,8 +16,6 @@ exports.RatingsController = void 0;
 const common_1 = require("@nestjs/common");
 const ratings_service_1 = require("./ratings.service");
 const create_rating_dto_1 = require("./dto/create-rating.dto");
-const rating_dto_1 = require("./dto/rating.dto");
-const class_transformer_1 = require("class-transformer");
 const swagger_1 = require("@nestjs/swagger");
 const auth_utils_1 = require("../auth/auth.utils");
 const update_rating_dto_1 = require("./dto/update-rating.dto");
@@ -27,24 +25,20 @@ let RatingsController = class RatingsController {
     }
     create(createRatingDto, req) {
         const session = (0, auth_utils_1.getSession)(req);
-        return (0, class_transformer_1.plainToInstance)(rating_dto_1.default, this.ratingsService.create(createRatingDto, session.id));
+        return this.ratingsService.create(createRatingDto, session.id);
     }
     findAll() {
-        return this.ratingsService
-            .findAll()
-            .then((items) => items.map((item) => (0, class_transformer_1.plainToInstance)(rating_dto_1.default, item)));
+        return this.ratingsService.findAll();
     }
     findAllByNovelWithUser(novelId) {
-        return this.ratingsService
-            .findAllByNovelWithUser(novelId)
-            .then((items) => items.map((item) => (0, class_transformer_1.plainToInstance)(rating_dto_1.default, item)));
+        return this.ratingsService.findAllByNovelWithUser(novelId);
     }
     findOne(id) {
-        return (0, class_transformer_1.plainToInstance)(rating_dto_1.default, this.ratingsService.findOne(id));
+        return this.ratingsService.findOne(id);
     }
     update(id, updateRatingDto, req) {
         const session = (0, auth_utils_1.getSession)(req);
-        return (0, class_transformer_1.plainToInstance)(rating_dto_1.default, this.ratingsService.update(id, updateRatingDto, session.id));
+        return this.ratingsService.update(id, updateRatingDto, session.id);
     }
 };
 exports.RatingsController = RatingsController;
@@ -88,6 +82,7 @@ __decorate([
 exports.RatingsController = RatingsController = __decorate([
     (0, swagger_1.ApiTags)('ratings'),
     (0, common_1.Controller)('ratings'),
+    (0, common_1.UseInterceptors)(common_1.ClassSerializerInterceptor),
     __metadata("design:paramtypes", [ratings_service_1.RatingsService])
 ], RatingsController);
 //# sourceMappingURL=ratings.controller.js.map
