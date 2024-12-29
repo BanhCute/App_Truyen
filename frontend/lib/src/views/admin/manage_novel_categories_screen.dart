@@ -31,10 +31,11 @@ class _ManageNovelCategoriesScreenState
     super.initState();
     _sessionCubit = context.read<SessionCubit>();
     _loadCategories();
-    _selectedCategories = widget.novel.categories
-        .where((e) => e.isNotEmpty)
-        .map((e) => int.parse(e))
-        .toList();
+    if (widget.novel.categories.isNotEmpty) {
+      _selectedCategories = widget.novel.categories
+          .map((cat) => cat.category['id'] as int)
+          .toList();
+    }
   }
 
   Future<void> _loadCategories() async {

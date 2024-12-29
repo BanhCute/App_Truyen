@@ -1,12 +1,26 @@
 import 'chapter.dart';
 
+class NovelCategory {
+  final Map<String, dynamic> category;
+
+  NovelCategory({required this.category});
+
+  factory NovelCategory.fromJson(Map<String, dynamic> json) {
+    return NovelCategory(category: json['category']);
+  }
+
+  Map<String, dynamic> toJson() {
+    return {'category': category};
+  }
+}
+
 class Novel {
   final String id;
   final String name;
   final String description;
   final String author;
   final String cover;
-  final List<String> categories;
+  final List<NovelCategory> categories;
   final DateTime createdAt;
   final DateTime updatedAt;
   final double rating;
@@ -36,14 +50,7 @@ class Novel {
   factory Novel.fromJson(Map<String, dynamic> json) {
     // Parse categories from the nested structure
     final categoryList = (json['categories'] as List?)
-            ?.map((cat) {
-              if (cat is Map<String, dynamic> &&
-                  cat['category'] is Map<String, dynamic>) {
-                return cat['category']['name'].toString();
-              }
-              return '';
-            })
-            .where((name) => name.isNotEmpty)
+            ?.map((cat) => NovelCategory.fromJson(cat))
             .toList() ??
         [];
 
@@ -78,7 +85,7 @@ class Novel {
       'description': description,
       'author': author,
       'cover': cover,
-      'categories': categories,
+      'categories': categories.map((cat) => cat.toJson()).toList(),
       'createdAt': createdAt.toIso8601String(),
       'updatedAt': updatedAt.toIso8601String(),
       'rating': rating,
@@ -86,7 +93,7 @@ class Novel {
       'followerCount': followerCount,
       'status': status,
       'userId': userId,
-      'chapters': chapters,
+      'chapters': chapters?.map((chapter) => chapter.toJson()).toList(),
     };
   }
 }

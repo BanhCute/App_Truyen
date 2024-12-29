@@ -14,6 +14,7 @@ import '../details/chapter_detail_screen.dart';
 import '../../services/follow_service.dart';
 import '../admin/manage_novel_categories_screen.dart';
 import '../admin/upload_chapter_screen.dart';
+import 'widgets/rating_section.dart';
 
 class NovelDetailScreen extends StatefulWidget {
   final Novel novel;
@@ -386,6 +387,7 @@ class _NovelDetailScreenState extends State<NovelDetailScreen> {
                         );
                       },
                     ),
+                    RatingSection(novelId: widget.novel.id),
                   ],
                 ),
               ),

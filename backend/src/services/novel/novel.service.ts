@@ -291,4 +291,180 @@ export class NovelService {
       },
     });
   }
+
+  async getNovelRatings(id: number) {
+    const novel = await this.databaseService.novel.findUnique({
+      where: { id },
+      include: {
+        ratings: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                name: true,
+                avatar: true,
+              },
+            },
+          },
+          orderBy: {
+            createdAt: 'desc',
+          },
+        },
+      },
+    });
+
+    if (!novel) {
+      throw new NotFoundException('Không tìm thấy truyện');
+    }
+
+    return novel.ratings;
+  }
+
+  async getAverageRating(id: number) {
+    const novel = await this.databaseService.novel.findUnique({
+      where: { id },
+      include: {
+        ratings: true,
+      },
+    });
+
+    if (!novel) {
+      throw new NotFoundException('Không tìm thấy truyện');
+    }
+
+    if (novel.ratings.length === 0) {
+      return { average: 0 };
+    }
+
+    const sum = novel.ratings.reduce((acc, rating) => acc + rating.score, 0);
+    const average = sum / novel.ratings.length;
+
+    return { average };
+  }
+
+  async rateNovel(
+    id: number,
+    userId: number,
+    ratingData: { score: number; content: string },
+  ) {
+    const novel = await this.databaseService.novel.findUnique({
+      where: { id },
+    });
+
+    if (!novel) {
+      throw new NotFoundException('Không tìm thấy truyện');
+    }
+
+    // Kiểm tra xem người dùng đã đánh giá chưa
+    const existingRating = await this.databaseService.rating.findFirst({
+      where: {
+        novelId: id,
+        userId: userId,
+      },
+    });
+
+    if (existingRating) {
+      throw new BadRequestException('Bạn đã đánh giá truyện này rồi');
+    }
+
+    // Validate score
+    if (ratingData.score < 1 || ratingData.score > 5) {
+      throw new BadRequestException('Điểm đánh giá phải từ 1 đến 5');
+    }
+
+    // Tạo đánh giá mới
+    const rating = await this.databaseService.rating.create({
+      data: {
+        novelId: id,
+        userId: userId,
+        score: ratingData.score,
+        content: ratingData.content,
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            avatar: true,
+          },
+        },
+      },
+    });
+
+    // Cập nhật điểm trung bình của truyện
+    const ratings = await this.databaseService.rating.findMany({
+      where: { novelId: id },
+    });
+
+    const sum = ratings.reduce((acc, rating) => acc + rating.score, 0);
+    const average = sum / ratings.length;
+
+    await this.databaseService.novel.update({
+      where: { id },
+      data: {
+        rating: average,
+      },
+    });
+
+    return rating;
+  }
+
+  async updateRating(
+    novelId: number,
+    ratingId: number,
+    userId: number,
+    ratingData: { score: number; content: string },
+  ) {
+    const rating = await this.databaseService.rating.findUnique({
+      where: { id: ratingId },
+    });
+
+    if (!rating) {
+      throw new NotFoundException('Không tìm thấy đánh giá');
+    }
+
+    if (rating.userId !== userId) {
+      throw new ForbiddenException('Bạn không có quyền sửa đánh giá này');
+    }
+
+    // Validate score
+    if (ratingData.score < 1 || ratingData.score > 5) {
+      throw new BadRequestException('Điểm đánh giá phải từ 1 đến 5');
+    }
+
+    // Cập nhật đánh giá
+    const updatedRating = await this.databaseService.rating.update({
+      where: { id: ratingId },
+      data: {
+        score: ratingData.score,
+        content: ratingData.content,
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            avatar: true,
+          },
+        },
+      },
+    });
+
+    // Cập nhật điểm trung bình của truyện
+    const ratings = await this.databaseService.rating.findMany({
+      where: { novelId },
+    });
+
+    const sum = ratings.reduce((acc, rating) => acc + rating.score, 0);
+    const average = sum / ratings.length;
+
+    await this.databaseService.novel.update({
+      where: { id: novelId },
+      data: {
+        rating: average,
+      },
+    });
+
+    return updatedRating;
+  }
 }

@@ -92,4 +92,35 @@ export class NovelController {
     const session = getSession(req);
     return this.novelService.removeCategory(id, categoryId, session.id);
   }
+
+  @Get(':id/ratings')
+  async getNovelRatings(@Param('id', ParseIntPipe) id: number) {
+    return this.novelService.getNovelRatings(id);
+  }
+
+  @Get(':id/ratings/average')
+  async getAverageRating(@Param('id', ParseIntPipe) id: number) {
+    return this.novelService.getAverageRating(id);
+  }
+
+  @Post(':id/ratings')
+  async rateNovel(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() ratingData: { score: number; content: string },
+    @Req() req: Request,
+  ) {
+    const session = getSession(req);
+    return this.novelService.rateNovel(id, session.id, ratingData);
+  }
+
+  @Patch(':id/ratings/:ratingId')
+  async updateRating(
+    @Param('id', ParseIntPipe) id: number,
+    @Param('ratingId', ParseIntPipe) ratingId: number,
+    @Body() ratingData: { score: number; content: string },
+    @Req() req: Request,
+  ) {
+    const session = getSession(req);
+    return this.novelService.updateRating(id, ratingId, session.id, ratingData);
+  }
 }

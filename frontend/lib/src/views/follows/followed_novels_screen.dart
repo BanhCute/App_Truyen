@@ -32,33 +32,37 @@ class _FollowedNovelsScreenState extends State<FollowedNovelsScreen> {
 
   Future<void> loadFollowedNovels() async {
     try {
-      // Lấy danh sách follows
       final follows = await FollowService.getFollowedNovels();
+      final novelIds = follows.map((f) => f.novelId.toString()).toList();
 
-      // Lấy thông tin novel cho mỗi follow
-      final headers = await FollowService.getHeaders();
-      final response = await http.get(
-        Uri.parse('${dotenv.get('API_URL')}/novels'),
-        headers: headers,
-      );
+      if (novelIds.isNotEmpty) {
+        final response = await http.get(
+          Uri.parse('${dotenv.get('API_URL')}/novels'),
+        );
 
-      print('Get novels response: ${response.statusCode} - ${response.body}');
+        if (response.statusCode == 200) {
+          final List<dynamic> allNovels = json.decode(response.body);
+          final followedNovels = allNovels
+              .where((novel) => novelIds.contains(novel['id'].toString()))
+              .map((novel) => Novel.fromJson(novel))
+              .toList();
 
-      if (response.statusCode == 200) {
-        final List allNovels = json.decode(response.body);
-        final followedNovels = allNovels
-            .where((novel) => follows.any((f) => f.novelId == novel['id']))
-            .map((json) => Novel.fromJson(json))
-            .toList();
-
+          if (mounted) {
+            setState(() {
+              novels = followedNovels;
+              isLoading = false;
+            });
+          }
+        } else {
+          throw Exception('Không thể lấy thông tin truyện');
+        }
+      } else {
         if (mounted) {
           setState(() {
-            novels = followedNovels;
+            novels = [];
             isLoading = false;
           });
         }
-      } else {
-        throw Exception('Không thể lấy thông tin truyện');
       }
     } catch (e) {
       print('Error loading followed novels: $e');
@@ -79,7 +83,6 @@ class _FollowedNovelsScreenState extends State<FollowedNovelsScreen> {
   Future<void> unfollowNovel(String novelId) async {
     try {
       await FollowService.unfollowNovel(novelId);
-      // Reload danh sách sau khi unfollow
       loadFollowedNovels();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -129,131 +132,155 @@ class _FollowedNovelsScreenState extends State<FollowedNovelsScreen> {
                       return Card(
                         margin: const EdgeInsets.symmetric(
                             horizontal: 16, vertical: 8),
-                        child: ListTile(
-                          leading: ClipRRect(
-                            borderRadius: BorderRadius.circular(4),
-                            child: Image.network(
-                              novel.cover,
-                              width: 50,
-                              height: 70,
-                              fit: BoxFit.cover,
-                              errorBuilder: (context, error, stackTrace) =>
-                                  const Icon(Icons.error),
+                        child: SizedBox(
+                          width: double.infinity,
+                          child: ListTile(
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 8,
                             ),
-                          ),
-                          title: Text(novel.name),
-                          subtitle: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text('Tác giả: ${novel.author}'),
-                              FutureBuilder<ReadingHistory?>(
-                                future:
-                                    ReadingHistoryService.getLastRead(novel.id),
-                                builder: (context, snapshot) {
-                                  if (snapshot.hasData &&
-                                      snapshot.data?.lastChapter != null) {
-                                    return Row(
-                                      children: [
-                                        Expanded(
-                                          child: Text(
-                                            'Đang đọc: ${snapshot.data!.lastChapter!.name}',
-                                            style: TextStyle(
-                                              color: Theme.of(context)
-                                                  .colorScheme
-                                                  .secondary,
-                                            ),
-                                          ),
+                            leading: ClipRRect(
+                              borderRadius: BorderRadius.circular(4),
+                              child: Image.network(
+                                novel.cover,
+                                width: 50,
+                                height: 70,
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) =>
+                                    const Icon(Icons.error),
+                              ),
+                            ),
+                            title: Text(
+                              novel.name,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            subtitle: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Tác giả: ${novel.author}',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                FutureBuilder<ReadingHistory?>(
+                                  future: ReadingHistoryService.getLastRead(
+                                      novel.id),
+                                  builder: (context, snapshot) {
+                                    if (snapshot.hasData &&
+                                        snapshot.data?.lastChapter != null) {
+                                      final chapterName =
+                                          snapshot.data!.lastChapter!.name;
+                                      final chapterNumber =
+                                          RegExp(r'Chương (\d+)')
+                                                  .firstMatch(chapterName)
+                                                  ?.group(1) ??
+                                              chapterName;
+                                      return Text(
+                                        'Đang đọc: ${snapshot.data!.lastChapter!.name}',
+                                        style: TextStyle(
+                                          color: Theme.of(context)
+                                              .colorScheme
+                                              .secondary,
                                         ),
-                                        TextButton.icon(
-                                          icon: const Icon(Icons.play_arrow),
-                                          label: const Text('Đọc tiếp'),
-                                          onPressed: () {
-                                            Navigator.push(
-                                              context,
-                                              MaterialPageRoute(
-                                                builder: (context) =>
-                                                    ChapterDetailScreen(
-                                                  novel: novel,
-                                                  chapter: snapshot
-                                                      .data!.lastChapter!,
-                                                  currentIndex: novel.chapters
-                                                          ?.indexWhere((c) =>
-                                                              c.id ==
-                                                              snapshot
-                                                                  .data!
-                                                                  .lastChapter!
-                                                                  .id) ??
-                                                      0,
-                                                  allChapters:
-                                                      novel.chapters ?? [],
-                                                ),
+                                      );
+                                    }
+                                    return const SizedBox.shrink();
+                                  },
+                                ),
+                              ],
+                            ),
+                            trailing: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                FutureBuilder<ReadingHistory?>(
+                                  future: ReadingHistoryService.getLastRead(
+                                      novel.id),
+                                  builder: (context, snapshot) {
+                                    if (snapshot.hasData &&
+                                        snapshot.data?.lastChapter != null) {
+                                      return IconButton(
+                                        icon: const Icon(Icons.play_arrow),
+                                        tooltip: 'Đọc tiếp',
+                                        onPressed: () {
+                                          Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (context) =>
+                                                  ChapterDetailScreen(
+                                                novel: novel,
+                                                chapter:
+                                                    snapshot.data!.lastChapter!,
+                                                currentIndex: novel.chapters
+                                                        ?.indexWhere((c) =>
+                                                            c.id ==
+                                                            snapshot
+                                                                .data!
+                                                                .lastChapter!
+                                                                .id) ??
+                                                    0,
+                                                allChapters:
+                                                    novel.chapters ?? [],
                                               ),
-                                            ).then((_) => loadFollowedNovels());
+                                            ),
+                                          ).then((_) => loadFollowedNovels());
+                                        },
+                                      );
+                                    }
+                                    return const SizedBox.shrink();
+                                  },
+                                ),
+                                IconButton(
+                                  icon: const Icon(Icons.remove_circle_outline),
+                                  color: Colors.grey[700],
+                                  tooltip: 'Bỏ theo dõi',
+                                  onPressed: () {
+                                    unfollowNovel(novel.id);
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content:
+                                            const Text('Đã bỏ theo dõi truyện'),
+                                        duration: const Duration(seconds: 3),
+                                        action: SnackBarAction(
+                                          label: 'Hoàn tác',
+                                          onPressed: () async {
+                                            try {
+                                              await FollowService.followNovel(
+                                                  novel.id);
+                                              loadFollowedNovels();
+                                            } catch (e) {
+                                              if (mounted) {
+                                                ScaffoldMessenger.of(context)
+                                                    .showSnackBar(
+                                                  SnackBar(
+                                                    content: Text(e
+                                                        .toString()
+                                                        .replaceAll(
+                                                            'Exception: ', '')),
+                                                    duration: const Duration(
+                                                        seconds: 2),
+                                                  ),
+                                                );
+                                              }
+                                            }
                                           },
                                         ),
-                                      ],
+                                      ),
                                     );
-                                  }
-                                  return const SizedBox.shrink();
-                                },
-                              ),
-                            ],
-                          ),
-                          trailing: Container(
-                            decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.8),
-                              borderRadius: BorderRadius.circular(20),
+                                  },
+                                ),
+                              ],
                             ),
-                            child: IconButton(
-                              icon: const Icon(Icons.remove_circle_outline),
-                              color: Colors.grey[700],
-                              tooltip: 'Bỏ theo dõi',
-                              onPressed: () {
-                                unfollowNovel(novel.id);
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content:
-                                        const Text('Đã bỏ theo dõi truyện'),
-                                    duration: const Duration(seconds: 3),
-                                    action: SnackBarAction(
-                                      label: 'Hoàn tác',
-                                      onPressed: () async {
-                                        try {
-                                          await FollowService.followNovel(
-                                              novel.id);
-                                          loadFollowedNovels();
-                                        } catch (e) {
-                                          if (mounted) {
-                                            ScaffoldMessenger.of(context)
-                                                .showSnackBar(
-                                              SnackBar(
-                                                content: Text(e
-                                                    .toString()
-                                                    .replaceAll(
-                                                        'Exception: ', '')),
-                                                duration:
-                                                    const Duration(seconds: 2),
-                                              ),
-                                            );
-                                          }
-                                        }
-                                      },
-                                    ),
-                                  ),
-                                );
-                              },
-                            ),
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      NovelDetailScreen(novel: novel),
+                                ),
+                              ).then((_) => loadFollowedNovels());
+                            },
                           ),
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) =>
-                                    NovelDetailScreen(novel: novel),
-                              ),
-                            ).then((_) =>
-                                loadFollowedNovels()); // Reload sau khi quay lại
-                          },
                         ),
                       );
                     },
