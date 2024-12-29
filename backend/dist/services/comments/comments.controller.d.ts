@@ -10,9 +10,9 @@ export declare class CommentsController {
     findOne(id: number): CommentDto;
     remove(id: number, req: Request): Promise<{
         id: number;
+        novelId: number | null;
         userId: number;
         createdAt: Date;
-        novelId: number | null;
         content: string;
         chapterId: number;
     }>;

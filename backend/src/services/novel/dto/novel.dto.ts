@@ -1,18 +1,4 @@
-import { Expose, Type } from 'class-transformer';
-
-export class CategoryDto {
-  @Expose()
-  id: number;
-
-  @Expose()
-  name: string;
-}
-
-export class NovelCategoryDto {
-  @Expose()
-  @Type(() => CategoryDto)
-  category: CategoryDto;
-}
+import { Expose, Transform } from 'class-transformer';
 
 export default class NovelDto {
   @Expose()
@@ -23,9 +9,6 @@ export default class NovelDto {
 
   @Expose()
   description: string;
-
-  @Expose()
-  createdAt: Date;
 
   @Expose()
   cover: string;
@@ -40,9 +23,6 @@ export default class NovelDto {
   view: number;
 
   @Expose()
-  updatedAt: Date;
-
-  @Expose()
   rating: number;
 
   @Expose()
@@ -52,9 +32,8 @@ export default class NovelDto {
   commentCount: number;
 
   @Expose()
-  userId: number;
+  createdAt: Date;
 
   @Expose()
-  @Type(() => NovelCategoryDto)
-  categories: NovelCategoryDto[];
+  updatedAt: Date;
 }

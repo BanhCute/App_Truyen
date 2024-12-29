@@ -7,7 +7,6 @@ export declare class RatingsController {
     constructor(ratingsService: RatingsService);
     create(createRatingDto: CreateRatingDto, req: Request): Promise<{
         novel: {
-            rating: number | null;
             id: number;
             userId: number;
             createdAt: Date;
@@ -18,6 +17,7 @@ export declare class RatingsController {
             status: string;
             view: number;
             updatedAt: Date;
+            rating: number | null;
             followerCount: number;
             commentCount: number;
         };
@@ -30,13 +30,12 @@ export declare class RatingsController {
         id: number;
         novelId: number;
         userId: number;
+        createdAt: Date;
         content: string;
         score: number;
-        createdAt: Date;
     }>;
     findAll(): import("@prisma/client").Prisma.PrismaPromise<({
         novel: {
-            rating: number | null;
             id: number;
             userId: number;
             createdAt: Date;
@@ -47,6 +46,7 @@ export declare class RatingsController {
             status: string;
             view: number;
             updatedAt: Date;
+            rating: number | null;
             followerCount: number;
             commentCount: number;
         };
@@ -59,13 +59,12 @@ export declare class RatingsController {
         id: number;
         novelId: number;
         userId: number;
+        createdAt: Date;
         content: string;
         score: number;
-        createdAt: Date;
     })[]>;
     findAllByNovelWithUser(novelId: number): Promise<({
         novel: {
-            rating: number | null;
             id: number;
             userId: number;
             createdAt: Date;
@@ -76,6 +75,7 @@ export declare class RatingsController {
             status: string;
             view: number;
             updatedAt: Date;
+            rating: number | null;
             followerCount: number;
             commentCount: number;
         };
@@ -88,13 +88,12 @@ export declare class RatingsController {
         id: number;
         novelId: number;
         userId: number;
+        createdAt: Date;
         content: string;
         score: number;
-        createdAt: Date;
     })[]>;
     findOne(id: number): Promise<{
         novel: {
-            rating: number | null;
             id: number;
             userId: number;
             createdAt: Date;
@@ -105,6 +104,7 @@ export declare class RatingsController {
             status: string;
             view: number;
             updatedAt: Date;
+            rating: number | null;
             followerCount: number;
             commentCount: number;
         };
@@ -117,13 +117,12 @@ export declare class RatingsController {
         id: number;
         novelId: number;
         userId: number;
+        createdAt: Date;
         content: string;
         score: number;
-        createdAt: Date;
     }>;
     update(id: number, updateRatingDto: UpdateRatingDto, req: Request): Promise<{
         novel: {
-            rating: number | null;
             id: number;
             userId: number;
             createdAt: Date;
@@ -134,6 +133,7 @@ export declare class RatingsController {
             status: string;
             view: number;
             updatedAt: Date;
+            rating: number | null;
             followerCount: number;
             commentCount: number;
         };
@@ -146,8 +146,8 @@ export declare class RatingsController {
         id: number;
         novelId: number;
         userId: number;
+        createdAt: Date;
         content: string;
         score: number;
-        createdAt: Date;
     }>;
 }

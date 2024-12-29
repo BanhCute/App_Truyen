@@ -29,9 +29,9 @@ export declare class NovelController {
         };
     } & {
         id: number;
+        novelId: number;
         userId: number;
         createdAt: Date;
-        novelId: number;
         content: string;
         score: number;
     })[]>;
@@ -49,9 +49,9 @@ export declare class NovelController {
         };
     } & {
         id: number;
+        novelId: number;
         userId: number;
         createdAt: Date;
-        novelId: number;
         content: string;
         score: number;
     }>;
@@ -66,9 +66,9 @@ export declare class NovelController {
         };
     } & {
         id: number;
+        novelId: number;
         userId: number;
         createdAt: Date;
-        novelId: number;
         content: string;
         score: number;
     }>;

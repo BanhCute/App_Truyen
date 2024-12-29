@@ -1,4 +1,4 @@
-import { Expose } from 'class-transformer';
+import { Expose, Type } from 'class-transformer';
 import NovelDto from 'src/services/novel/dto/novel.dto';
 import UserDto from 'src/services/users/dto/user.dto';
 
@@ -22,8 +22,10 @@ export default class RatingDto {
   createdAt: Date;
 
   @Expose()
+  @Type(() => NovelDto)
   novel: NovelDto;
 
   @Expose()
+  @Type(() => UserDto)
   user: UserDto;
 }

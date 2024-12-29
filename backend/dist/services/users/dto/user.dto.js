@@ -23,6 +23,17 @@ __decorate([
 ], UserDto.prototype, "name", void 0);
 __decorate([
     (0, class_transformer_1.Expose)(),
+    (0, class_transformer_1.Transform)(({ value }) => value || ''),
     __metadata("design:type", String)
 ], UserDto.prototype, "avatar", void 0);
+__decorate([
+    (0, class_transformer_1.Expose)(),
+    (0, class_transformer_1.Transform)(({ value }) => !value),
+    __metadata("design:type", Boolean)
+], UserDto.prototype, "isDeleted", void 0);
+__decorate([
+    (0, class_transformer_1.Expose)(),
+    (0, class_transformer_1.Transform)(({ value }) => !value),
+    __metadata("design:type", Boolean)
+], UserDto.prototype, "isBanned", void 0);
 //# sourceMappingURL=user.dto.js.map

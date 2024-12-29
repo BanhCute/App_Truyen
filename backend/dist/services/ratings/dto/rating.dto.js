@@ -41,10 +41,12 @@ __decorate([
 ], RatingDto.prototype, "createdAt", void 0);
 __decorate([
     (0, class_transformer_1.Expose)(),
+    (0, class_transformer_1.Type)(() => novel_dto_1.default),
     __metadata("design:type", novel_dto_1.default)
 ], RatingDto.prototype, "novel", void 0);
 __decorate([
     (0, class_transformer_1.Expose)(),
+    (0, class_transformer_1.Type)(() => user_dto_1.default),
     __metadata("design:type", user_dto_1.default)
 ], RatingDto.prototype, "user", void 0);
 //# sourceMappingURL=rating.dto.js.map

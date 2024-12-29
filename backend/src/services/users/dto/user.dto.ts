@@ -1,4 +1,4 @@
-import { Expose } from 'class-transformer';
+import { Expose, Transform } from 'class-transformer';
 
 export default class UserDto {
   @Expose()
@@ -8,5 +8,14 @@ export default class UserDto {
   name: string;
 
   @Expose()
+  @Transform(({ value }) => value || '')
   avatar: string;
+
+  @Expose()
+  @Transform(({ value }) => !value)
+  isDeleted: boolean;
+
+  @Expose()
+  @Transform(({ value }) => !value)
+  isBanned: boolean;
 }
