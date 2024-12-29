@@ -236,28 +236,10 @@ export class NovelService {
     // Trả về novel với thông tin categories đã cập nhật
     return this.databaseService.novel.findUnique({
       where: { id },
-      select: {
-        id: true,
-        name: true,
-        description: true,
-        author: true,
-        cover: true,
-        status: true,
-        view: true,
-        rating: true,
-        followerCount: true,
-        commentCount: true,
-        createdAt: true,
-        updatedAt: true,
-        userId: true,
+      include: {
         categories: {
-          select: {
-            category: {
-              select: {
-                id: true,
-                name: true,
-              },
-            },
+          include: {
+            category: true,
           },
         },
       },

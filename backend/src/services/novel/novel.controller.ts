@@ -75,7 +75,12 @@ export class NovelController {
     @Req() req: Request,
   ) {
     const session = getSession(req);
-    return this.novelService.addCategories(id, categoryIds, session.id);
+    const result = await this.novelService.addCategories(
+      id,
+      categoryIds,
+      session.id,
+    );
+    return plainToInstance(NovelDto, result);
   }
 
   @Delete(':id/categories/:categoryId')
