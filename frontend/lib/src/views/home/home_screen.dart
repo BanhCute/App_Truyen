@@ -345,7 +345,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                     width: 50,
                                     height: 70,
                                     fit: BoxFit.cover,
-                                    errorBuilder:
+                                    errorBuilder: 
                                         (context, error, stackTrace) =>
                                             const Icon(Icons.error),
                                   ),
@@ -489,20 +489,20 @@ class _HomeScreenState extends State<HomeScreen> {
                   children: [
                     CircleAvatar(
                       radius: 50,
-                      backgroundImage: state.session.user?.avatar != null
-                          ? NetworkImage(state.session.user!.avatar!)
+                      backgroundImage: state.session.user.avatar != null
+                          ? NetworkImage(state.session.user.avatar!)
                           : null,
-                      child: state.session.user?.avatar == null
+                      child: state.session.user.avatar == null
                           ? const Icon(Icons.person, size: 50)
                           : null,
                     ),
                     const SizedBox(height: 16),
                     Text(
-                      state.session.user?.name ?? 'Người dùng',
+                      state.session.user.name ?? 'Người dùng',
                       style: const TextStyle(fontSize: 20),
                     ),
                     const SizedBox(height: 16),
-                    if (state.session.user?.isAdmin == true) ...[
+                    if (state.session.user.isAdmin == true) ...[
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [

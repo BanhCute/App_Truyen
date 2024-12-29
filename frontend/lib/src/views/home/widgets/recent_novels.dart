@@ -7,9 +7,9 @@ class RecentNovels extends StatelessWidget {
   final List<Novel> novels;
 
   const RecentNovels({
-    Key? key,
+    super.key,
     required this.novels,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -61,7 +61,7 @@ class RecentNovels extends StatelessWidget {
                         Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(Icons.star, size: 16, color: Colors.amber),
+                            const Icon(Icons.star, size: 16, color: Colors.amber),
                             Text(' ${novel.rating}'),
                           ],
                         ),

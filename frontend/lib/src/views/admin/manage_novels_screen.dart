@@ -11,7 +11,7 @@ import 'upload_chapter_screen.dart';
 import 'manage_novel_categories_screen.dart';
 
 class ManageNovelsScreen extends StatefulWidget {
-  const ManageNovelsScreen({Key? key}) : super(key: key);
+  const ManageNovelsScreen({super.key});
 
   @override
   State<ManageNovelsScreen> createState() => _ManageNovelsScreenState();

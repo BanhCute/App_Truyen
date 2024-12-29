@@ -13,7 +13,7 @@ import 'dart:io';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
 
 class UploadNovelScreen extends StatefulWidget {
-  const UploadNovelScreen({Key? key}) : super(key: key);
+  const UploadNovelScreen({super.key});
 
   @override
   State<UploadNovelScreen> createState() => _UploadNovelScreenState();
@@ -27,7 +27,7 @@ class _UploadNovelScreenState extends State<UploadNovelScreen> {
   String? _selectedStatus = 'Đang tiến hành';
   File? _coverImage;
   bool _isLoading = false;
-  int _retryCount = 0; // Đếm số lần thử lại
+  final int _retryCount = 0; // Đếm số lần thử lại
 
   Future<void> _pickImage() async {
     try {
@@ -365,9 +365,9 @@ class _UploadNovelScreenState extends State<UploadNovelScreen> {
                                     fit: BoxFit.cover,
                                   ),
                                 )
-                              : Column(
+                              : const Column(
                                   mainAxisAlignment: MainAxisAlignment.center,
-                                  children: const [
+                                  children: [
                                     Icon(Icons.add_photo_alternate, size: 50),
                                     Text('Thêm ảnh bìa'),
                                   ],

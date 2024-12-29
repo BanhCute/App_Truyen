@@ -5,10 +5,10 @@ class MarqueeText extends StatefulWidget {
   final TextStyle style;
 
   const MarqueeText({
-    Key? key,
+    super.key,
     required this.text,
     required this.style,
-  }) : super(key: key);
+  });
 
   @override
   State<MarqueeText> createState() => _MarqueeTextState();

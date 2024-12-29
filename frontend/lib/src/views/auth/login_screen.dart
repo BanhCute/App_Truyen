@@ -110,7 +110,7 @@ class _LoginScreenState extends State<LoginScreen> {
           );
 
           Future.delayed(Duration.zero, () {
-            if (state.session.user?.isAdmin == true) {
+            if (state.session.user.isAdmin == true) {
               showDialog(
                 context: context,
                 barrierDismissible: false,
@@ -120,7 +120,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('Xin chào ${state.session.user?.name}'),
+                      Text('Xin chào ${state.session.user.name}'),
                       const SizedBox(height: 8),
                       const Text('Bạn có quyền:'),
                       const Text('• Đăng truyện mới'),
@@ -188,10 +188,10 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     ],
                   ),
-                  child: Icon(
+                  child: const Icon(
                     Icons.menu_book,
                     size: 100,
-                    color: const Color(0xFF1B3A57),
+                    color: Color(0xFF1B3A57),
                   ),
                 ),
                 const SizedBox(height: 30),
@@ -200,15 +200,15 @@ class _LoginScreenState extends State<LoginScreen> {
                     if (state is Authenticated) {
                       return Column(
                         children: [
-                          if (state.session.user?.avatar != null)
+                          if (state.session.user.avatar != null)
                             CircleAvatar(
                               radius: 40,
                               backgroundImage:
-                                  NetworkImage(state.session.user!.avatar!),
+                                  NetworkImage(state.session.user.avatar!),
                             ),
                           const SizedBox(height: 15),
                           Text(
-                            state.session.user?.name ?? '',
+                            state.session.user.name ?? '',
                             style: TextStyle(
                               fontSize: 20,
                               fontWeight: FontWeight.bold,

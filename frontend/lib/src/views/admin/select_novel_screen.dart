@@ -11,7 +11,7 @@ import 'dart:convert';
 
 class SelectNovelScreen extends StatefulWidget {
   final Novel? selectedNovel;
-  const SelectNovelScreen({Key? key, this.selectedNovel}) : super(key: key);
+  const SelectNovelScreen({super.key, this.selectedNovel});
 
   @override
   State<SelectNovelScreen> createState() => _SelectNovelScreenState();

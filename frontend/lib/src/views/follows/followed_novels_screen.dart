@@ -13,7 +13,7 @@ import '../novel_detail/novel_detail_screen.dart';
 import '../details/chapter_detail_screen.dart';
 
 class FollowedNovelsScreen extends StatefulWidget {
-  const FollowedNovelsScreen({Key? key}) : super(key: key);
+  const FollowedNovelsScreen({super.key});
 
   @override
   State<FollowedNovelsScreen> createState() => _FollowedNovelsScreenState();

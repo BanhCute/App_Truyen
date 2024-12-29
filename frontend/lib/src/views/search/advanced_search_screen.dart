@@ -6,7 +6,7 @@ import '../../models/category.dart';
 import '../../models/novel.dart';
 
 class AdvancedSearchScreen extends StatelessWidget {
-  const AdvancedSearchScreen({Key? key}) : super(key: key);
+  const AdvancedSearchScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -21,7 +21,7 @@ class AdvancedSearchScreen extends StatelessWidget {
 }
 
 class AdvancedSearchView extends StatelessWidget {
-  const AdvancedSearchView({Key? key}) : super(key: key);
+  const AdvancedSearchView({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -62,13 +62,13 @@ class AdvancedSearchView extends StatelessWidget {
                       Text('Trạng thái: ${novel.status}'),
                       Row(
                         children: [
-                          Icon(Icons.remove_red_eye, size: 16),
+                          const Icon(Icons.remove_red_eye, size: 16),
                           Text(' ${novel.view}'),
-                          SizedBox(width: 8),
-                          Icon(Icons.star, size: 16),
+                          const SizedBox(width: 8),
+                          const Icon(Icons.star, size: 16),
                           Text(' ${novel.rating}'),
-                          SizedBox(width: 8),
-                          Icon(Icons.favorite, size: 16),
+                          const SizedBox(width: 8),
+                          const Icon(Icons.favorite, size: 16),
                           Text(' ${novel.followerCount}'),
                         ],
                       ),

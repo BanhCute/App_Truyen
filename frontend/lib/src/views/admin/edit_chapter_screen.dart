@@ -13,7 +13,7 @@ import 'package:http_parser/http_parser.dart';
 class EditChapterScreen extends StatefulWidget {
   final Chapter chapter;
 
-  const EditChapterScreen({Key? key, required this.chapter}) : super(key: key);
+  const EditChapterScreen({super.key, required this.chapter});
 
   @override
   State<EditChapterScreen> createState() => _EditChapterScreenState();
@@ -23,7 +23,7 @@ class _EditChapterScreenState extends State<EditChapterScreen> {
   final _formKey = GlobalKey<FormState>();
   late TextEditingController _nameController;
   List<String> _existingImages = [];
-  List<File> _newImages = [];
+  final List<File> _newImages = [];
   bool _isLoading = false;
 
   @override
@@ -220,9 +220,9 @@ class _EditChapterScreenState extends State<EditChapterScreen> {
                     ),
                     const SizedBox(height: 16),
                     if (_existingImages.isNotEmpty) ...[
-                      Text(
+                      const Text(
                         'Ảnh hiện tại:',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
                         ),

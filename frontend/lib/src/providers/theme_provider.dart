@@ -39,7 +39,7 @@ class ThemeProvider extends ChangeNotifier {
     hintColor: Colors.grey[300],
     dividerColor: Colors.white24,
     iconTheme: const IconThemeData(color: Colors.white),
-    dialogBackgroundColor: Color(0xFF2C4B6B),
+    dialogBackgroundColor: const Color(0xFF2C4B6B),
   );
 
   void toggleTheme() {

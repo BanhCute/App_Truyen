@@ -31,14 +31,14 @@ class StoryManagementScreen extends StatelessWidget {
               actions: [
                 TextButton(
                   onPressed: () => Navigator.pop(context),
-                  child: Text('Hủy'),
+                  child: const Text('Hủy'),
                 ),
                 TextButton(
                   onPressed: () {
                     // Xử lý thêm truyện
                     Navigator.pop(context);
                   },
-                  child: Text('Thêm'),
+                  child: const Text('Thêm'),
                 ),
               ],
             ),
@@ -50,19 +50,19 @@ class StoryManagementScreen extends StatelessWidget {
         itemCount: 10, // Số lượng truyện mẫu
         itemBuilder: (context, index) {
           return ListTile(
-            leading: Icon(Icons.book),
+            leading: const Icon(Icons.book),
             title: Text('Truyện ${index + 1}'),
             trailing: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
                 IconButton(
-                  icon: Icon(Icons.edit),
+                  icon: const Icon(Icons.edit),
                   onPressed: () {
                     // Xử lý sửa truyện
                   },
                 ),
                 IconButton(
-                  icon: Icon(Icons.delete),
+                  icon: const Icon(Icons.delete),
                   onPressed: () {
                     // Xử lý xóa truyện
                   },

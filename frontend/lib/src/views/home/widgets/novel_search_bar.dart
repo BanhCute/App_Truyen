@@ -9,12 +9,12 @@ class NovelSearchBar extends StatelessWidget {
   final Function(String) onSearch;
 
   const NovelSearchBar({
-    Key? key,
+    super.key,
     required this.searchController,
     required this.isSearching,
     required this.filteredNovels,
     required this.onSearch,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -31,7 +31,7 @@ class NovelSearchBar extends StatelessWidget {
             ),
             child: TextField(
               controller: searchController,
-              style: TextStyle(color: Colors.white),
+              style: const TextStyle(color: Colors.white),
               onChanged: onSearch,
               decoration: InputDecoration(
                 hintText: 'Tìm theo tên truyện hoặc tác giả',
@@ -104,7 +104,7 @@ class NovelSearchBar extends StatelessWidget {
                               ),
                               Row(
                                 children: [
-                                  Icon(Icons.star,
+                                  const Icon(Icons.star,
                                       size: 14, color: Colors.amber),
                                   Text(
                                     ' ${novel.rating}',

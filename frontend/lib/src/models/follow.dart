@@ -1,4 +1,3 @@
-import 'novel.dart';
 
 class Follow {
   final int id;

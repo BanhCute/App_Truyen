@@ -6,7 +6,6 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import '../models/user.dart';
-import '../models/session.dart';
 
 class GoogleButton extends StatelessWidget {
   const GoogleButton({super.key});

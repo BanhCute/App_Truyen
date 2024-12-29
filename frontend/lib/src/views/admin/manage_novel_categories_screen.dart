@@ -10,9 +10,9 @@ class ManageNovelCategoriesScreen extends StatefulWidget {
   final Novel novel;
 
   const ManageNovelCategoriesScreen({
-    Key? key,
+    super.key,
     required this.novel,
-  }) : super(key: key);
+  });
 
   @override
   State<ManageNovelCategoriesScreen> createState() =>

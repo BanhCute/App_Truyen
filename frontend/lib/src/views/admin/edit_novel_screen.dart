@@ -15,7 +15,7 @@ import '../../models/novel.dart';
 
 class EditNovelScreen extends StatefulWidget {
   final Novel novel;
-  const EditNovelScreen({Key? key, required this.novel}) : super(key: key);
+  const EditNovelScreen({super.key, required this.novel});
 
   @override
   State<EditNovelScreen> createState() => _EditNovelScreenState();
@@ -283,10 +283,10 @@ class _EditNovelScreenState extends State<EditNovelScreen> {
                                             const Icon(Icons.error, size: 50),
                                       ),
                                     )
-                                  : Column(
+                                  : const Column(
                                       mainAxisAlignment:
                                           MainAxisAlignment.center,
-                                      children: const [
+                                      children: [
                                         Icon(Icons.add_photo_alternate,
                                             size: 50),
                                         Text('Thay đổi ảnh bìa'),

@@ -18,7 +18,7 @@ import '../admin/upload_chapter_screen.dart';
 class NovelDetailScreen extends StatefulWidget {
   final Novel novel;
 
-  const NovelDetailScreen({Key? key, required this.novel}) : super(key: key);
+  const NovelDetailScreen({super.key, required this.novel});
 
   @override
   State<NovelDetailScreen> createState() => _NovelDetailScreenState();
@@ -247,7 +247,7 @@ class _NovelDetailScreenState extends State<NovelDetailScreen> {
                               const SizedBox(height: 8),
                               Row(
                                 children: [
-                                  Icon(
+                                  const Icon(
                                     Icons.star,
                                     color: Colors.amber,
                                     size: 20,

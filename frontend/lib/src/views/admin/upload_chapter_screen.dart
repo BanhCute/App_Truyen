@@ -12,7 +12,7 @@ import '../../models/chapter.dart';
 
 class UploadChapterScreen extends StatefulWidget {
   final Novel novel;
-  const UploadChapterScreen({Key? key, required this.novel}) : super(key: key);
+  const UploadChapterScreen({super.key, required this.novel});
 
   @override
   State<UploadChapterScreen> createState() => _UploadChapterScreenState();
@@ -21,7 +21,7 @@ class UploadChapterScreen extends StatefulWidget {
 class _UploadChapterScreenState extends State<UploadChapterScreen> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
-  List<File> _images = [];
+  final List<File> _images = [];
   bool _isLoading = false;
   List<Chapter> _existingChapters = [];
 

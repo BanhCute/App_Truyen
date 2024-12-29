@@ -8,7 +8,7 @@ import '../../../bloc/session_cubit.dart';
 import 'package:provider/provider.dart';
 
 class ManageCategoriesScreen extends StatefulWidget {
-  const ManageCategoriesScreen({Key? key}) : super(key: key);
+  const ManageCategoriesScreen({super.key});
 
   @override
   State<ManageCategoriesScreen> createState() => _ManageCategoriesScreenState();
@@ -356,8 +356,8 @@ class _ManageCategoriesScreenState extends State<ManageCategoriesScreen> {
             ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => _showAddDialog(),
-        child: const Icon(Icons.add),
         backgroundColor: const Color(0xFF1B3A57),
+        child: const Icon(Icons.add),
       ),
     );
   }

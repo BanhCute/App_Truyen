@@ -7,9 +7,9 @@ class RecommendedNovels extends StatelessWidget {
   final List<Novel> novels;
 
   const RecommendedNovels({
-    Key? key,
+    super.key,
     required this.novels,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -19,7 +19,7 @@ class RecommendedNovels extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Padding(
-            padding: EdgeInsets.symmetric(horizontal: 16),
+            padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Text(
               'Đề Xuất',
               style: Theme.of(context).textTheme.bodyLarge?.copyWith(
@@ -97,6 +97,7 @@ class RecommendedNovels extends StatelessWidget {
                                 ),
                                 Text(
                                   'Đánh giá: ${novel.rating}⭐',
+                                  
                                   style: const TextStyle(
                                     color: Colors.white,
                                     fontSize: 14,

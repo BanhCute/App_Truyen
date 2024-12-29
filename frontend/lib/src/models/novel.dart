@@ -35,9 +35,16 @@ class Novel {
 
   factory Novel.fromJson(Map<String, dynamic> json) {
     // Parse categories from the nested structure
-    final categoryList = (json['categories'] as List?)?.map((cat) {
-          return cat['category']['name'].toString();
-        }).toList() ??
+    final categoryList = (json['categories'] as List?)
+            ?.map((cat) {
+              if (cat is Map<String, dynamic> &&
+                  cat['category'] is Map<String, dynamic>) {
+                return cat['category']['name'].toString();
+              }
+              return '';
+            })
+            .where((name) => name.isNotEmpty)
+            .toList() ??
         [];
 
     return Novel(

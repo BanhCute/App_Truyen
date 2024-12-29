@@ -19,8 +19,8 @@ class ChapterDetailScreen extends StatefulWidget {
     required this.chapter,
     required this.currentIndex,
     required this.allChapters,
-    Key? key,
-  }) : super(key: key);
+    super.key,
+  });
 
   @override
   State<ChapterDetailScreen> createState() => _ChapterDetailScreenState();
@@ -271,11 +271,11 @@ class ChapterListBottomSheet extends StatelessWidget {
   final List<Chapter> allChapters;
 
   const ChapterListBottomSheet({
-    Key? key,
+    super.key,
     required this.novel,
     required this.currentChapterIndex,
     required this.allChapters,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -343,12 +343,12 @@ class CommentBottomSheet extends StatelessWidget {
   final VoidCallback onSubmit;
 
   const CommentBottomSheet({
-    Key? key,
+    super.key,
     required this.comments,
     required this.isLoading,
     required this.commentController,
     required this.onSubmit,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
