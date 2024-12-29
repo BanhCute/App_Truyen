@@ -34,13 +34,19 @@ class Novel {
   });
 
   factory Novel.fromJson(Map<String, dynamic> json) {
+    // Parse categories from the nested structure
+    final categoryList = (json['categories'] as List?)?.map((cat) {
+          return cat['category']['name'].toString();
+        }).toList() ??
+        [];
+
     return Novel(
       id: json['id']?.toString() ?? '',
       name: json['name'] ?? '',
       description: json['description'] ?? '',
       author: json['author'] ?? '',
       cover: json['cover'] ?? '',
-      categories: List<String>.from(json['categories'] ?? []),
+      categories: categoryList,
       createdAt:
           DateTime.parse(json['createdAt'] ?? DateTime.now().toIso8601String()),
       updatedAt:

@@ -10,6 +10,7 @@ import '../../models/reading_history.dart';
 import '../../services/follow_service.dart';
 import '../../services/reading_history_service.dart';
 import '../novel_detail/novel_detail_screen.dart';
+import '../details/chapter_detail_screen.dart';
 
 class FollowedNovelsScreen extends StatefulWidget {
   const FollowedNovelsScreen({Key? key}) : super(key: key);
@@ -151,13 +152,46 @@ class _FollowedNovelsScreenState extends State<FollowedNovelsScreen> {
                                 builder: (context, snapshot) {
                                   if (snapshot.hasData &&
                                       snapshot.data?.lastChapter != null) {
-                                    return Text(
-                                      'Đang đọc: ${snapshot.data!.lastChapter!.name}',
-                                      style: TextStyle(
-                                        color: Theme.of(context)
-                                            .colorScheme
-                                            .secondary,
-                                      ),
+                                    return Row(
+                                      children: [
+                                        Expanded(
+                                          child: Text(
+                                            'Đang đọc: ${snapshot.data!.lastChapter!.name}',
+                                            style: TextStyle(
+                                              color: Theme.of(context)
+                                                  .colorScheme
+                                                  .secondary,
+                                            ),
+                                          ),
+                                        ),
+                                        TextButton.icon(
+                                          icon: const Icon(Icons.play_arrow),
+                                          label: const Text('Đọc tiếp'),
+                                          onPressed: () {
+                                            Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                builder: (context) =>
+                                                    ChapterDetailScreen(
+                                                  novel: novel,
+                                                  chapter: snapshot
+                                                      .data!.lastChapter!,
+                                                  currentIndex: novel.chapters
+                                                          ?.indexWhere((c) =>
+                                                              c.id ==
+                                                              snapshot
+                                                                  .data!
+                                                                  .lastChapter!
+                                                                  .id) ??
+                                                      0,
+                                                  allChapters:
+                                                      novel.chapters ?? [],
+                                                ),
+                                              ),
+                                            ).then((_) => loadFollowedNovels());
+                                          },
+                                        ),
+                                      ],
                                     );
                                   }
                                   return const SizedBox.shrink();

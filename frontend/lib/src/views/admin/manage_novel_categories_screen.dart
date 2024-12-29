@@ -24,13 +24,17 @@ class _ManageNovelCategoriesScreenState
   List<Map<String, dynamic>> _categories = [];
   List<int> _selectedCategories = [];
   bool _isLoading = true;
+  late final SessionCubit _sessionCubit;
 
   @override
   void initState() {
     super.initState();
+    _sessionCubit = context.read<SessionCubit>();
     _loadCategories();
-    _selectedCategories =
-        widget.novel.categories.map((e) => int.parse(e)).toList();
+    _selectedCategories = widget.novel.categories
+        .where((e) => e.isNotEmpty)
+        .map((e) => int.parse(e))
+        .toList();
   }
 
   Future<void> _loadCategories() async {
@@ -38,6 +42,7 @@ class _ManageNovelCategoriesScreenState
       final response =
           await http.get(Uri.parse('${dotenv.get('API_URL')}/categories'));
       if (response.statusCode == 200) {
+        if (!mounted) return;
         setState(() {
           _categories =
               List<Map<String, dynamic>>.from(json.decode(response.body));
@@ -46,6 +51,7 @@ class _ManageNovelCategoriesScreenState
       }
     } catch (e) {
       print('Error loading categories: $e');
+      if (!mounted) return;
       setState(() {
         _isLoading = false;
       });
@@ -53,53 +59,65 @@ class _ManageNovelCategoriesScreenState
   }
 
   Future<void> _saveCategories() async {
+    if (!mounted) return;
     setState(() {
       _isLoading = true;
     });
 
     try {
-      final state = context.read<SessionCubit>().state;
+      final state = _sessionCubit.state;
       if (state is! Authenticated) {
+        if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Vui lòng đăng nhập để thực hiện')),
         );
         return;
       }
 
+      print('Selected categories: $_selectedCategories');
+      print('Novel ID: ${widget.novel.id}');
+
+      final requestBody = json.encode({
+        'categoryIds': _selectedCategories,
+      });
+      print('Request body: $requestBody');
+
       final response = await http.post(
         Uri.parse(
-            '${dotenv.get('API_URL')}/novels/${widget.novel.id}/categories'),
+            '${dotenv.get('API_URL')}/novels/${int.parse(widget.novel.id)}/categories'),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer ${state.session.accessToken}',
         },
-        body: json.encode({
-          'categoryIds': _selectedCategories,
-        }),
+        body: requestBody,
       );
 
+      print('Response status: ${response.statusCode}');
+      print('Response body: ${response.body}');
+
       if (response.statusCode == 200 || response.statusCode == 201) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Đã cập nhật thể loại')),
-          );
-          Navigator.pop(context);
-        }
+        final responseData = json.decode(response.body);
+        print('Response categories: ${responseData['categories']}');
+
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Đã cập nhật thể loại')),
+        );
+        Navigator.pop(context, true);
       } else {
         throw Exception('Không thể cập nhật thể loại');
       }
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Lỗi: ${e.toString()}')),
-        );
-      }
+      print('Error saving categories: $e');
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Lỗi: ${e.toString()}')),
+      );
     } finally {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
+      if (!mounted) return;
+      setState(() {
+        _isLoading = false;
+      });
     }
   }
 

@@ -11,23 +11,36 @@ import 'package:http_parser/http_parser.dart';
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
+import '../../models/novel.dart';
 
-class UploadNovelScreen extends StatefulWidget {
-  const UploadNovelScreen({Key? key}) : super(key: key);
+class EditNovelScreen extends StatefulWidget {
+  final Novel novel;
+  const EditNovelScreen({Key? key, required this.novel}) : super(key: key);
 
   @override
-  State<UploadNovelScreen> createState() => _UploadNovelScreenState();
+  State<EditNovelScreen> createState() => _EditNovelScreenState();
 }
 
-class _UploadNovelScreenState extends State<UploadNovelScreen> {
+class _EditNovelScreenState extends State<EditNovelScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _nameController = TextEditingController();
-  final _descriptionController = TextEditingController();
-  final _authorController = TextEditingController();
-  String? _selectedStatus = 'Đang tiến hành';
+  late TextEditingController _nameController;
+  late TextEditingController _descriptionController;
+  late TextEditingController _authorController;
+  String? _selectedStatus;
   File? _coverImage;
+  String? _currentCoverUrl;
   bool _isLoading = false;
-  int _retryCount = 0; // Đếm số lần thử lại
+
+  @override
+  void initState() {
+    super.initState();
+    _nameController = TextEditingController(text: widget.novel.name);
+    _descriptionController =
+        TextEditingController(text: widget.novel.description);
+    _authorController = TextEditingController(text: widget.novel.author);
+    _selectedStatus = widget.novel.status;
+    _currentCoverUrl = widget.novel.cover;
+  }
 
   Future<void> _pickImage() async {
     try {
@@ -39,7 +52,6 @@ class _UploadNovelScreenState extends State<UploadNovelScreen> {
       );
 
       if (pickedFile != null) {
-        // Nén ảnh trước khi lưu
         final File originalFile = File(pickedFile.path);
         try {
           final Directory tempDir = await getTemporaryDirectory();
@@ -56,18 +68,20 @@ class _UploadNovelScreenState extends State<UploadNovelScreen> {
           if (compressedFile != null) {
             setState(() {
               _coverImage = File(compressedFile.path);
+              _currentCoverUrl =
+                  null; // Reset current cover URL when new image is picked
             });
           } else {
-            // Nếu nén thất bại, sử dụng file gốc
             setState(() {
               _coverImage = originalFile;
+              _currentCoverUrl = null;
             });
           }
         } catch (e) {
           print('Error compressing image: $e');
-          // Nếu có lỗi khi nén, sử dụng file gốc
           setState(() {
             _coverImage = originalFile;
+            _currentCoverUrl = null;
           });
         }
       }
@@ -82,115 +96,66 @@ class _UploadNovelScreenState extends State<UploadNovelScreen> {
   }
 
   Future<String?> _uploadImage() async {
-    if (_coverImage == null) return null;
+    if (_coverImage == null) return _currentCoverUrl;
 
     try {
       final state = context.read<SessionCubit>().state;
       if (state is! Authenticated) return null;
       final token = state.session.accessToken;
 
-      // Kiểm tra kích thước file
       final fileSize = await _coverImage!.length();
       if (fileSize > 1000000) {
         throw Exception('Kích thước ảnh không được vượt quá 1MB');
       }
 
-      // Tạo form data
       var request = http.MultipartRequest(
         'POST',
         Uri.parse('${dotenv.get('API_URL')}/cloudinary'),
       );
 
-      // Thêm file vào form với đúng field name
       var stream = http.ByteStream(_coverImage!.openRead());
       var length = await _coverImage!.length();
       var multipartFile = http.MultipartFile(
-        'image', // Đảm bảo tên field khớp với DTO
+        'image',
         stream,
         length,
         filename: _coverImage!.path.split('/').last,
-        contentType: MediaType('image', 'jpeg'), // Thêm content type
+        contentType: MediaType('image', 'jpeg'),
       );
       request.files.add(multipartFile);
 
-      // Thêm headers
       request.headers.addAll({
         'Authorization': 'Bearer $token',
         'Accept': 'application/json',
       });
 
-      print('Sending request to: ${request.url}');
-      print('File size: $length bytes');
-      print('Headers: ${request.headers}');
-
       var response = await request.send();
       var responseData = await response.stream.bytesToString();
 
-      print('Response status: ${response.statusCode}');
-      print('Response data: $responseData');
-
       if (response.statusCode == 201) {
         var data = json.decode(responseData);
-        return data['urls'][0]; // Lấy URL đầu tiên từ mảng urls
+        return data['urls'][0];
       } else {
         var errorData = json.decode(responseData);
         String errorMessage = errorData['message'] is List
             ? errorData['message'].join(', ')
             : errorData['message']?.toString() ?? 'Lỗi không xác định';
 
-        await showDialog(
-          context: context,
-          builder: (context) => AlertDialog(
-            title: const Text('Lỗi tải ảnh'),
-            content: Text('$errorMessage\n\nHệ thống sẽ sử dụng ảnh mặc định.'),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(),
-                child: const Text('Đồng ý'),
-              ),
-            ],
-          ),
-        );
-
-        // Trả về URL ảnh mặc định
-        return 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTqIaD4wuVHsK6dbGQlEC4MBycX72MfyVLoMg&s';
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Lỗi tải ảnh: $errorMessage')),
+          );
+        }
+        return _currentCoverUrl;
       }
     } catch (e) {
       print('Error uploading image: $e');
       if (mounted) {
-        await showDialog(
-          context: context,
-          builder: (context) => AlertDialog(
-            title: const Text('Lỗi'),
-            content: Text(
-                'Không thể tải ảnh lên: $e\n\nHệ thống sẽ sử dụng ảnh mặc định.'),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(),
-                child: const Text('Đồng ý'),
-              ),
-            ],
-          ),
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Không thể tải ảnh lên: $e')),
         );
       }
-      return 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTqIaD4wuVHsK6dbGQlEC4MBycX72MfyVLoMg&s';
-    }
-  }
-
-  Future<void> _checkApiConnection() async {
-    try {
-      final response = await http.get(
-        Uri.parse('${dotenv.get('API_URL')}/novels'),
-        headers: {
-          'Accept': 'application/json',
-        },
-      ).timeout(const Duration(seconds: 10));
-
-      print('GET /novels status: ${response.statusCode}');
-      print('GET /novels headers: ${response.headers}');
-      print('GET /novels body: ${response.body}');
-    } catch (e) {
-      print('Error checking API: $e');
+      return _currentCoverUrl;
     }
   }
 
@@ -204,122 +169,64 @@ class _UploadNovelScreenState extends State<UploadNovelScreen> {
     try {
       final sessionCubit = context.read<SessionCubit>();
       final currentState = sessionCubit.state;
-      print('Current session state: $currentState');
 
       if (currentState is! Authenticated) {
-        print('Not authenticated');
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-                content: Text('Vui lòng đăng nhập để đăng truy���n')),
+                content: Text('Vui lòng đăng nhập để cập nhật truyện')),
           );
         }
         return;
       }
 
       final token = currentState.session.accessToken;
-      print('Token: $token');
+      String? coverUrl = await _uploadImage();
 
-      // Upload ảnh nếu có
-      String? coverUrl;
-      if (_coverImage != null) {
-        print('File name: ${_coverImage!.path.split('/').last}');
-        print('File size: ${await _coverImage!.length()} bytes');
-        print('Content-Type: multipart/form-data');
-
-        coverUrl = await _uploadImage();
-        print('Cover URL after upload: $coverUrl');
-
-        if (coverUrl == null) {
-          print('Upload failed, using default image');
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Không thể tải lên ảnh bìa')),
-            );
-          }
-          return;
-        }
-      }
-
-      // Tạo payload
       final payload = {
         'name': _nameController.text,
         'description': _descriptionController.text,
         'author': _authorController.text,
-        'status': _selectedStatus ?? 'Đang tiến hành',
-        'cover': coverUrl ??
-            'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTqIaD4wuVHsK6dbGQlEC4MBycX72MfyVLoMg&s',
-        'userId': currentState.session.user.id,
+        'status': _selectedStatus ?? widget.novel.status,
+        if (coverUrl != null) 'cover': coverUrl,
       };
 
-      final apiUrl = '${dotenv.get('API_URL')}/novels';
-      print('Creating novel with payload: ${json.encode(payload)}');
-      print('API URL: $apiUrl');
-      print(
-          'Request headers: {Authorization: Bearer $token, Accept: application/json, Content-Type: application/json}');
+      final apiUrl = '${dotenv.get('API_URL')}/novels/${widget.novel.id}';
 
-      try {
-        print('Sending POST request to $apiUrl');
-        final response = await http
-            .post(
-              Uri.parse(apiUrl),
-              headers: {
-                'Accept': 'application/json',
-                'Content-Type': 'application/json',
-                'Authorization': 'Bearer $token',
-              },
-              body: json.encode(payload),
-            )
-            .timeout(const Duration(seconds: 30));
+      final response = await http
+          .patch(
+            Uri.parse(apiUrl),
+            headers: {
+              'Accept': 'application/json',
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer $token',
+            },
+            body: json.encode(payload),
+          )
+          .timeout(const Duration(seconds: 30));
 
-        print('Response status: ${response.statusCode}');
-        print('Response headers: ${response.headers}');
-        print('Response body: ${response.body}');
-
-        if (response.statusCode >= 200 && response.statusCode < 300) {
-          print('Novel created successfully');
-          if (mounted) {
-            Navigator.pop(context);
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Đăng truyện thành công!')),
-            );
-          }
-        } else {
-          print('Got error response: ${response.statusCode}');
-          final responseData = json.decode(response.body);
-          final errorMessage =
-              responseData['message'] as String? ?? 'Có lỗi xảy ra';
-          print('Error message: $errorMessage');
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Lỗi khi đăng truyện: $errorMessage')),
-            );
-          }
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        if (mounted) {
+          Navigator.pop(context, true);
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Cập nhật truyện thành công!')),
+          );
         }
-      } catch (e) {
-        print('HTTP request failed: $e');
-        if (e is TimeoutException) {
-          print('Request timed out');
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                  content:
-                      Text('Kết nối tới server quá lâu, vui lòng thử lại')),
-            );
-          }
-        } else {
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Lỗi kết nối: $e')),
-            );
-          }
+      } else {
+        final responseData = json.decode(response.body);
+        final errorMessage =
+            responseData['message'] as String? ?? 'Có lỗi xảy ra';
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Lỗi khi cập nhật truyện: $errorMessage')),
+          );
         }
       }
     } catch (e) {
-      print('Error creating novel: $e');
+      print('Error updating novel: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Có lỗi xảy ra khi đăng truyện')),
+          SnackBar(content: Text('Có lỗi xảy ra: $e')),
         );
       }
     } finally {
@@ -335,7 +242,7 @@ class _UploadNovelScreenState extends State<UploadNovelScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Đăng truyện mới'),
+        title: const Text('Sửa truyện'),
         backgroundColor: const Color(0xFF1B3A57),
       ),
       body: _isLoading
@@ -365,13 +272,26 @@ class _UploadNovelScreenState extends State<UploadNovelScreen> {
                                     fit: BoxFit.cover,
                                   ),
                                 )
-                              : Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: const [
-                                    Icon(Icons.add_photo_alternate, size: 50),
-                                    Text('Thêm ảnh bìa'),
-                                  ],
-                                ),
+                              : _currentCoverUrl != null
+                                  ? ClipRRect(
+                                      borderRadius: BorderRadius.circular(8),
+                                      child: Image.network(
+                                        _currentCoverUrl!,
+                                        fit: BoxFit.cover,
+                                        errorBuilder: (context, error,
+                                                stackTrace) =>
+                                            const Icon(Icons.error, size: 50),
+                                      ),
+                                    )
+                                  : Column(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: const [
+                                        Icon(Icons.add_photo_alternate,
+                                            size: 50),
+                                        Text('Thay đổi ảnh bìa'),
+                                      ],
+                                    ),
                         ),
                       ),
                     ),
@@ -455,7 +375,7 @@ class _UploadNovelScreenState extends State<UploadNovelScreen> {
                         ),
                         onPressed: _submitForm,
                         child: const Text(
-                          'Đăng truyện',
+                          'Cập nhật truyện',
                           style: TextStyle(fontSize: 16),
                         ),
                       ),

@@ -8,6 +8,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../models/chapter.dart';
 import 'dart:convert';
 import 'dart:io';
+import 'package:http_parser/http_parser.dart';
 
 class EditChapterScreen extends StatefulWidget {
   final Chapter chapter;
@@ -60,14 +61,15 @@ class _EditChapterScreenState extends State<EditChapterScreen> {
         try {
           var request = http.MultipartRequest(
             'POST',
-            Uri.parse('${dotenv.get('API_URL')}/cloudinary/upload'),
+            Uri.parse('${dotenv.get('API_URL')}/cloudinary'),
           );
 
           request.headers['Authorization'] = 'Bearer $token';
           request.files.add(
             await http.MultipartFile.fromPath(
-              'file',
+              'image',
               image.path,
+              contentType: MediaType('image', 'jpeg'),
             ),
           );
 
@@ -81,7 +83,7 @@ class _EditChapterScreenState extends State<EditChapterScreen> {
 
           if (response.statusCode == 201) {
             var data = json.decode(responseData);
-            uploadedUrls.add(data['url']);
+            uploadedUrls.add(data['urls'][0]);
           } else {
             print(
                 'Upload failed with status ${response.statusCode}: $responseData');

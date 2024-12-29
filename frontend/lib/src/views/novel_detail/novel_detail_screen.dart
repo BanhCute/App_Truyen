@@ -30,6 +30,7 @@ class _NovelDetailScreenState extends State<NovelDetailScreen> {
   bool isLoading = true;
   bool isFollowing = false;
   late Novel novel;
+  bool _isAuthor = false;
 
   @override
   void initState() {
@@ -85,32 +86,51 @@ class _NovelDetailScreenState extends State<NovelDetailScreen> {
   }
 
   Future<void> loadData() async {
+    setState(() {
+      isLoading = true;
+    });
+
     try {
-      // Load novel data
       final novelResponse = await http.get(
         Uri.parse('${dotenv.get('API_URL')}/novels/${widget.novel.id}'),
       );
 
       if (novelResponse.statusCode == 200) {
         final novelData = json.decode(novelResponse.body);
+        print('Novel response: ${novelResponse.body}');
+
+        final state = context.read<SessionCubit>().state;
+
+        // Parse categories from the nested structure
+        final categoryList = (novelData['categories'] as List?)?.map((cat) {
+              print('Category data: $cat');
+              return cat['category']['name'].toString();
+            }).toList() ??
+            [];
+
         setState(() {
           novel = Novel.fromJson(novelData);
-          categories = List<String>.from(novelData['categories'] ?? []);
+          categories = categoryList;
+          _isAuthor = state is Authenticated &&
+              state.session.user.id.toString() == novel.userId;
         });
+
+        print('Categories loaded: $categories'); // Debug log
       }
 
-      // Load chapters
       final chaptersResponse = await http.get(
         Uri.parse('${dotenv.get('API_URL')}/chapters'),
       );
 
       if (chaptersResponse.statusCode == 200) {
-        final List chaptersData = json.decode(chaptersResponse.body);
+        final List<dynamic> chaptersData = json.decode(chaptersResponse.body);
         setState(() {
           chapters = chaptersData
               .where((chapter) => chapter['novelId'].toString() == novel.id)
-              .map((json) => Chapter.fromJson(json))
+              .map((chapter) => Chapter.fromJson(chapter))
               .toList();
+
+          // Sắp xếp chương theo số
           chapters.sort((a, b) {
             try {
               final aNum = int.parse(a.name.replaceAll(RegExp(r'[^0-9]'), ''));
@@ -121,8 +141,11 @@ class _NovelDetailScreenState extends State<NovelDetailScreen> {
               return 0;
             }
           });
+
           isLoading = false;
         });
+
+        print('Chapters loaded: ${chapters.length}'); // Debug log
       } else {
         throw Exception('Failed to load chapters');
       }
@@ -133,6 +156,19 @@ class _NovelDetailScreenState extends State<NovelDetailScreen> {
           isLoading = false;
         });
       }
+    }
+  }
+
+  Future<void> _manageCategories() async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ManageNovelCategoriesScreen(novel: novel),
+      ),
+    );
+
+    if (result == true) {
+      loadData(); // Reload data after categories are updated
     }
   }
 
@@ -233,26 +269,42 @@ class _NovelDetailScreenState extends State<NovelDetailScreen> {
                       ],
                     ),
                     const SizedBox(height: 16),
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: categories
-                          .map((category) => Chip(
-                                label: Text(
-                                  category,
-                                  style: TextStyle(
-                                    color: Theme.of(context).brightness ==
-                                            Brightness.dark
-                                        ? Colors.white
-                                        : Colors.black,
-                                  ),
-                                ),
-                                backgroundColor: Theme.of(context).brightness ==
-                                        Brightness.dark
-                                    ? Colors.white.withOpacity(0.1)
-                                    : Colors.grey.withOpacity(0.1),
-                              ))
-                          .toList(),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Wrap(
+                            spacing: 8,
+                            runSpacing: 8,
+                            children: categories.isEmpty
+                                ? [const Chip(label: Text('Chưa có thể loại'))]
+                                : categories
+                                    .map((category) => Chip(
+                                          label: Text(
+                                            category,
+                                            style: TextStyle(
+                                              color: Theme.of(context)
+                                                          .brightness ==
+                                                      Brightness.dark
+                                                  ? Colors.white
+                                                  : Colors.black,
+                                            ),
+                                          ),
+                                          backgroundColor: Theme.of(context)
+                                                      .brightness ==
+                                                  Brightness.dark
+                                              ? Colors.white.withOpacity(0.1)
+                                              : Colors.grey.withOpacity(0.1),
+                                        ))
+                                    .toList(),
+                          ),
+                        ),
+                        if (_isAuthor)
+                          IconButton(
+                            icon: const Icon(Icons.edit),
+                            onPressed: _manageCategories,
+                            tooltip: 'Quản lý thể loại',
+                          ),
+                      ],
                     ),
                     const SizedBox(height: 16),
                     Text(

@@ -1,20 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:frontend/bloc/session_cubit.dart';
-import 'package:frontend/models/session.dart';
 import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_image_compress/flutter_image_compress.dart';
-import 'package:path_provider/path_provider.dart';
-import '../../models/novel.dart';
 import 'dart:convert';
 import 'dart:io';
 import 'package:http_parser/http_parser.dart';
+import '../../models/novel.dart';
+import '../../models/chapter.dart';
 
 class UploadChapterScreen extends StatefulWidget {
   final Novel novel;
-
   const UploadChapterScreen({Key? key, required this.novel}) : super(key: key);
 
   @override
@@ -24,17 +21,46 @@ class UploadChapterScreen extends StatefulWidget {
 class _UploadChapterScreenState extends State<UploadChapterScreen> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
-  final _picker = ImagePicker();
-  List<XFile> _chapterImages = [];
+  List<File> _images = [];
   bool _isLoading = false;
-  double _uploadProgress = 0.0;
+  List<Chapter> _existingChapters = [];
 
-  Future<String> getToken() async {
-    final state = context.read<SessionCubit>().state;
-    if (state is! Authenticated) {
-      throw Exception('Vui lòng đăng nhập');
+  @override
+  void initState() {
+    super.initState();
+    _loadExistingChapters();
+  }
+
+  Future<void> _loadExistingChapters() async {
+    try {
+      final response = await http.get(
+        Uri.parse('${dotenv.get('API_URL')}/chapters'),
+      );
+
+      if (response.statusCode == 200) {
+        final List data = json.decode(response.body);
+        setState(() {
+          _existingChapters = data
+              .where(
+                  (chapter) => chapter['novelId'].toString() == widget.novel.id)
+              .map((json) => Chapter.fromJson(json))
+              .toList();
+
+          // Sắp xếp chương theo số thứ tự
+          _existingChapters.sort((a, b) {
+            try {
+              final aNum = int.parse(a.name.replaceAll(RegExp(r'[^0-9]'), ''));
+              final bNum = int.parse(b.name.replaceAll(RegExp(r'[^0-9]'), ''));
+              return aNum.compareTo(bNum);
+            } catch (e) {
+              return 0;
+            }
+          });
+        });
+      }
+    } catch (e) {
+      print('Error loading chapters: $e');
     }
-    return state.session.accessToken;
   }
 
   Future<void> _pickImages() async {
@@ -44,7 +70,7 @@ class _UploadChapterScreenState extends State<UploadChapterScreen> {
 
       if (pickedFiles.isNotEmpty) {
         setState(() {
-          _chapterImages.addAll(pickedFiles);
+          _images.addAll(pickedFiles.map((file) => File(file.path)));
         });
       }
     } catch (e) {
@@ -52,120 +78,132 @@ class _UploadChapterScreenState extends State<UploadChapterScreen> {
     }
   }
 
-  Future<File> _compressImage(File file) async {
-    final dir = await getTemporaryDirectory();
-    final targetPath =
-        '${dir.path}/${DateTime.now().millisecondsSinceEpoch}.jpg';
-
-    var result = await FlutterImageCompress.compressAndGetFile(
-      file.path,
-      targetPath,
-      quality: 70,
-      format: CompressFormat.jpeg,
-    );
-
-    return File(result?.path ?? file.path);
+  void _removeImage(int index) {
+    setState(() {
+      _images.removeAt(index);
+    });
   }
 
-  Future<List<String>> uploadImages(List<XFile> images) async {
-    if (images.isEmpty) {
-      throw Exception('Vui lòng chọn ít nhất 1 ảnh');
-    }
+  Future<List<String>> _uploadImages() async {
+    List<String> uploadedUrls = [];
 
     try {
-      final request = http.MultipartRequest(
-        'POST',
-        Uri.parse('${dotenv.get('API_URL')}/cloudinary'),
-      );
+      final state = context.read<SessionCubit>().state;
+      if (state is! Authenticated) return [];
+      final token = state.session.accessToken;
 
-      final token = await getToken();
-      request.headers['Authorization'] = 'Bearer $token';
-
-      for (var image in images) {
-        final bytes = await image.readAsBytes();
-        final multipartFile = http.MultipartFile.fromBytes(
-          'image',
-          bytes,
-          filename: image.name,
-          contentType: MediaType('image', 'jpeg'),
+      for (var image in _images) {
+        var request = http.MultipartRequest(
+          'POST',
+          Uri.parse('${dotenv.get('API_URL')}/cloudinary'),
         );
-        request.files.add(multipartFile);
-      }
 
-      final response = await request.send();
-      final responseData = await response.stream.bytesToString();
-      print('Response status: ${response.statusCode}');
-      print('Response data: $responseData');
+        request.headers['Authorization'] = 'Bearer $token';
+        request.files.add(
+          await http.MultipartFile.fromPath(
+            'image',
+            image.path,
+            contentType: MediaType('image', 'jpeg'),
+          ),
+        );
 
-      if (response.statusCode == 201) {
-        final data = json.decode(responseData);
-        return List<String>.from(data['urls']);
-      } else {
-        throw Exception(
-            'Upload failed with status ${response.statusCode}: $responseData');
+        var response = await request.send();
+        var responseData = await response.stream.bytesToString();
+
+        print('Response status: ${response.statusCode}');
+        print('Response data: $responseData');
+
+        if (response.statusCode == 201) {
+          var data = json.decode(responseData);
+          uploadedUrls.addAll(List<String>.from(data['urls']));
+        }
       }
     } catch (e) {
       print('Error uploading images: $e');
-      rethrow;
     }
+
+    return uploadedUrls;
   }
 
-  Future<void> _handleSubmit() async {
-    if (_formKey.currentState!.validate()) {
-      setState(() {
-        _isLoading = true;
-      });
+  Future<void> _submitForm() async {
+    if (!_formKey.currentState!.validate()) return;
+    if (_images.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Vui lòng chọn ít nhất một ảnh')),
+      );
+      return;
+    }
 
-      try {
-        List<String> imageUrls = [];
-        if (_chapterImages.isNotEmpty) {
-          imageUrls = await uploadImages(_chapterImages);
-        }
+    setState(() {
+      _isLoading = true;
+    });
 
-        final token = await getToken();
-        final response = await http.post(
-          Uri.parse('${dotenv.get('API_URL')}/chapters'),
+    try {
+      final state = context.read<SessionCubit>().state;
+      if (state is! Authenticated) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Vui lòng đăng nhập để thêm chương')),
+        );
+        return;
+      }
+      final token = state.session.accessToken;
+
+      // Upload images
+      final imageUrls = await _uploadImages();
+      if (imageUrls.isEmpty) {
+        throw Exception('Không thể tải lên ảnh');
+      }
+
+      // Create chapter
+      final response = await http.post(
+        Uri.parse('${dotenv.get('API_URL')}/chapters'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+        body: json.encode({
+          'name': _nameController.text,
+          'content': imageUrls.join('\n'),
+          'novelId': int.parse(widget.novel.id),
+        }),
+      );
+
+      if (response.statusCode == 201) {
+        // Cập nhật thời gian cập nhật của truyện
+        await http.patch(
+          Uri.parse('${dotenv.get('API_URL')}/novels/${widget.novel.id}'),
           headers: {
-            'Authorization': 'Bearer $token',
             'Content-Type': 'application/json',
+            'Authorization': 'Bearer $token',
           },
           body: json.encode({
-            'name': _nameController.text,
-            'content': imageUrls.join('\n'),
-            'novelId': widget.novel.id,
+            'updatedAt': DateTime.now().toIso8601String(),
           }),
         );
 
-        if (response.statusCode == 201) {
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Thêm chương thành công')),
-            );
-            Navigator.pop(context);
-          }
-        } else {
-          throw Exception(json.decode(response.body)['message']);
-        }
-      } catch (e) {
         if (mounted) {
+          Navigator.pop(context);
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Lỗi: ${e.toString()}')),
+            const SnackBar(content: Text('Thêm chương thành công!')),
           );
         }
-      } finally {
-        if (mounted) {
-          setState(() {
-            _isLoading = false;
-          });
-        }
+      } else {
+        throw Exception('Không thể thêm chương');
+      }
+    } catch (e) {
+      print('Error creating chapter: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Có lỗi xảy ra: $e')),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
       }
     }
-  }
-
-  void _removeImage(int index) {
-    setState(() {
-      _chapterImages.removeAt(index);
-    });
   }
 
   @override
@@ -176,140 +214,150 @@ class _UploadChapterScreenState extends State<UploadChapterScreen> {
         backgroundColor: const Color(0xFF1B3A57),
       ),
       body: _isLoading
-          ? Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  CircularProgressIndicator(
-                    value: _uploadProgress,
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    'Đang tải lên... ${(_uploadProgress * 100).toInt()}%',
-                    style: const TextStyle(fontSize: 16),
-                  ),
-                ],
-              ),
-            )
-          : Column(
-              children: [
-                Expanded(
-                  child: SingleChildScrollView(
-                    child: Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Form(
-                            key: _formKey,
-                            child: TextFormField(
-                              controller: _nameController,
-                              decoration: const InputDecoration(
-                                labelText: 'Tên chương',
-                                border: OutlineInputBorder(),
-                              ),
-                              validator: (value) {
-                                if (value == null || value.isEmpty) {
-                                  return 'Vui lòng nhập tên chương';
-                                }
-                                return null;
-                              },
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-                          ElevatedButton.icon(
-                            onPressed: _pickImages,
-                            icon: const Icon(Icons.add_photo_alternate),
-                            label: const Text('Thêm ảnh'),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.green,
-                              padding: const EdgeInsets.symmetric(vertical: 12),
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-                          if (_chapterImages.isNotEmpty) ...[
+          ? const Center(child: CircularProgressIndicator())
+          : SingleChildScrollView(
+              padding: const EdgeInsets.all(16),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Hiển thị thông tin truyện
+                    Card(
+                      child: Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
                             Text(
-                              'Ảnh đã chọn (${_chapterImages.length}):',
-                              style: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                              ),
+                              'Thông tin truyện:',
+                              style: Theme.of(context).textTheme.titleLarge,
                             ),
                             const SizedBox(height: 8),
-                            GridView.builder(
-                              shrinkWrap: true,
-                              physics: const NeverScrollableScrollPhysics(),
-                              gridDelegate:
-                                  const SliverGridDelegateWithFixedCrossAxisCount(
-                                crossAxisCount: 3,
-                                crossAxisSpacing: 8,
-                                mainAxisSpacing: 8,
-                              ),
-                              itemCount: _chapterImages.length,
-                              itemBuilder: (context, index) {
-                                return Stack(
-                                  children: [
-                                    ClipRRect(
-                                      borderRadius: BorderRadius.circular(8),
-                                      child: Image.file(
-                                        File(_chapterImages[index].path),
-                                        width: double.infinity,
-                                        height: double.infinity,
-                                        fit: BoxFit.cover,
-                                      ),
-                                    ),
-                                    Positioned(
-                                      top: 4,
-                                      right: 4,
-                                      child: Container(
-                                        decoration: BoxDecoration(
-                                          color: Colors.black.withOpacity(0.5),
-                                          shape: BoxShape.circle,
-                                        ),
-                                        child: IconButton(
-                                          icon: const Icon(
-                                            Icons.close,
-                                            color: Colors.white,
-                                            size: 20,
-                                          ),
-                                          onPressed: () => _removeImage(index),
-                                          constraints: const BoxConstraints(
-                                            minWidth: 30,
-                                            minHeight: 30,
-                                          ),
-                                          padding: EdgeInsets.zero,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                );
-                              },
-                            ),
+                            Text('Tác giả: ${widget.novel.author}'),
+                            Text('Trạng thái: ${widget.novel.status}'),
+                            Text(
+                                'Thể loại: ${widget.novel.categories.join(", ")}'),
                           ],
-                          const SizedBox(height: 16),
-                        ],
+                        ),
                       ),
                     ),
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: _handleSubmit,
+                    const SizedBox(height: 16),
+
+                    // Hiển thị danh sách chương hiện có
+                    if (_existingChapters.isNotEmpty) ...[
+                      Card(
+                        child: Padding(
+                          padding: const EdgeInsets.all(16.0),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Các chương hiện có:',
+                                style: Theme.of(context).textTheme.titleLarge,
+                              ),
+                              const SizedBox(height: 8),
+                              ListView.builder(
+                                shrinkWrap: true,
+                                physics: const NeverScrollableScrollPhysics(),
+                                itemCount: _existingChapters.length,
+                                itemBuilder: (context, index) {
+                                  return ListTile(
+                                    title: Text(_existingChapters[index].name),
+                                  );
+                                },
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                    ],
+
+                    TextFormField(
+                      controller: _nameController,
+                      decoration: const InputDecoration(
+                        labelText: 'Tên chương',
+                        border: OutlineInputBorder(),
+                      ),
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Vui lòng nhập tên chương';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                    ElevatedButton.icon(
+                      onPressed: _pickImages,
+                      icon: const Icon(Icons.add_photo_alternate),
+                      label: const Text('Chọn ảnh'),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF1B3A57),
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                      ),
-                      child: const Text(
-                        'Thêm chương',
-                        style: TextStyle(fontSize: 16),
+                        backgroundColor: Colors.green,
+                        padding: const EdgeInsets.symmetric(vertical: 12),
                       ),
                     ),
-                  ),
+                    const SizedBox(height: 16),
+                    if (_images.isNotEmpty) ...[
+                      Text(
+                        'Ảnh đã chọn (${_images.length}):',
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      ListView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemCount: _images.length,
+                        itemBuilder: (context, index) {
+                          return Card(
+                            margin: const EdgeInsets.only(bottom: 8),
+                            child: Stack(
+                              children: [
+                                Image.file(
+                                  _images[index],
+                                  height: 200,
+                                  width: double.infinity,
+                                  fit: BoxFit.contain,
+                                ),
+                                Positioned(
+                                  right: 8,
+                                  top: 8,
+                                  child: CircleAvatar(
+                                    backgroundColor: Colors.red,
+                                    child: IconButton(
+                                      icon: const Icon(Icons.close,
+                                          color: Colors.white),
+                                      onPressed: () => _removeImage(index),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        },
+                      ),
+                    ],
+                    const SizedBox(height: 24),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF1B3A57),
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                        ),
+                        onPressed: _submitForm,
+                        child: const Text(
+                          'Thêm chương',
+                          style: TextStyle(fontSize: 16),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-              ],
+              ),
             ),
     );
   }

@@ -21,6 +21,8 @@ import '../../models/reading_history.dart';
 import '../novel_detail/novel_detail_screen.dart';
 import '../admin/manage_novel_categories_screen.dart';
 import '../admin/manage_categories_screen.dart';
+import '../admin/manage_novels_screen.dart';
+import '../details/chapter_detail_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -354,13 +356,45 @@ class _HomeScreenState extends State<HomeScreen> {
                                   children: [
                                     Text('Tác giả: ${item.novel.author}'),
                                     if (item.lastChapter != null)
-                                      Text(
-                                        'Đọc gần nhất: ${item.lastChapter!.name}',
-                                        style: TextStyle(
-                                          color: Theme.of(context)
-                                              .colorScheme
-                                              .secondary,
-                                        ),
+                                      Row(
+                                        children: [
+                                          Expanded(
+                                            child: Text(
+                                              'Đang đọc: ${item.lastChapter!.name}',
+                                              style: TextStyle(
+                                                color: Theme.of(context)
+                                                    .colorScheme
+                                                    .secondary,
+                                              ),
+                                            ),
+                                          ),
+                                          TextButton.icon(
+                                            icon: const Icon(Icons.play_arrow),
+                                            label: const Text('Đọc tiếp'),
+                                            onPressed: () {
+                                              Navigator.push(
+                                                context,
+                                                MaterialPageRoute(
+                                                  builder: (context) =>
+                                                      ChapterDetailScreen(
+                                                    novel: item.novel,
+                                                    chapter: item.lastChapter!,
+                                                    currentIndex: item
+                                                            .novel.chapters
+                                                            ?.indexWhere((c) =>
+                                                                c.id ==
+                                                                item.lastChapter!
+                                                                    .id) ??
+                                                        0,
+                                                    allChapters:
+                                                        item.novel.chapters ??
+                                                            [],
+                                                  ),
+                                                ),
+                                              ).then((_) => loadHistory());
+                                            },
+                                          ),
+                                        ],
                                       ),
                                   ],
                                 ),
@@ -469,10 +503,8 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                     const SizedBox(height: 16),
                     if (state.session.user?.isAdmin == true) ...[
-                      Wrap(
-                        alignment: WrapAlignment.center,
-                        spacing: 16,
-                        runSpacing: 16,
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           ElevatedButton.icon(
                             icon: const Icon(Icons.add),
@@ -481,10 +513,8 @@ class _HomeScreenState extends State<HomeScreen> {
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (context) => BlocProvider.value(
-                                    value: context.read<SessionCubit>(),
-                                    child: const UploadNovelScreen(),
-                                  ),
+                                  builder: (context) =>
+                                      const UploadNovelScreen(),
                                 ),
                               );
                             },
@@ -494,6 +524,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                   horizontal: 16, vertical: 12),
                             ),
                           ),
+                          const SizedBox(width: 16),
                           ElevatedButton.icon(
                             icon: const Icon(Icons.category),
                             label: const Text('Quản lý thể loại'),
@@ -514,132 +545,25 @@ class _HomeScreenState extends State<HomeScreen> {
                           ),
                         ],
                       ),
-                      const SizedBox(height: 24),
-                      Text(
-                        'Truyện của bạn',
-                        style: Theme.of(context).textTheme.titleLarge,
-                      ),
                       const SizedBox(height: 16),
-                      Expanded(
-                        child: SingleChildScrollView(
-                          child: Column(
-                            children: novels
-                                .where((n) => n.userId == state.session.user.id)
-                                .map((novel) => Card(
-                                      margin: const EdgeInsets.symmetric(
-                                          vertical: 8, horizontal: 16),
-                                      child: ExpansionTile(
-                                        leading: ClipRRect(
-                                          borderRadius:
-                                              BorderRadius.circular(4),
-                                          child: Image.network(
-                                            novel.cover,
-                                            width: 50,
-                                            height: 70,
-                                            fit: BoxFit.cover,
-                                            errorBuilder:
-                                                (context, error, stackTrace) =>
-                                                    const Icon(Icons.error),
-                                          ),
-                                        ),
-                                        title: Text(novel.name),
-                                        subtitle: Text(
-                                            'Số chương: ${novel.chapters?.length ?? 0}'),
-                                        children: [
-                                          Padding(
-                                            padding: const EdgeInsets.all(16.0),
-                                            child: Column(
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.stretch,
-                                              children: [
-                                                ElevatedButton.icon(
-                                                  icon: const Icon(
-                                                      Icons.add_circle),
-                                                  label: const Text(
-                                                      'Thêm chương mới'),
-                                                  onPressed: () {
-                                                    Navigator.push(
-                                                      context,
-                                                      MaterialPageRoute(
-                                                        builder: (context) =>
-                                                            BlocProvider.value(
-                                                          value: context.read<
-                                                              SessionCubit>(),
-                                                          child:
-                                                              UploadChapterScreen(
-                                                                  novel: novel),
-                                                        ),
-                                                      ),
-                                                    );
-                                                  },
-                                                  style:
-                                                      ElevatedButton.styleFrom(
-                                                    backgroundColor:
-                                                        Colors.blue,
-                                                  ),
-                                                ),
-                                                const SizedBox(height: 8),
-                                                ElevatedButton.icon(
-                                                  icon: const Icon(
-                                                      Icons.category),
-                                                  label: const Text(
-                                                      'Quản lý thể loại'),
-                                                  onPressed: () {
-                                                    Navigator.push(
-                                                      context,
-                                                      MaterialPageRoute(
-                                                        builder: (context) =>
-                                                            BlocProvider.value(
-                                                          value: context.read<
-                                                              SessionCubit>(),
-                                                          child:
-                                                              ManageNovelCategoriesScreen(
-                                                                  novel: novel),
-                                                        ),
-                                                      ),
-                                                    );
-                                                  },
-                                                  style:
-                                                      ElevatedButton.styleFrom(
-                                                    backgroundColor:
-                                                        Colors.orange,
-                                                  ),
-                                                ),
-                                                const SizedBox(height: 8),
-                                                ElevatedButton.icon(
-                                                  icon: const Icon(Icons.edit),
-                                                  label:
-                                                      const Text('Sửa chương'),
-                                                  onPressed: () {
-                                                    Navigator.push(
-                                                      context,
-                                                      MaterialPageRoute(
-                                                        builder: (context) =>
-                                                            BlocProvider.value(
-                                                          value: context.read<
-                                                              SessionCubit>(),
-                                                          child:
-                                                              SelectNovelScreen(
-                                                                  selectedNovel:
-                                                                      novel),
-                                                        ),
-                                                      ),
-                                                    );
-                                                  },
-                                                  style:
-                                                      ElevatedButton.styleFrom(
-                                                    backgroundColor:
-                                                        Colors.green,
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ))
-                                .toList(),
-                          ),
+                      ElevatedButton.icon(
+                        icon: const Icon(Icons.book),
+                        label: const Text('Quản lý tất cả truyện'),
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => BlocProvider.value(
+                                value: context.read<SessionCubit>(),
+                                child: const ManageNovelsScreen(),
+                              ),
+                            ),
+                          );
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.blue,
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 12),
                         ),
                       ),
                     ],

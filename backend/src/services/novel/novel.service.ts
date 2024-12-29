@@ -218,24 +218,38 @@ export class NovelService {
       throw new BadRequestException('Một số thể loại không tồn tại');
     }
 
-    // Thêm các thể loại mới
-    const existingCategoryIds = novel.categories.map((nc) => nc.categoryId);
-    const newCategoryIds = categoryIds.filter(
-      (id) => !existingCategoryIds.includes(id),
-    );
+    // Xóa tất cả các thể loại cũ
+    await this.databaseService.novelCategory.deleteMany({
+      where: {
+        novelId: id,
+      },
+    });
 
+    // Thêm các thể loại mới
     await this.databaseService.novelCategory.createMany({
-      data: newCategoryIds.map((categoryId) => ({
+      data: categoryIds.map((categoryId) => ({
         novelId: id,
         categoryId,
       })),
-      skipDuplicates: true,
     });
 
+    // Trả về novel với thông tin categories đã cập nhật
     return this.databaseService.novel.findUnique({
       where: { id },
       select: {
         id: true,
+        name: true,
+        description: true,
+        author: true,
+        cover: true,
+        status: true,
+        view: true,
+        rating: true,
+        followerCount: true,
+        commentCount: true,
+        createdAt: true,
+        updatedAt: true,
+        userId: true,
         categories: {
           select: {
             category: {
