@@ -1,3 +1,10 @@
+export declare class CategoryDto {
+    id: number;
+    name: string;
+}
+export declare class NovelCategoryDto {
+    category: CategoryDto;
+}
 export default class NovelDto {
     id: number;
     name: string;
@@ -12,4 +19,5 @@ export default class NovelDto {
     followerCount: number;
     commentCount: number;
     userId: number;
+    categories: NovelCategoryDto[];
 }

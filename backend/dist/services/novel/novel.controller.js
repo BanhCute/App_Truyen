@@ -49,11 +49,26 @@ let NovelController = class NovelController {
     }
     async addCategories(id, categoryIds, req) {
         const session = (0, auth_utils_1.getSession)(req);
-        return this.novelService.addCategories(id, categoryIds, session.id);
+        const result = await this.novelService.addCategories(id, categoryIds, session.id);
+        return (0, class_transformer_1.plainToInstance)(novel_dto_1.default, result);
     }
     async removeCategory(id, categoryId, req) {
         const session = (0, auth_utils_1.getSession)(req);
         return this.novelService.removeCategory(id, categoryId, session.id);
+    }
+    async getNovelRatings(id) {
+        return this.novelService.getNovelRatings(id);
+    }
+    async getAverageRating(id) {
+        return this.novelService.getAverageRating(id);
+    }
+    async rateNovel(id, ratingData, req) {
+        const session = (0, auth_utils_1.getSession)(req);
+        return this.novelService.rateNovel(id, session.id, ratingData);
+    }
+    async updateRating(id, ratingId, ratingData, req) {
+        const session = (0, auth_utils_1.getSession)(req);
+        return this.novelService.updateRating(id, ratingId, session.id, ratingData);
     }
 };
 exports.NovelController = NovelController;
@@ -113,6 +128,39 @@ __decorate([
     __metadata("design:paramtypes", [Number, Number, Object]),
     __metadata("design:returntype", Promise)
 ], NovelController.prototype, "removeCategory", null);
+__decorate([
+    (0, common_1.Get)(':id/ratings'),
+    __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Number]),
+    __metadata("design:returntype", Promise)
+], NovelController.prototype, "getNovelRatings", null);
+__decorate([
+    (0, common_1.Get)(':id/ratings/average'),
+    __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Number]),
+    __metadata("design:returntype", Promise)
+], NovelController.prototype, "getAverageRating", null);
+__decorate([
+    (0, common_1.Post)(':id/ratings'),
+    __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),
+    __param(1, (0, common_1.Body)()),
+    __param(2, (0, common_1.Req)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Number, Object, Object]),
+    __metadata("design:returntype", Promise)
+], NovelController.prototype, "rateNovel", null);
+__decorate([
+    (0, common_1.Patch)(':id/ratings/:ratingId'),
+    __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),
+    __param(1, (0, common_1.Param)('ratingId', common_1.ParseIntPipe)),
+    __param(2, (0, common_1.Body)()),
+    __param(3, (0, common_1.Req)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Number, Number, Object, Object]),
+    __metadata("design:returntype", Promise)
+], NovelController.prototype, "updateRating", null);
 exports.NovelController = NovelController = __decorate([
     (0, common_1.Controller)('novels'),
     __metadata("design:paramtypes", [novel_service_1.NovelService])

@@ -90,13 +90,31 @@ export declare class NovelService {
         id: number;
     }>;
     addCategories(id: number, categoryIds: number[], userId: number): Promise<{
-        id: number;
-        categories: {
+        categories: ({
             category: {
                 id: number;
                 name: string;
+                description: string | null;
             };
-        }[];
+        } & {
+            id: number;
+            novelId: number;
+            categoryId: number;
+        })[];
+    } & {
+        id: number;
+        name: string;
+        rating: number | null;
+        view: number;
+        userId: number;
+        updatedAt: Date;
+        createdAt: Date;
+        description: string | null;
+        cover: string | null;
+        author: string;
+        status: string;
+        followerCount: number;
+        commentCount: number;
     }>;
     removeCategory(id: number, categoryId: number, userId: number): Promise<{
         id: number;
@@ -106,5 +124,56 @@ export declare class NovelService {
                 name: string;
             };
         }[];
+    }>;
+    getNovelRatings(id: number): Promise<({
+        user: {
+            id: number;
+            name: string;
+            avatar: string;
+        };
+    } & {
+        id: number;
+        userId: number;
+        createdAt: Date;
+        novelId: number;
+        content: string;
+        score: number;
+    })[]>;
+    getAverageRating(id: number): Promise<{
+        average: number;
+    }>;
+    rateNovel(id: number, userId: number, ratingData: {
+        score: number;
+        content: string;
+    }): Promise<{
+        user: {
+            id: number;
+            name: string;
+            avatar: string;
+        };
+    } & {
+        id: number;
+        userId: number;
+        createdAt: Date;
+        novelId: number;
+        content: string;
+        score: number;
+    }>;
+    updateRating(novelId: number, ratingId: number, userId: number, ratingData: {
+        score: number;
+        content: string;
+    }): Promise<{
+        user: {
+            id: number;
+            name: string;
+            avatar: string;
+        };
+    } & {
+        id: number;
+        userId: number;
+        createdAt: Date;
+        novelId: number;
+        content: string;
+        score: number;
     }>;
 }

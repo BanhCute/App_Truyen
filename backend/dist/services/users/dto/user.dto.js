@@ -10,41 +10,19 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const class_transformer_1 = require("class-transformer");
-const novel_dto_1 = require("../../novel/dto/novel.dto");
-const user_dto_1 = require("../../users/dto/user.dto");
-class RatingDto {
+class UserDto {
 }
-exports.default = RatingDto;
+exports.default = UserDto;
 __decorate([
     (0, class_transformer_1.Expose)(),
     __metadata("design:type", Number)
-], RatingDto.prototype, "id", void 0);
-__decorate([
-    (0, class_transformer_1.Expose)(),
-    __metadata("design:type", Number)
-], RatingDto.prototype, "novelId", void 0);
-__decorate([
-    (0, class_transformer_1.Expose)(),
-    __metadata("design:type", Number)
-], RatingDto.prototype, "userId", void 0);
+], UserDto.prototype, "id", void 0);
 __decorate([
     (0, class_transformer_1.Expose)(),
     __metadata("design:type", String)
-], RatingDto.prototype, "content", void 0);
+], UserDto.prototype, "name", void 0);
 __decorate([
     (0, class_transformer_1.Expose)(),
-    __metadata("design:type", Number)
-], RatingDto.prototype, "score", void 0);
-__decorate([
-    (0, class_transformer_1.Expose)(),
-    __metadata("design:type", Date)
-], RatingDto.prototype, "createdAt", void 0);
-__decorate([
-    (0, class_transformer_1.Expose)(),
-    __metadata("design:type", novel_dto_1.default)
-], RatingDto.prototype, "novel", void 0);
-__decorate([
-    (0, class_transformer_1.Expose)(),
-    __metadata("design:type", user_dto_1.default)
-], RatingDto.prototype, "user", void 0);
-//# sourceMappingURL=rating.dto.js.map
+    __metadata("design:type", String)
+], UserDto.prototype, "avatar", void 0);
+//# sourceMappingURL=user.dto.js.map

@@ -19,12 +19,12 @@ class RatingService {
 
   static Future<int> _getCurrentUserId() async {
     final prefs = await SharedPreferences.getInstance();
-    final sessionJson = prefs.getString('session');
-    if (sessionJson == null) {
+    final userData = prefs.getString('user_data');
+    if (userData == null) {
       throw Exception('Vui lòng đăng nhập để đánh giá');
     }
-    final session = json.decode(sessionJson);
-    return session['user']['id'] as int;
+    final user = json.decode(userData);
+    return user['id'] as int;
   }
 
   static Future<List<Rating>> getNovelRatings(String novelId) async {

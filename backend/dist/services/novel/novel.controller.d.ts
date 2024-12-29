@@ -11,15 +11,7 @@ export declare class NovelController {
     findOne(id: number): NovelDto;
     update(id: number, updateNovelDto: UpdateNovelDto, req: Request): NovelDto;
     remove(id: number, req: Request): NovelDto;
-    addCategories(id: number, categoryIds: number[], req: Request): Promise<{
-        id: number;
-        categories: {
-            category: {
-                id: number;
-                name: string;
-            };
-        }[];
-    }>;
+    addCategories(id: number, categoryIds: number[], req: Request): Promise<NovelDto>;
     removeCategory(id: number, categoryId: number, req: Request): Promise<{
         id: number;
         categories: {
@@ -28,5 +20,56 @@ export declare class NovelController {
                 name: string;
             };
         }[];
+    }>;
+    getNovelRatings(id: number): Promise<({
+        user: {
+            id: number;
+            name: string;
+            avatar: string;
+        };
+    } & {
+        id: number;
+        userId: number;
+        createdAt: Date;
+        novelId: number;
+        content: string;
+        score: number;
+    })[]>;
+    getAverageRating(id: number): Promise<{
+        average: number;
+    }>;
+    rateNovel(id: number, ratingData: {
+        score: number;
+        content: string;
+    }, req: Request): Promise<{
+        user: {
+            id: number;
+            name: string;
+            avatar: string;
+        };
+    } & {
+        id: number;
+        userId: number;
+        createdAt: Date;
+        novelId: number;
+        content: string;
+        score: number;
+    }>;
+    updateRating(id: number, ratingId: number, ratingData: {
+        score: number;
+        content: string;
+    }, req: Request): Promise<{
+        user: {
+            id: number;
+            name: string;
+            avatar: string;
+        };
+    } & {
+        id: number;
+        userId: number;
+        createdAt: Date;
+        novelId: number;
+        content: string;
+        score: number;
     }>;
 }

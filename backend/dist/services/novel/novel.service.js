@@ -203,27 +203,23 @@ let NovelService = class NovelService {
         if (categories.length !== categoryIds.length) {
             throw new common_1.BadRequestException('Một số thể loại không tồn tại');
         }
-        const existingCategoryIds = novel.categories.map((nc) => nc.categoryId);
-        const newCategoryIds = categoryIds.filter((id) => !existingCategoryIds.includes(id));
+        await this.databaseService.novelCategory.deleteMany({
+            where: {
+                novelId: id,
+            },
+        });
         await this.databaseService.novelCategory.createMany({
-            data: newCategoryIds.map((categoryId) => ({
+            data: categoryIds.map((categoryId) => ({
                 novelId: id,
                 categoryId,
             })),
-            skipDuplicates: true,
         });
         return this.databaseService.novel.findUnique({
             where: { id },
-            select: {
-                id: true,
+            include: {
                 categories: {
-                    select: {
-                        category: {
-                            select: {
-                                id: true,
-                                name: true,
-                            },
-                        },
+                    include: {
+                        category: true,
                     },
                 },
             },
@@ -267,6 +263,139 @@ let NovelService = class NovelService {
                 },
             },
         });
+    }
+    async getNovelRatings(id) {
+        const novel = await this.databaseService.novel.findUnique({
+            where: { id },
+            include: {
+                ratings: {
+                    include: {
+                        user: {
+                            select: {
+                                id: true,
+                                name: true,
+                                avatar: true,
+                            },
+                        },
+                    },
+                    orderBy: {
+                        createdAt: 'desc',
+                    },
+                },
+            },
+        });
+        if (!novel) {
+            throw new common_1.NotFoundException('Không tìm thấy truyện');
+        }
+        return novel.ratings;
+    }
+    async getAverageRating(id) {
+        const novel = await this.databaseService.novel.findUnique({
+            where: { id },
+            include: {
+                ratings: true,
+            },
+        });
+        if (!novel) {
+            throw new common_1.NotFoundException('Không tìm thấy truyện');
+        }
+        if (novel.ratings.length === 0) {
+            return { average: 0 };
+        }
+        const sum = novel.ratings.reduce((acc, rating) => acc + rating.score, 0);
+        const average = sum / novel.ratings.length;
+        return { average };
+    }
+    async rateNovel(id, userId, ratingData) {
+        const novel = await this.databaseService.novel.findUnique({
+            where: { id },
+        });
+        if (!novel) {
+            throw new common_1.NotFoundException('Không tìm thấy truyện');
+        }
+        const existingRating = await this.databaseService.rating.findFirst({
+            where: {
+                novelId: id,
+                userId: userId,
+            },
+        });
+        if (existingRating) {
+            throw new common_1.BadRequestException('Bạn đã đánh giá truyện này rồi');
+        }
+        if (ratingData.score < 1 || ratingData.score > 5) {
+            throw new common_1.BadRequestException('Điểm đánh giá phải từ 1 đến 5');
+        }
+        const rating = await this.databaseService.rating.create({
+            data: {
+                novelId: id,
+                userId: userId,
+                score: ratingData.score,
+                content: ratingData.content,
+            },
+            include: {
+                user: {
+                    select: {
+                        id: true,
+                        name: true,
+                        avatar: true,
+                    },
+                },
+            },
+        });
+        const ratings = await this.databaseService.rating.findMany({
+            where: { novelId: id },
+        });
+        const sum = ratings.reduce((acc, rating) => acc + rating.score, 0);
+        const average = sum / ratings.length;
+        await this.databaseService.novel.update({
+            where: { id },
+            data: {
+                rating: average,
+            },
+        });
+        return rating;
+    }
+    async updateRating(novelId, ratingId, userId, ratingData) {
+        const rating = await this.databaseService.rating.findUnique({
+            where: { id: ratingId },
+        });
+        if (!rating) {
+            throw new common_1.NotFoundException('Không tìm thấy đánh giá');
+        }
+        if (rating.userId !== userId) {
+            throw new common_1.ForbiddenException('Bạn không có quyền sửa đánh giá này');
+        }
+        if (ratingData.score < 1 || ratingData.score > 5) {
+            throw new common_1.BadRequestException('Điểm đánh giá phải từ 1 đến 5');
+        }
+        const updatedRating = await this.databaseService.rating.update({
+            where: { id: ratingId },
+            data: {
+                score: ratingData.score,
+                content: ratingData.content,
+            },
+            include: {
+                user: {
+                    select: {
+                        id: true,
+                        name: true,
+                        avatar: true,
+                    },
+                },
+            },
+        });
+        const ratings = await this.databaseService.rating.findMany({
+            where: { novelId },
+        });
+        const sum = ratings.reduce((acc, rating) => acc + rating.score, 0);
+        const average = sum / ratings.length;
+        await this.databaseService.novel.update({
+            where: { id: novelId },
+            data: {
+                rating: average,
+            },
+        });
+        return updatedRating;
     }
 };
 exports.NovelService = NovelService;

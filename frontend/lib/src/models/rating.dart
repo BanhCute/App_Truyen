@@ -51,13 +51,9 @@ class Rating {
 
     // Lấy thông tin từ user object
     final name = user!['name']?.toString();
-    final email = user!['email']?.toString();
-    final displayName = user!['displayName']?.toString();
 
-    // Trả về tên theo thứ tự ưu tiên
-    if (displayName != null && displayName.isNotEmpty) return displayName;
+    // Trả về tên nếu có
     if (name != null && name.isNotEmpty) return name;
-    if (email != null && email.isNotEmpty) return email.split('@')[0];
 
     return 'Người dùng';
   }
@@ -65,10 +61,12 @@ class Rating {
   String get userAvatar {
     if (user == null) return 'U';
 
-    // Nếu có avatar thì trả về chữ cái đầu của avatar
+    // Lấy avatar từ user object
     final avatar = user!['avatar']?.toString();
+
+    // Nếu có avatar thì trả về
     if (avatar != null && avatar.isNotEmpty) {
-      return avatar[0].toUpperCase();
+      return avatar;
     }
 
     // Nếu không có avatar thì lấy chữ cái đầu của tên

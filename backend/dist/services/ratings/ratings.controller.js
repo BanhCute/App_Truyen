@@ -20,6 +20,7 @@ const rating_dto_1 = require("./dto/rating.dto");
 const class_transformer_1 = require("class-transformer");
 const swagger_1 = require("@nestjs/swagger");
 const auth_utils_1 = require("../auth/auth.utils");
+const update_rating_dto_1 = require("./dto/update-rating.dto");
 let RatingsController = class RatingsController {
     constructor(ratingsService) {
         this.ratingsService = ratingsService;
@@ -33,8 +34,17 @@ let RatingsController = class RatingsController {
             .findAll()
             .then((items) => items.map((item) => (0, class_transformer_1.plainToInstance)(rating_dto_1.default, item)));
     }
+    findAllByNovelWithUser(novelId) {
+        return this.ratingsService
+            .findAllByNovelWithUser(novelId)
+            .then((items) => items.map((item) => (0, class_transformer_1.plainToInstance)(rating_dto_1.default, item)));
+    }
     findOne(id) {
         return (0, class_transformer_1.plainToInstance)(rating_dto_1.default, this.ratingsService.findOne(id));
+    }
+    update(id, updateRatingDto, req) {
+        const session = (0, auth_utils_1.getSession)(req);
+        return (0, class_transformer_1.plainToInstance)(rating_dto_1.default, this.ratingsService.update(id, updateRatingDto, session.id));
     }
 };
 exports.RatingsController = RatingsController;
@@ -53,12 +63,28 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], RatingsController.prototype, "findAll", null);
 __decorate([
+    (0, common_1.Get)('novel/:novelId/with-user'),
+    __param(0, (0, common_1.Param)('novelId', common_1.ParseIntPipe)),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Number]),
+    __metadata("design:returntype", void 0)
+], RatingsController.prototype, "findAllByNovelWithUser", null);
+__decorate([
     (0, common_1.Get)(':id'),
     __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Number]),
     __metadata("design:returntype", void 0)
 ], RatingsController.prototype, "findOne", null);
+__decorate([
+    (0, common_1.Put)(':id'),
+    __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),
+    __param(1, (0, common_1.Body)()),
+    __param(2, (0, common_1.Req)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Number, update_rating_dto_1.UpdateRatingDto, Object]),
+    __metadata("design:returntype", void 0)
+], RatingsController.prototype, "update", null);
 exports.RatingsController = RatingsController = __decorate([
     (0, swagger_1.ApiTags)('ratings'),
     (0, common_1.Controller)('ratings'),

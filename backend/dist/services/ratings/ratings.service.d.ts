@@ -1,5 +1,6 @@
 import { DatabaseService } from '../database/database.service';
 import { CreateRatingDto } from './dto/create-rating.dto';
+import { UpdateRatingDto } from './dto/update-rating.dto';
 export declare class RatingsService {
     private readonly databaseService;
     constructor(databaseService: DatabaseService);
@@ -7,9 +8,7 @@ export declare class RatingsService {
         user: {
             id: number;
             name: string;
-            avatar: string | null;
-            isDeleted: boolean;
-            isBanned: boolean;
+            avatar: string;
         };
         novel: {
             id: number;
@@ -38,9 +37,36 @@ export declare class RatingsService {
         user: {
             id: number;
             name: string;
-            avatar: string | null;
-            isDeleted: boolean;
-            isBanned: boolean;
+            avatar: string;
+        };
+        novel: {
+            id: number;
+            name: string;
+            rating: number | null;
+            view: number;
+            userId: number;
+            updatedAt: Date;
+            createdAt: Date;
+            description: string | null;
+            cover: string | null;
+            author: string;
+            status: string;
+            followerCount: number;
+            commentCount: number;
+        };
+    } & {
+        id: number;
+        userId: number;
+        createdAt: Date;
+        novelId: number;
+        content: string;
+        score: number;
+    })[]>;
+    findAllByNovelWithUser(novelId: number): Promise<({
+        user: {
+            id: number;
+            name: string;
+            avatar: string;
         };
         novel: {
             id: number;
@@ -69,9 +95,36 @@ export declare class RatingsService {
         user: {
             id: number;
             name: string;
-            avatar: string | null;
-            isDeleted: boolean;
-            isBanned: boolean;
+            avatar: string;
+        };
+        novel: {
+            id: number;
+            name: string;
+            rating: number | null;
+            view: number;
+            userId: number;
+            updatedAt: Date;
+            createdAt: Date;
+            description: string | null;
+            cover: string | null;
+            author: string;
+            status: string;
+            followerCount: number;
+            commentCount: number;
+        };
+    } & {
+        id: number;
+        userId: number;
+        createdAt: Date;
+        novelId: number;
+        content: string;
+        score: number;
+    }>;
+    update(id: number, updateRatingDto: UpdateRatingDto, userId: number): Promise<{
+        user: {
+            id: number;
+            name: string;
+            avatar: string;
         };
         novel: {
             id: number;

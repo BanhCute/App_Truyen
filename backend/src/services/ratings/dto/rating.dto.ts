@@ -1,5 +1,6 @@
 import { Expose } from 'class-transformer';
 import NovelDto from 'src/services/novel/dto/novel.dto';
+import UserDto from 'src/services/users/dto/user.dto';
 
 export default class RatingDto {
   @Expose()
@@ -7,6 +8,9 @@ export default class RatingDto {
 
   @Expose()
   novelId: number;
+
+  @Expose()
+  userId: number;
 
   @Expose()
   content: string;
@@ -19,4 +23,7 @@ export default class RatingDto {
 
   @Expose()
   novel: NovelDto;
+
+  @Expose()
+  user: UserDto;
 }

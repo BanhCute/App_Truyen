@@ -42,7 +42,13 @@ let RatingsService = class RatingsService {
             },
             include: {
                 novel: true,
-                user: true,
+                user: {
+                    select: {
+                        id: true,
+                        name: true,
+                        avatar: true,
+                    },
+                },
             },
         });
     }
@@ -50,7 +56,33 @@ let RatingsService = class RatingsService {
         return this.databaseService.rating.findMany({
             include: {
                 novel: true,
-                user: true,
+                user: {
+                    select: {
+                        id: true,
+                        name: true,
+                        avatar: true,
+                    },
+                },
+            },
+        });
+    }
+    async findAllByNovelWithUser(novelId) {
+        return this.databaseService.rating.findMany({
+            where: {
+                novelId: novelId,
+            },
+            include: {
+                novel: true,
+                user: {
+                    select: {
+                        id: true,
+                        name: true,
+                        avatar: true,
+                    },
+                },
+            },
+            orderBy: {
+                createdAt: 'desc',
             },
         });
     }
@@ -59,13 +91,56 @@ let RatingsService = class RatingsService {
             where: { id },
             include: {
                 novel: true,
-                user: true,
+                user: {
+                    select: {
+                        id: true,
+                        name: true,
+                        avatar: true,
+                    },
+                },
             },
         });
         if (!rating) {
             throw new common_1.NotFoundException(`Rating với ID ${id} không tồn tại`);
         }
         return rating;
+    }
+    async update(id, updateRatingDto, userId) {
+        const rating = await this.databaseService.rating.findUnique({
+            where: { id },
+            include: {
+                user: {
+                    select: {
+                        id: true,
+                        name: true,
+                        avatar: true,
+                    },
+                },
+            },
+        });
+        if (!rating) {
+            throw new common_1.NotFoundException(`Rating với ID ${id} không tồn tại`);
+        }
+        if (rating.userId !== userId) {
+            throw new common_1.ForbiddenException('Bạn không có quyền sửa đánh giá này');
+        }
+        return this.databaseService.rating.update({
+            where: { id },
+            data: {
+                content: updateRatingDto.content.trim(),
+                score: updateRatingDto.score,
+            },
+            include: {
+                novel: true,
+                user: {
+                    select: {
+                        id: true,
+                        name: true,
+                        avatar: true,
+                    },
+                },
+            },
+        });
     }
 };
 exports.RatingsService = RatingsService;
