@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import { DatabaseService } from '../database/database.service';
 import { CreateRatingDto } from './dto/create-rating.dto';
+import { UpdateRatingDto } from './dto/update-rating.dto';
 
 @Injectable()
 export class RatingsService {
@@ -75,5 +76,37 @@ export class RatingsService {
     }
 
     return rating;
+  }
+
+  async update(id: number, updateRatingDto: UpdateRatingDto, userId: number) {
+    // Kiểm tra rating tồn tại
+    const rating = await this.databaseService.rating.findUnique({
+      where: { id },
+      include: {
+        user: true,
+      },
+    });
+
+    if (!rating) {
+      throw new NotFoundException(`Rating với ID ${id} không tồn tại`);
+    }
+
+    // Kiểm tra quyền update
+    if (rating.userId !== userId) {
+      throw new ForbiddenException('Bạn không có quyền sửa đánh giá này');
+    }
+
+    // Update rating
+    return this.databaseService.rating.update({
+      where: { id },
+      data: {
+        content: updateRatingDto.content.trim(),
+        score: updateRatingDto.score,
+      },
+      include: {
+        novel: true,
+        user: true,
+      },
+    });
   }
 }

@@ -99,8 +99,8 @@ class _RatingSectionState extends State<RatingSection> {
     }
 
     double selectedScore = existingRating?.score ?? 5;
-    final contentController =
-        TextEditingController(text: existingRating?.content ?? '');
+    String content = existingRating?.content ?? '';
+    final contentController = TextEditingController(text: content);
 
     showDialog(
       context: context,
@@ -144,6 +144,9 @@ class _RatingSectionState extends State<RatingSection> {
                 const SizedBox(height: 16),
                 TextField(
                   controller: contentController,
+                  onChanged: (value) {
+                    content = value;
+                  },
                   decoration: const InputDecoration(
                     labelText: 'Nhận xét',
                     border: OutlineInputBorder(),
@@ -162,8 +165,7 @@ class _RatingSectionState extends State<RatingSection> {
             ),
             ElevatedButton(
               onPressed: () async {
-                final content = contentController.text.trim();
-                if (content.isEmpty) {
+                if (content.trim().isEmpty) {
                   ScaffoldMessenger.of(dialogContext).showSnackBar(
                     const SnackBar(content: Text('Vui lòng nhập nhận xét')),
                   );
@@ -171,34 +173,30 @@ class _RatingSectionState extends State<RatingSection> {
                 }
 
                 try {
+                  Navigator.of(dialogContext).pop();
+
                   if (_userRating != null && _userRating!.id != -1) {
                     await RatingService.updateRating(
                       widget.novelId,
                       _userRating!.id.toString(),
                       selectedScore,
-                      content,
+                      content.trim(),
                     );
                   } else {
                     await RatingService.rateNovel(
                       widget.novelId,
                       selectedScore,
-                      content,
+                      content.trim(),
                     );
                   }
 
                   if (!mounted) return;
 
-                  // Đóng dialog
-                  Navigator.of(dialogContext).pop();
-                  contentController.dispose();
-
-                  // Cập nhật UI
                   await _loadRatings();
                   if (widget.onRatingUpdated != null) {
                     widget.onRatingUpdated!();
                   }
 
-                  if (!mounted) return;
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                       content: Text(_userRating?.id == -1
@@ -209,7 +207,7 @@ class _RatingSectionState extends State<RatingSection> {
                 } catch (e) {
                   print('Error in rating dialog: $e');
                   if (!mounted) return;
-                  ScaffoldMessenger.of(dialogContext).showSnackBar(
+                  ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                         content:
                             Text(e.toString().replaceAll('Exception: ', ''))),
@@ -222,9 +220,7 @@ class _RatingSectionState extends State<RatingSection> {
         );
       },
     ).whenComplete(() {
-      if (mounted) {
-        contentController.dispose();
-      }
+      contentController.dispose();
     });
   }
 

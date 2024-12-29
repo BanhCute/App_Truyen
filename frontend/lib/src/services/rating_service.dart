@@ -84,10 +84,19 @@ class RatingService {
     );
 
     if (response.statusCode != 201) {
-      throw Exception(json.decode(response.body)['message']);
+      final error = json.decode(response.body);
+      if (error['message']?.contains('đã đánh giá') ?? false) {
+        // Nếu đã đánh giá rồi, thử update
+        final ratings = await getNovelRatings(novelId);
+        final userRating = ratings.firstWhere(
+          (r) => r.userId.toString() == error['userId'].toString(),
+          orElse: () => throw Exception(error['message']),
+        );
+        await updateRating(novelId, userRating.id.toString(), score, content);
+        return;
+      }
+      throw Exception(error['message']);
     }
-
-    await getNovelRatings(novelId);
   }
 
   static Future<void> updateRating(
@@ -110,7 +119,5 @@ class RatingService {
     if (response.statusCode != 200) {
       throw Exception(json.decode(response.body)['message']);
     }
-
-    await getNovelRatings(novelId);
   }
 }
