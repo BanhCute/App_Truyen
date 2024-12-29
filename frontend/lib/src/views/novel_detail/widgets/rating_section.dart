@@ -4,6 +4,7 @@ import 'package:frontend/bloc/session_cubit.dart';
 
 import '../../../models/rating.dart';
 import '../../../services/rating_service.dart';
+import 'rating_dialog.dart';
 
 class RatingSection extends StatefulWidget {
   final String novelId;
@@ -48,6 +49,7 @@ class _RatingSectionState extends State<RatingSection> {
 
     try {
       final ratings = await RatingService.getNovelRatings(widget.novelId);
+      print('Loaded ${ratings.length} ratings for novel ${widget.novelId}');
 
       if (mounted) {
         setState(() {
@@ -61,18 +63,25 @@ class _RatingSectionState extends State<RatingSection> {
 
           // Tìm đánh giá của người dùng hiện tại
           if (_sessionState is Authenticated) {
+            final userId = (_sessionState as Authenticated).session.user.id;
+            print('Current user ID: $userId');
+
             _userRating = _ratings.firstWhere(
               (rating) =>
-                  rating.userId ==
-                  (_sessionState as Authenticated).session.user.id,
-              orElse: () => Rating(
-                id: -1,
-                novelId: int.parse(widget.novelId),
-                userId: (_sessionState as Authenticated).session.user.id,
-                content: '',
-                score: 5.0,
-                createdAt: DateTime.now(),
-              ),
+                  rating.userId == userId &&
+                  rating.novelId == int.parse(widget.novelId),
+              orElse: () {
+                print(
+                    'No rating found for user $userId and novel ${widget.novelId}');
+                return Rating(
+                  id: -1,
+                  novelId: int.parse(widget.novelId),
+                  userId: userId,
+                  content: '',
+                  score: 5.0,
+                  createdAt: DateTime.now(),
+                );
+              },
             );
             print('Found user rating: ${_userRating?.id}');
           }
@@ -90,7 +99,7 @@ class _RatingSectionState extends State<RatingSection> {
     }
   }
 
-  void _showRatingDialog({Rating? existingRating}) {
+  Future<void> _handleRating({Rating? existingRating}) async {
     if (_sessionState is! Authenticated) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Vui lòng đăng nhập để đánh giá')),
@@ -98,130 +107,58 @@ class _RatingSectionState extends State<RatingSection> {
       return;
     }
 
-    double selectedScore = existingRating?.score ?? 5;
-    String content = existingRating?.content ?? '';
-    final contentController = TextEditingController(text: content);
-
-    showDialog(
+    final result = await showDialog<Map<String, dynamic>>(
       context: context,
-      barrierDismissible: false,
-      builder: (dialogContext) {
-        return AlertDialog(
-          title:
-              Text(_userRating?.id == -1 ? 'Đánh giá truyện' : 'Sửa đánh giá'),
-          content: StatefulBuilder(
-            builder: (context, setState) => Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                SizedBox(
-                  width: double.maxFinite,
-                  child: SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: List.generate(5, (index) {
-                        return Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 4),
-                          child: InkWell(
-                            onTap: () {
-                              setState(() {
-                                selectedScore = index + 1;
-                              });
-                            },
-                            child: Icon(
-                              index < selectedScore
-                                  ? Icons.star
-                                  : Icons.star_border,
-                              color: Colors.amber,
-                              size: 30,
-                            ),
-                          ),
-                        );
-                      }),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                TextField(
-                  controller: contentController,
-                  onChanged: (value) {
-                    content = value;
-                  },
-                  decoration: const InputDecoration(
-                    labelText: 'Nhận xét',
-                    border: OutlineInputBorder(),
-                  ),
-                  maxLines: 3,
-                ),
-              ],
+      builder: (context) => RatingDialog(
+        initialRating: existingRating?.score ?? 5,
+        initialContent: existingRating?.content ?? '',
+        isUpdate: existingRating?.id != -1,
+      ),
+    );
+
+    if (result != null && mounted) {
+      try {
+        if (existingRating?.id != -1) {
+          await RatingService.updateRating(
+            widget.novelId,
+            existingRating!.id.toString(),
+            result['rating'],
+            result['content'],
+          );
+        } else {
+          await RatingService.rateNovel(
+            widget.novelId,
+            result['rating'],
+            result['content'],
+          );
+        }
+
+        await _loadRatings();
+        if (widget.onRatingUpdated != null) {
+          widget.onRatingUpdated!();
+        }
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(existingRating?.id == -1
+                  ? 'Đã đánh giá truyện'
+                  : 'Đã cập nhật đánh giá'),
             ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(dialogContext).pop();
-              },
-              child: const Text('Hủy'),
+          );
+        }
+      } catch (e) {
+        print('Error handling rating: $e');
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(e.toString().replaceAll('Exception: ', '')),
+              duration: const Duration(seconds: 2),
             ),
-            ElevatedButton(
-              onPressed: () async {
-                if (content.trim().isEmpty) {
-                  ScaffoldMessenger.of(dialogContext).showSnackBar(
-                    const SnackBar(content: Text('Vui lòng nhập nhận xét')),
-                  );
-                  return;
-                }
-
-                try {
-                  Navigator.of(dialogContext).pop();
-
-                  if (_userRating != null && _userRating!.id != -1) {
-                    await RatingService.updateRating(
-                      widget.novelId,
-                      _userRating!.id.toString(),
-                      selectedScore,
-                      content.trim(),
-                    );
-                  } else {
-                    await RatingService.rateNovel(
-                      widget.novelId,
-                      selectedScore,
-                      content.trim(),
-                    );
-                  }
-
-                  if (!mounted) return;
-
-                  await _loadRatings();
-                  if (widget.onRatingUpdated != null) {
-                    widget.onRatingUpdated!();
-                  }
-
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(_userRating?.id == -1
-                          ? 'Đã đánh giá truyện'
-                          : 'Đã cập nhật đánh giá'),
-                    ),
-                  );
-                } catch (e) {
-                  print('Error in rating dialog: $e');
-                  if (!mounted) return;
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                        content:
-                            Text(e.toString().replaceAll('Exception: ', ''))),
-                  );
-                }
-              },
-              child: Text(_userRating?.id == -1 ? 'Đánh giá' : 'Cập nhật'),
-            ),
-          ],
-        );
-      },
-    ).whenComplete(() {
-      contentController.dispose();
-    });
+          );
+        }
+      }
+    }
   }
 
   @override
@@ -268,7 +205,7 @@ class _RatingSectionState extends State<RatingSection> {
                   if (state is Authenticated) {
                     return ElevatedButton(
                       onPressed: () =>
-                          _showRatingDialog(existingRating: _userRating),
+                          _handleRating(existingRating: _userRating),
                       child: Text(
                           _userRating?.id == -1 ? 'Đánh giá' : 'Sửa đánh giá'),
                     );
@@ -303,7 +240,7 @@ class _RatingSectionState extends State<RatingSection> {
                       Row(
                         children: [
                           CircleAvatar(
-                            backgroundColor: Colors.blue,
+                            backgroundColor: Theme.of(context).primaryColor,
                             child: Text(
                               rating.userAvatar,
                               style: const TextStyle(color: Colors.white),
@@ -335,7 +272,7 @@ class _RatingSectionState extends State<RatingSection> {
                             ),
                           ),
                           Text(
-                            '${rating.createdAt.add(const Duration(hours: 7)).hour}:${rating.createdAt.add(const Duration(hours: 7)).minute.toString().padLeft(2, '0')} ${rating.createdAt.add(const Duration(hours: 7)).day}/${rating.createdAt.add(const Duration(hours: 7)).month}/${rating.createdAt.add(const Duration(hours: 7)).year}',
+                            _formatDateTime(rating.createdAt),
                             style: const TextStyle(
                                 color: Colors.grey, fontSize: 12),
                           ),
@@ -351,5 +288,10 @@ class _RatingSectionState extends State<RatingSection> {
           ),
       ],
     );
+  }
+
+  String _formatDateTime(DateTime dateTime) {
+    final localTime = dateTime.add(const Duration(hours: 7));
+    return '${localTime.hour}:${localTime.minute.toString().padLeft(2, '0')} ${localTime.day}/${localTime.month}/${localTime.year}';
   }
 }

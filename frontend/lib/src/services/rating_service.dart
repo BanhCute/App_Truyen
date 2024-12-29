@@ -8,10 +8,23 @@ class RatingService {
   static Future<Map<String, String>> _getHeaders() async {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('token');
+    if (token == null) {
+      throw Exception('Vui lòng đăng nhập để đánh giá');
+    }
     return {
       'Authorization': 'Bearer $token',
       'Content-Type': 'application/json',
     };
+  }
+
+  static Future<int> _getCurrentUserId() async {
+    final prefs = await SharedPreferences.getInstance();
+    final sessionJson = prefs.getString('session');
+    if (sessionJson == null) {
+      throw Exception('Vui lòng đăng nhập để đánh giá');
+    }
+    final session = json.decode(sessionJson);
+    return session['user']['id'] as int;
   }
 
   static Future<List<Rating>> getNovelRatings(String novelId) async {
@@ -19,7 +32,7 @@ class RatingService {
       print('Fetching ratings for novel: $novelId');
       final headers = await _getHeaders();
       final response = await http.get(
-        Uri.parse('${dotenv.get('API_URL')}/ratings'),
+        Uri.parse('${dotenv.get('API_URL')}/ratings/novel/$novelId/with-user'),
         headers: headers,
       );
 
@@ -27,11 +40,7 @@ class RatingService {
 
       if (response.statusCode == 200) {
         final List<dynamic> data = json.decode(response.body);
-        final novelIdInt = int.parse(novelId);
-        return data
-            .where((json) => json['novelId'] == novelIdInt)
-            .map((json) => Rating.fromJson(json))
-            .toList();
+        return data.map((json) => Rating.fromJson(json)).toList();
       } else {
         print(
             'Failed to load ratings: ${response.statusCode} - ${response.body}');
@@ -43,59 +52,58 @@ class RatingService {
     }
   }
 
-  static Future<void> _updateNovelRating(
-      String novelId, List<Rating> ratings) async {
-    try {
-      final headers = await _getHeaders();
-      final averageRating =
-          ratings.map((r) => r.score).reduce((a, b) => a + b) / ratings.length;
-
-      final response = await http.patch(
-        Uri.parse('${dotenv.get('API_URL')}/novels/$novelId'),
-        headers: headers,
-        body: json.encode({
-          'rating': averageRating,
-        }),
-      );
-
-      if (response.statusCode != 200) {
-        print(
-            'Failed to update novel rating: ${response.statusCode} - ${response.body}');
-      }
-    } catch (e) {
-      print('Error updating novel rating: $e');
-    }
-  }
-
   static Future<void> rateNovel(
     String novelId,
     double score,
     String content,
   ) async {
-    final headers = await _getHeaders();
-    final response = await http.post(
-      Uri.parse('${dotenv.get('API_URL')}/ratings'),
-      headers: headers,
-      body: json.encode({
-        'novelId': int.parse(novelId),
-        'score': score,
-        'content': content,
-      }),
-    );
+    try {
+      final headers = await _getHeaders();
+      final userId = await _getCurrentUserId();
 
-    if (response.statusCode != 201) {
-      final error = json.decode(response.body);
-      if (error['message']?.contains('đã đánh giá') ?? false) {
-        // Nếu đã đánh giá rồi, thử update
-        final ratings = await getNovelRatings(novelId);
-        final userRating = ratings.firstWhere(
-          (r) => r.userId.toString() == error['userId'].toString(),
-          orElse: () => throw Exception(error['message']),
+      // Kiểm tra xem đã đánh giá chưa
+      final ratings = await getNovelRatings(novelId);
+      final existingRating = ratings.firstWhere(
+        (r) => r.userId == userId,
+        orElse: () => Rating(
+          id: -1,
+          novelId: int.parse(novelId),
+          userId: userId,
+          content: '',
+          score: 5.0,
+          createdAt: DateTime.now(),
+        ),
+      );
+
+      if (existingRating.id != -1) {
+        await updateRating(
+          novelId,
+          existingRating.id.toString(),
+          score,
+          content,
         );
-        await updateRating(novelId, userRating.id.toString(), score, content);
         return;
       }
-      throw Exception(error['message']);
+
+      final response = await http.post(
+        Uri.parse('${dotenv.get('API_URL')}/ratings'),
+        headers: headers,
+        body: json.encode({
+          'novelId': int.parse(novelId),
+          'score': score,
+          'content': content,
+        }),
+      );
+
+      print('Rate novel response: ${response.body}');
+
+      if (response.statusCode != 201) {
+        final error = json.decode(response.body);
+        throw Exception(error['message'] ?? 'Không thể đánh giá truyện');
+      }
+    } catch (e) {
+      print('Error in rateNovel: $e');
+      rethrow;
     }
   }
 
@@ -105,19 +113,36 @@ class RatingService {
     double score,
     String content,
   ) async {
-    final headers = await _getHeaders();
-    final response = await http.put(
-      Uri.parse('${dotenv.get('API_URL')}/ratings/$ratingId'),
-      headers: headers,
-      body: json.encode({
-        'novelId': int.parse(novelId),
-        'score': score,
-        'content': content,
-      }),
-    );
+    try {
+      final headers = await _getHeaders();
+      final userId = await _getCurrentUserId();
+      print('Updating rating $ratingId for novel $novelId');
 
-    if (response.statusCode != 200) {
-      throw Exception(json.decode(response.body)['message']);
+      // Kiểm tra quyền sửa rating
+      final ratings = await getNovelRatings(novelId);
+      final rating = ratings.firstWhere(
+        (r) => r.id.toString() == ratingId && r.userId == userId,
+        orElse: () => throw Exception('Bạn không có quyền sửa đánh giá này'),
+      );
+
+      final response = await http.put(
+        Uri.parse('${dotenv.get('API_URL')}/ratings/$ratingId'),
+        headers: headers,
+        body: json.encode({
+          'score': score,
+          'content': content,
+        }),
+      );
+
+      print('Update rating response: ${response.body}');
+
+      if (response.statusCode != 200) {
+        final error = json.decode(response.body);
+        throw Exception(error['message'] ?? 'Không thể cập nhật đánh giá');
+      }
+    } catch (e) {
+      print('Error in updateRating: $e');
+      rethrow;
     }
   }
 }

@@ -48,7 +48,13 @@ export class RatingsService {
       },
       include: {
         novel: true,
-        user: true,
+        user: {
+          select: {
+            id: true,
+            name: true,
+            avatar: true,
+          },
+        },
       },
     });
   }
@@ -57,7 +63,34 @@ export class RatingsService {
     return this.databaseService.rating.findMany({
       include: {
         novel: true,
-        user: true,
+        user: {
+          select: {
+            id: true,
+            name: true,
+            avatar: true,
+          },
+        },
+      },
+    });
+  }
+
+  async findAllByNovelWithUser(novelId: number) {
+    return this.databaseService.rating.findMany({
+      where: {
+        novelId: novelId,
+      },
+      include: {
+        novel: true,
+        user: {
+          select: {
+            id: true,
+            name: true,
+            avatar: true,
+          },
+        },
+      },
+      orderBy: {
+        createdAt: 'desc',
       },
     });
   }
@@ -67,7 +100,13 @@ export class RatingsService {
       where: { id },
       include: {
         novel: true,
-        user: true,
+        user: {
+          select: {
+            id: true,
+            name: true,
+            avatar: true,
+          },
+        },
       },
     });
 
@@ -83,7 +122,13 @@ export class RatingsService {
     const rating = await this.databaseService.rating.findUnique({
       where: { id },
       include: {
-        user: true,
+        user: {
+          select: {
+            id: true,
+            name: true,
+            avatar: true,
+          },
+        },
       },
     });
 
@@ -105,7 +150,13 @@ export class RatingsService {
       },
       include: {
         novel: true,
-        user: true,
+        user: {
+          select: {
+            id: true,
+            name: true,
+            avatar: true,
+          },
+        },
       },
     });
   }

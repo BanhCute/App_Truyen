@@ -38,6 +38,13 @@ export class RatingsController {
       .then((items) => items.map((item) => plainToInstance(RatingDto, item)));
   }
 
+  @Get('novel/:novelId/with-user')
+  findAllByNovelWithUser(@Param('novelId', ParseIntPipe) novelId: number) {
+    return this.ratingsService
+      .findAllByNovelWithUser(novelId)
+      .then((items) => items.map((item) => plainToInstance(RatingDto, item)));
+  }
+
   @Get(':id')
   findOne(@Param('id', ParseIntPipe) id: number) {
     return plainToInstance(RatingDto, this.ratingsService.findOne(id));
