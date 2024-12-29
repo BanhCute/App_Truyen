@@ -7,11 +7,13 @@ import '../../../services/rating_service.dart';
 
 class RatingSection extends StatefulWidget {
   final String novelId;
+  final Function? onRatingUpdated;
 
   const RatingSection({
-    super.key,
+    Key? key,
     required this.novelId,
-  });
+    this.onRatingUpdated,
+  }) : super(key: key);
 
   @override
   State<RatingSection> createState() => _RatingSectionState();
@@ -22,39 +24,60 @@ class _RatingSectionState extends State<RatingSection> {
   bool _isLoading = true;
   Rating? _userRating;
   double _averageRating = 0;
+  late SessionState _sessionState;
 
   @override
   void initState() {
     super.initState();
+    _sessionState = context.read<SessionCubit>().state;
     _loadRatings();
   }
 
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _sessionState = context.read<SessionCubit>().state;
+  }
+
   Future<void> _loadRatings() async {
+    if (!mounted) return;
+
+    setState(() {
+      _isLoading = true;
+    });
+
     try {
       final ratings = await RatingService.getNovelRatings(widget.novelId);
-      final average = await RatingService.getAverageRating(widget.novelId);
 
       if (mounted) {
         setState(() {
           _ratings = ratings;
-          _averageRating = average;
-          _isLoading = false;
+
+          if (_ratings.isNotEmpty) {
+            _averageRating =
+                _ratings.map((r) => r.score).reduce((a, b) => a + b) /
+                    _ratings.length;
+          }
 
           // Tìm đánh giá của người dùng hiện tại
-          final state = context.read<SessionCubit>().state;
-          if (state is Authenticated) {
-            _userRating = ratings.firstWhere(
-              (rating) => rating.userId == state.session.user.id,
+          if (_sessionState is Authenticated) {
+            _userRating = _ratings.firstWhere(
+              (rating) =>
+                  rating.userId ==
+                  (_sessionState as Authenticated).session.user.id,
               orElse: () => Rating(
                 id: -1,
                 novelId: int.parse(widget.novelId),
-                userId: state.session.user.id,
+                userId: (_sessionState as Authenticated).session.user.id,
                 content: '',
                 score: 5.0,
                 createdAt: DateTime.now(),
               ),
             );
+            print('Found user rating: ${_userRating?.id}');
           }
+
+          _isLoading = false;
         });
       }
     } catch (e) {
@@ -68,8 +91,7 @@ class _RatingSectionState extends State<RatingSection> {
   }
 
   void _showRatingDialog({Rating? existingRating}) {
-    final state = context.read<SessionCubit>().state;
-    if (state is! Authenticated) {
+    if (_sessionState is! Authenticated) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Vui lòng đăng nhập để đánh giá')),
       );
@@ -82,12 +104,13 @@ class _RatingSectionState extends State<RatingSection> {
 
     showDialog(
       context: context,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setDialogState) => AlertDialog(
+      barrierDismissible: false,
+      builder: (dialogContext) {
+        return AlertDialog(
           title:
-              Text(existingRating == null ? 'Đánh giá truyện' : 'Sửa đánh giá'),
-          content: SingleChildScrollView(
-            child: Column(
+              Text(_userRating?.id == -1 ? 'Đánh giá truyện' : 'Sửa đánh giá'),
+          content: StatefulBuilder(
+            builder: (context, setState) => Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 SizedBox(
@@ -101,7 +124,7 @@ class _RatingSectionState extends State<RatingSection> {
                           padding: const EdgeInsets.symmetric(horizontal: 4),
                           child: InkWell(
                             onTap: () {
-                              setDialogState(() {
+                              setState(() {
                                 selectedScore = index + 1;
                               });
                             },
@@ -132,59 +155,77 @@ class _RatingSectionState extends State<RatingSection> {
           ),
           actions: [
             TextButton(
-              onPressed: () => Navigator.pop(context),
+              onPressed: () {
+                Navigator.of(dialogContext).pop();
+              },
               child: const Text('Hủy'),
             ),
             ElevatedButton(
               onPressed: () async {
+                final content = contentController.text.trim();
+                if (content.isEmpty) {
+                  ScaffoldMessenger.of(dialogContext).showSnackBar(
+                    const SnackBar(content: Text('Vui lòng nhập nhận xét')),
+                  );
+                  return;
+                }
+
                 try {
-                  if (existingRating != null && existingRating.id != -1) {
+                  if (_userRating != null && _userRating!.id != -1) {
                     await RatingService.updateRating(
                       widget.novelId,
-                      existingRating.id.toString(),
+                      _userRating!.id.toString(),
                       selectedScore,
-                      contentController.text,
+                      content,
                     );
                   } else {
                     await RatingService.rateNovel(
                       widget.novelId,
                       selectedScore,
-                      contentController.text,
+                      content,
                     );
                   }
-                  if (mounted) {
-                    Navigator.pop(context);
-                    _loadRatings();
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(
-                            existingRating?.id == -1 || existingRating == null
-                                ? 'Đã đánh giá truyện'
-                                : 'Đã cập nhật đánh giá'),
-                      ),
-                    );
+
+                  if (!mounted) return;
+
+                  // Đóng dialog
+                  Navigator.of(dialogContext).pop();
+                  contentController.dispose();
+
+                  // Cập nhật UI
+                  await _loadRatings();
+                  if (widget.onRatingUpdated != null) {
+                    widget.onRatingUpdated!();
                   }
+
+                  if (!mounted) return;
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(_userRating?.id == -1
+                          ? 'Đã đánh giá truyện'
+                          : 'Đã cập nhật đánh giá'),
+                    ),
+                  );
                 } catch (e) {
-                  if (mounted) {
-                    Navigator.pop(context);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(e.toString().contains('Cannot PATCH')
-                            ? 'Không thể cập nhật đánh giá. Vui lòng thử lại sau.'
-                            : e.toString()),
-                      ),
-                    );
-                  }
+                  print('Error in rating dialog: $e');
+                  if (!mounted) return;
+                  ScaffoldMessenger.of(dialogContext).showSnackBar(
+                    SnackBar(
+                        content:
+                            Text(e.toString().replaceAll('Exception: ', ''))),
+                  );
                 }
               },
-              child: Text(existingRating?.id == -1 || existingRating == null
-                  ? 'Đánh giá'
-                  : 'Cập nhật'),
+              child: Text(_userRating?.id == -1 ? 'Đánh giá' : 'Cập nhật'),
             ),
           ],
-        ),
-      ),
-    );
+        );
+      },
+    ).whenComplete(() {
+      if (mounted) {
+        contentController.dispose();
+      }
+    });
   }
 
   @override
@@ -245,7 +286,10 @@ class _RatingSectionState extends State<RatingSection> {
         if (_isLoading)
           const Center(child: CircularProgressIndicator())
         else if (_ratings.isEmpty)
-          const Center(child: Text('Chưa có đánh giá nào'))
+          const Padding(
+            padding: EdgeInsets.all(16.0),
+            child: Center(child: Text('Chưa có đánh giá nào')),
+          )
         else
           ListView.builder(
             shrinkWrap: true,
@@ -253,38 +297,58 @@ class _RatingSectionState extends State<RatingSection> {
             itemCount: _ratings.length,
             itemBuilder: (context, index) {
               final rating = _ratings[index];
-              return ListTile(
-                leading: CircleAvatar(
-                  child: Text(
-                    rating.user?['name']?.substring(0, 1).toUpperCase() ?? 'U',
+              return Card(
+                margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          CircleAvatar(
+                            backgroundColor: Colors.blue,
+                            child: Text(
+                              rating.userAvatar,
+                              style: const TextStyle(color: Colors.white),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  rating.userName,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                Row(
+                                  children: List.generate(5, (starIndex) {
+                                    return Icon(
+                                      starIndex < rating.score
+                                          ? Icons.star
+                                          : Icons.star_border,
+                                      color: Colors.amber,
+                                      size: 16,
+                                    );
+                                  }),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Text(
+                            '${rating.createdAt.add(const Duration(hours: 7)).hour}:${rating.createdAt.add(const Duration(hours: 7)).minute.toString().padLeft(2, '0')} ${rating.createdAt.add(const Duration(hours: 7)).day}/${rating.createdAt.add(const Duration(hours: 7)).month}/${rating.createdAt.add(const Duration(hours: 7)).year}',
+                            style: const TextStyle(
+                                color: Colors.grey, fontSize: 12),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Text(rating.content),
+                    ],
                   ),
-                ),
-                title: Row(
-                  children: [
-                    Text(rating.user?['name'] ?? 'Người dùng'),
-                    const SizedBox(width: 8),
-                    Row(
-                      children: List.generate(5, (starIndex) {
-                        return Icon(
-                          starIndex < rating.score
-                              ? Icons.star
-                              : Icons.star_border,
-                          color: Colors.amber,
-                          size: 16,
-                        );
-                      }),
-                    ),
-                  ],
-                ),
-                subtitle: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(rating.content),
-                    Text(
-                      '${rating.createdAt.day}/${rating.createdAt.month}/${rating.createdAt.year}',
-                      style: const TextStyle(color: Colors.grey),
-                    ),
-                  ],
                 ),
               );
             },

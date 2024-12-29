@@ -5,7 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../models/rating.dart';
 
 class RatingService {
-  static Future<Map<String, String>> getHeaders() async {
+  static Future<Map<String, String>> _getHeaders() async {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('token');
     return {
@@ -16,17 +16,26 @@ class RatingService {
 
   static Future<List<Rating>> getNovelRatings(String novelId) async {
     try {
-      final headers = await getHeaders();
+      print('Fetching ratings for novel: $novelId');
+      final headers = await _getHeaders();
       final response = await http.get(
-        Uri.parse('${dotenv.get('API_URL')}/novels/$novelId/ratings'),
+        Uri.parse('${dotenv.get('API_URL')}/ratings'),
         headers: headers,
       );
 
+      print('Rating response: ${response.body}');
+
       if (response.statusCode == 200) {
-        final List data = json.decode(response.body);
-        return data.map((json) => Rating.fromJson(json)).toList();
+        final List<dynamic> data = json.decode(response.body);
+        final novelIdInt = int.parse(novelId);
+        return data
+            .where((json) => json['novelId'] == novelIdInt)
+            .map((json) => Rating.fromJson(json))
+            .toList();
       } else {
-        throw Exception('Không thể lấy đánh giá');
+        print(
+            'Failed to load ratings: ${response.statusCode} - ${response.body}');
+        return [];
       }
     } catch (e) {
       print('Error getting ratings: $e');
@@ -34,73 +43,74 @@ class RatingService {
     }
   }
 
-  static Future<Rating> rateNovel(
-      String novelId, double score, String content) async {
+  static Future<void> _updateNovelRating(
+      String novelId, List<Rating> ratings) async {
     try {
-      final headers = await getHeaders();
-      final response = await http.post(
-        Uri.parse('${dotenv.get('API_URL')}/novels/$novelId/ratings'),
-        headers: headers,
-        body: json.encode({
-          'score': score,
-          'content': content,
-        }),
-      );
+      final headers = await _getHeaders();
+      final averageRating =
+          ratings.map((r) => r.score).reduce((a, b) => a + b) / ratings.length;
 
-      if (response.statusCode == 201) {
-        return Rating.fromJson(json.decode(response.body));
-      } else {
-        final error = json.decode(response.body);
-        throw Exception(error['message'] ?? 'Không thể đánh giá truyện');
-      }
-    } catch (e) {
-      print('Error rating novel: $e');
-      throw Exception('Không thể đánh giá truyện. Vui lòng thử lại sau.');
-    }
-  }
-
-  static Future<Rating> updateRating(
-      String novelId, String ratingId, double score, String content) async {
-    try {
-      final headers = await getHeaders();
       final response = await http.patch(
-        Uri.parse('${dotenv.get('API_URL')}/novels/$novelId/ratings/$ratingId'),
+        Uri.parse('${dotenv.get('API_URL')}/novels/$novelId'),
         headers: headers,
         body: json.encode({
-          'score': score,
-          'content': content,
+          'rating': averageRating,
         }),
       );
 
-      if (response.statusCode == 200) {
-        return Rating.fromJson(json.decode(response.body));
-      } else {
-        final error = json.decode(response.body);
-        throw Exception(error['message'] ?? 'Không thể cập nhật đánh giá');
+      if (response.statusCode != 200) {
+        print(
+            'Failed to update novel rating: ${response.statusCode} - ${response.body}');
       }
     } catch (e) {
-      print('Error updating rating: $e');
-      throw Exception('Không thể cập nhật đánh giá. Vui lòng thử lại sau.');
+      print('Error updating novel rating: $e');
     }
   }
 
-  static Future<double> getAverageRating(String novelId) async {
-    try {
-      final headers = await getHeaders();
-      final response = await http.get(
-        Uri.parse('${dotenv.get('API_URL')}/novels/$novelId/ratings/average'),
-        headers: headers,
-      );
+  static Future<void> rateNovel(
+    String novelId,
+    double score,
+    String content,
+  ) async {
+    final headers = await _getHeaders();
+    final response = await http.post(
+      Uri.parse('${dotenv.get('API_URL')}/ratings'),
+      headers: headers,
+      body: json.encode({
+        'novelId': int.parse(novelId),
+        'score': score,
+        'content': content,
+      }),
+    );
 
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        return data['average'].toDouble();
-      } else {
-        return 0.0;
-      }
-    } catch (e) {
-      print('Error getting average rating: $e');
-      return 0.0;
+    if (response.statusCode != 201) {
+      throw Exception(json.decode(response.body)['message']);
     }
+
+    await getNovelRatings(novelId);
+  }
+
+  static Future<void> updateRating(
+    String novelId,
+    String ratingId,
+    double score,
+    String content,
+  ) async {
+    final headers = await _getHeaders();
+    final response = await http.put(
+      Uri.parse('${dotenv.get('API_URL')}/ratings/$ratingId'),
+      headers: headers,
+      body: json.encode({
+        'novelId': int.parse(novelId),
+        'score': score,
+        'content': content,
+      }),
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception(json.decode(response.body)['message']);
+    }
+
+    await getNovelRatings(novelId);
   }
 }

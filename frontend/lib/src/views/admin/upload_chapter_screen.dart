@@ -236,8 +236,6 @@ class _UploadChapterScreenState extends State<UploadChapterScreen> {
                             const SizedBox(height: 8),
                             Text('Tác giả: ${widget.novel.author}'),
                             Text('Trạng thái: ${widget.novel.status}'),
-                            Text(
-                                'Thể loại: ${widget.novel.categories.join(", ")}'),
                           ],
                         ),
                       ),
