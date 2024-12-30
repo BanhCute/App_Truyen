@@ -46,11 +46,20 @@ export class RatingsController {
       );
 
       if (novelId > 0) {
-        return this.ratingsService.findAllByNovelWithUser(novelId, page, limit);
+        const result = await this.ratingsService.findAllByNovelWithUser(
+          novelId,
+          page,
+          limit,
+        );
+        console.log('Found ratings:', JSON.stringify(result, null, 2));
+        return result;
       }
 
+      console.log('Finding all ratings without novelId filter');
       const ratings = await this.ratingsService.findAll();
-      return {
+      console.log('Found all ratings:', JSON.stringify(ratings, null, 2));
+
+      const result = {
         items: ratings,
         meta: {
           page,
@@ -59,6 +68,9 @@ export class RatingsController {
           totalPages: Math.ceil(ratings.length / limit),
         },
       };
+
+      console.log('Returning result:', JSON.stringify(result, null, 2));
+      return result;
     } catch (error) {
       console.error('Error in findAll:', error);
       throw error;

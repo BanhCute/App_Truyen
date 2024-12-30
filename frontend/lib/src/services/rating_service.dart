@@ -33,7 +33,7 @@ class RatingService {
       print('Fetching ratings for novel: $novelId (page $page, limit $limit)');
       final headers = await _getHeaders();
       final url = Uri.parse(
-          '${dotenv.get('API_URL')}/ratings/novel/$novelId/with-user?page=$page&limit=$limit');
+          '${dotenv.get('API_URL')}/ratings?novelId=${int.parse(novelId)}&page=$page&limit=$limit');
 
       print('Request URL: $url');
       print('Request headers: $headers');
