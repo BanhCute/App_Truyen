@@ -23,14 +23,17 @@ import { UpdateRatingDto } from './dto/update-rating.dto';
 
 @ApiTags('ratings')
 @Controller('ratings')
-@UseInterceptors(ClassSerializerInterceptor)
 export class RatingsController {
   constructor(private readonly ratingsService: RatingsService) {}
 
   @Post()
-  create(@Body() createRatingDto: CreateRatingDto, @Req() req: Request) {
+  async create(@Body() createRatingDto: CreateRatingDto, @Req() req: Request) {
     const session = getSession(req);
-    return this.ratingsService.create(createRatingDto, session.id);
+    const rating = await this.ratingsService.create(
+      createRatingDto,
+      session.id,
+    );
+    return plainToInstance(RatingDto, rating);
   }
 
   @Get()
@@ -53,16 +56,23 @@ export class RatingsController {
 
       console.log('Raw result:', JSON.stringify(result, null, 2));
 
-      const transformedRatings = plainToInstance(RatingDto, result.items, {
-        excludeExtraneousValues: true,
-      });
+      const transformedItems = result.items.map((item) =>
+        plainToInstance(RatingDto, item),
+      );
+
+      console.log(
+        'Transformed items:',
+        JSON.stringify(transformedItems, null, 2),
+      );
 
       return {
-        items: transformedRatings,
+        items: transformedItems,
         meta: result.meta,
       };
     } catch (error) {
       console.error('Error in findAll:', error);
+      console.error('Error details:', error.message);
+      console.error('Error stack:', error.stack);
       return {
         items: [],
         meta: {
@@ -85,22 +95,32 @@ export class RatingsController {
       console.log(
         `Finding ratings for novel ${novelId} (page ${page}, limit ${limit})`,
       );
+
       const result = await this.ratingsService.findAllByNovelWithUser(
         novelId,
         page,
         limit,
       );
-      console.log('Found ratings:', JSON.stringify(result, null, 2));
 
-      const transformedRatings = plainToInstance(RatingDto, result.items, {
-        excludeExtraneousValues: true,
-      });
+      console.log('Raw result:', JSON.stringify(result, null, 2));
+
+      const transformedItems = result.items.map((item) =>
+        plainToInstance(RatingDto, item),
+      );
+
+      console.log(
+        'Transformed items:',
+        JSON.stringify(transformedItems, null, 2),
+      );
+
       return {
-        items: transformedRatings,
+        items: transformedItems,
         meta: result.meta,
       };
     } catch (error) {
       console.error('Error in findAllByNovelWithUser:', error);
+      console.error('Error details:', error.message);
+      console.error('Error stack:', error.stack);
       return {
         items: [],
         meta: {
@@ -116,9 +136,7 @@ export class RatingsController {
   @Get(':id')
   async findOne(@Param('id', ParseIntPipe) id: number) {
     const rating = await this.ratingsService.findOne(id);
-    return plainToInstance(RatingDto, rating, {
-      excludeExtraneousValues: true,
-    });
+    return plainToInstance(RatingDto, rating);
   }
 
   @Put(':id')
@@ -133,8 +151,6 @@ export class RatingsController {
       updateRatingDto,
       session.id,
     );
-    return plainToInstance(RatingDto, rating, {
-      excludeExtraneousValues: true,
-    });
+    return plainToInstance(RatingDto, rating);
   }
 }

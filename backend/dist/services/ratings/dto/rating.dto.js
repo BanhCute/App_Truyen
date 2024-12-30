@@ -13,6 +13,9 @@ const class_transformer_1 = require("class-transformer");
 const novel_dto_1 = require("../../novel/dto/novel.dto");
 const user_dto_1 = require("../../users/dto/user.dto");
 class RatingDto {
+    constructor(partial) {
+        Object.assign(this, partial);
+    }
 }
 exports.default = RatingDto;
 __decorate([
@@ -49,4 +52,12 @@ __decorate([
     (0, class_transformer_1.Type)(() => user_dto_1.default),
     __metadata("design:type", user_dto_1.default)
 ], RatingDto.prototype, "user", void 0);
+__decorate([
+    (0, class_transformer_1.Expose)(),
+    __metadata("design:type", String)
+], RatingDto.prototype, "userName", void 0);
+__decorate([
+    (0, class_transformer_1.Expose)(),
+    __metadata("design:type", String)
+], RatingDto.prototype, "userAvatar", void 0);
 //# sourceMappingURL=rating.dto.js.map

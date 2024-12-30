@@ -6,35 +6,7 @@ import { UpdateRatingDto } from './dto/update-rating.dto';
 export declare class RatingsController {
     private readonly ratingsService;
     constructor(ratingsService: RatingsService);
-    create(createRatingDto: CreateRatingDto, req: Request): Promise<{
-        novel: {
-            rating: number | null;
-            id: number;
-            userId: number;
-            createdAt: Date;
-            name: string;
-            description: string | null;
-            cover: string | null;
-            author: string;
-            status: string;
-            view: number;
-            updatedAt: Date;
-            followerCount: number;
-            commentCount: number;
-        };
-        user: {
-            id: number;
-            name: string;
-            avatar: string;
-        };
-    } & {
-        id: number;
-        novelId: number;
-        userId: number;
-        content: string;
-        score: number;
-        createdAt: Date;
-    }>;
+    create(createRatingDto: CreateRatingDto, req: Request): Promise<RatingDto>;
     findAll(novelId: number, page: number, limit: number): Promise<{
         items: RatingDto[];
         meta: {

@@ -23,9 +23,19 @@ export default class RatingDto {
 
   @Expose()
   @Type(() => NovelDto)
-  novel: NovelDto;
+  novel?: NovelDto;
 
   @Expose()
   @Type(() => UserDto)
-  user: UserDto;
+  user?: UserDto;
+
+  @Expose()
+  userName?: string;
+
+  @Expose()
+  userAvatar?: string;
+
+  constructor(partial: Partial<RatingDto>) {
+    Object.assign(this, partial);
+  }
 }

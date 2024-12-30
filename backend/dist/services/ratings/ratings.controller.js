@@ -25,9 +25,10 @@ let RatingsController = class RatingsController {
     constructor(ratingsService) {
         this.ratingsService = ratingsService;
     }
-    create(createRatingDto, req) {
+    async create(createRatingDto, req) {
         const session = (0, auth_utils_1.getSession)(req);
-        return this.ratingsService.create(createRatingDto, session.id);
+        const rating = await this.ratingsService.create(createRatingDto, session.id);
+        return (0, class_transformer_1.plainToInstance)(rating_dto_1.default, rating);
     }
     async findAll(novelId, page, limit) {
         try {
@@ -36,16 +37,17 @@ let RatingsController = class RatingsController {
                 ? await this.ratingsService.findAllByNovelWithUser(novelId, page, limit)
                 : await this.ratingsService.findAll();
             console.log('Raw result:', JSON.stringify(result, null, 2));
-            const transformedRatings = (0, class_transformer_1.plainToInstance)(rating_dto_1.default, result.items, {
-                excludeExtraneousValues: true,
-            });
+            const transformedItems = result.items.map((item) => (0, class_transformer_1.plainToInstance)(rating_dto_1.default, item));
+            console.log('Transformed items:', JSON.stringify(transformedItems, null, 2));
             return {
-                items: transformedRatings,
+                items: transformedItems,
                 meta: result.meta,
             };
         }
         catch (error) {
             console.error('Error in findAll:', error);
+            console.error('Error details:', error.message);
+            console.error('Error stack:', error.stack);
             return {
                 items: [],
                 meta: {
@@ -61,17 +63,18 @@ let RatingsController = class RatingsController {
         try {
             console.log(`Finding ratings for novel ${novelId} (page ${page}, limit ${limit})`);
             const result = await this.ratingsService.findAllByNovelWithUser(novelId, page, limit);
-            console.log('Found ratings:', JSON.stringify(result, null, 2));
-            const transformedRatings = (0, class_transformer_1.plainToInstance)(rating_dto_1.default, result.items, {
-                excludeExtraneousValues: true,
-            });
+            console.log('Raw result:', JSON.stringify(result, null, 2));
+            const transformedItems = result.items.map((item) => (0, class_transformer_1.plainToInstance)(rating_dto_1.default, item));
+            console.log('Transformed items:', JSON.stringify(transformedItems, null, 2));
             return {
-                items: transformedRatings,
+                items: transformedItems,
                 meta: result.meta,
             };
         }
         catch (error) {
             console.error('Error in findAllByNovelWithUser:', error);
+            console.error('Error details:', error.message);
+            console.error('Error stack:', error.stack);
             return {
                 items: [],
                 meta: {
@@ -85,16 +88,12 @@ let RatingsController = class RatingsController {
     }
     async findOne(id) {
         const rating = await this.ratingsService.findOne(id);
-        return (0, class_transformer_1.plainToInstance)(rating_dto_1.default, rating, {
-            excludeExtraneousValues: true,
-        });
+        return (0, class_transformer_1.plainToInstance)(rating_dto_1.default, rating);
     }
     async update(id, updateRatingDto, req) {
         const session = (0, auth_utils_1.getSession)(req);
         const rating = await this.ratingsService.update(id, updateRatingDto, session.id);
-        return (0, class_transformer_1.plainToInstance)(rating_dto_1.default, rating, {
-            excludeExtraneousValues: true,
-        });
+        return (0, class_transformer_1.plainToInstance)(rating_dto_1.default, rating);
     }
 };
 exports.RatingsController = RatingsController;
@@ -104,7 +103,7 @@ __decorate([
     __param(1, (0, common_1.Req)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [create_rating_dto_1.CreateRatingDto, Object]),
-    __metadata("design:returntype", void 0)
+    __metadata("design:returntype", Promise)
 ], RatingsController.prototype, "create", null);
 __decorate([
     (0, common_1.Get)(),
@@ -143,7 +142,6 @@ __decorate([
 exports.RatingsController = RatingsController = __decorate([
     (0, swagger_1.ApiTags)('ratings'),
     (0, common_1.Controller)('ratings'),
-    (0, common_1.UseInterceptors)(common_1.ClassSerializerInterceptor),
     __metadata("design:paramtypes", [ratings_service_1.RatingsService])
 ], RatingsController);
 //# sourceMappingURL=ratings.controller.js.map

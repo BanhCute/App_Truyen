@@ -7,6 +7,9 @@ export default class RatingDto {
     content: string;
     score: number;
     createdAt: Date;
-    novel: NovelDto;
-    user: UserDto;
+    novel?: NovelDto;
+    user?: UserDto;
+    userName?: string;
+    userAvatar?: string;
+    constructor(partial: Partial<RatingDto>);
 }
