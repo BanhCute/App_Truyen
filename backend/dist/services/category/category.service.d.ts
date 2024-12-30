@@ -9,16 +9,16 @@ export declare class CategoryService {
         name: string;
         description: string | null;
     }, never, import("@prisma/client/runtime/library").DefaultArgs>;
-    findAll(): import("@prisma/client").Prisma.PrismaPromise<{
+    findAll(): Promise<{
         id: number;
         name: string;
         description: string | null;
     }[]>;
-    findOne(id: number): import("@prisma/client").Prisma.Prisma__CategoryClient<{
+    findOne(id: number): Promise<{
         id: number;
         name: string;
         description: string | null;
-    }, null, import("@prisma/client/runtime/library").DefaultArgs>;
+    }>;
     update(id: number, updateCategoryDto: UpdateCategoryDto): import("@prisma/client").Prisma.Prisma__CategoryClient<{
         id: number;
         name: string;

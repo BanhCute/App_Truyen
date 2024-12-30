@@ -40,12 +40,12 @@ let RatingsController = class RatingsController {
             const ratings = await this.ratingsService.findAll();
             console.log('Found all ratings:', JSON.stringify(ratings, null, 2));
             const result = {
-                items: ratings,
+                items: ratings || [],
                 meta: {
                     page,
                     limit,
-                    total: ratings.length,
-                    totalPages: Math.ceil(ratings.length / limit),
+                    total: ratings?.length || 0,
+                    totalPages: Math.ceil((ratings?.length || 0) / limit),
                 },
             };
             console.log('Returning result:', JSON.stringify(result, null, 2));
@@ -53,7 +53,15 @@ let RatingsController = class RatingsController {
         }
         catch (error) {
             console.error('Error in findAll:', error);
-            throw error;
+            return {
+                items: [],
+                meta: {
+                    page,
+                    limit,
+                    total: 0,
+                    totalPages: 0,
+                },
+            };
         }
     }
     async findAllByNovelWithUser(novelId, page, limit) {

@@ -21,13 +21,41 @@ let CategoryService = class CategoryService {
             data: createCategoryDto,
         });
     }
-    findAll() {
-        return this.databaseService.category.findMany();
+    async findAll() {
+        try {
+            console.log('Finding all categories');
+            const categories = await this.databaseService.category.findMany({
+                where: {
+                    isDeleted: false,
+                },
+                orderBy: {
+                    name: 'asc',
+                },
+            });
+            console.log(`Found ${categories.length} categories:`, categories);
+            return categories;
+        }
+        catch (error) {
+            console.error('Error finding categories:', error);
+            throw error;
+        }
     }
-    findOne(id) {
-        return this.databaseService.category.findUnique({
-            where: { id },
-        });
+    async findOne(id) {
+        try {
+            console.log(`Finding category with id ${id}`);
+            const category = await this.databaseService.category.findUnique({
+                where: {
+                    id,
+                    isDeleted: false,
+                },
+            });
+            console.log('Found category:', category);
+            return category;
+        }
+        catch (error) {
+            console.error('Error finding category:', error);
+            throw error;
+        }
     }
     update(id, updateCategoryDto) {
         return this.databaseService.category.update({

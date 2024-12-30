@@ -60,12 +60,12 @@ export class RatingsController {
       console.log('Found all ratings:', JSON.stringify(ratings, null, 2));
 
       const result = {
-        items: ratings,
+        items: ratings || [],
         meta: {
           page,
           limit,
-          total: ratings.length,
-          totalPages: Math.ceil(ratings.length / limit),
+          total: ratings?.length || 0,
+          totalPages: Math.ceil((ratings?.length || 0) / limit),
         },
       };
 
@@ -73,7 +73,15 @@ export class RatingsController {
       return result;
     } catch (error) {
       console.error('Error in findAll:', error);
-      throw error;
+      return {
+        items: [],
+        meta: {
+          page,
+          limit,
+          total: 0,
+          totalPages: 0,
+        },
+      };
     }
   }
 

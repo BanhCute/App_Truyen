@@ -90,18 +90,38 @@ export class RatingsService {
     try {
       const skip = (page - 1) * limit;
 
-      console.log('Database query params:', {
-        novelId,
-        skip,
-        take: limit,
+      // Log query conditions
+      console.log('Database query conditions:', {
         where: {
-          novelId,
+          novelId: novelId,
           user: {
             isDeleted: false,
             isBanned: false,
           },
         },
+        include: {
+          user: {
+            select: {
+              id: true,
+              name: true,
+              avatar: true,
+            },
+          },
+        },
+        orderBy: {
+          createdAt: 'desc',
+        },
+        skip,
+        take: limit,
       });
+
+      // First check if ratings exist
+      const checkRatings = await this.databaseService.rating.findMany({
+        where: {
+          novelId: novelId,
+        },
+      });
+      console.log('Raw ratings without conditions:', checkRatings);
 
       const [ratings, total] = await Promise.all([
         this.databaseService.rating.findMany({
