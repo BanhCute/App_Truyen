@@ -36,8 +36,14 @@ let NovelController = class NovelController {
             .then((items) => items.map((item) => (0, class_transformer_1.plainToInstance)(novel_dto_1.default, item)));
         return data;
     }
-    findOne(id) {
-        return (0, class_transformer_1.plainToInstance)(novel_dto_1.default, this.novelService.findOne(id));
+    async findOne(id) {
+        console.log(`GET /novels/${id}`);
+        const novel = await this.novelService.findOne(id);
+        if (!novel) {
+            throw new common_1.NotFoundException('Không tìm thấy truyện');
+        }
+        console.log('Response:', JSON.stringify(novel, null, 2));
+        return novel;
     }
     update(id, updateNovelDto, req) {
         const session = (0, auth_utils_1.getSession)(req);
@@ -91,7 +97,7 @@ __decorate([
     __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Number]),
-    __metadata("design:returntype", void 0)
+    __metadata("design:returntype", Promise)
 ], NovelController.prototype, "findOne", null);
 __decorate([
     (0, common_1.Patch)(':id'),

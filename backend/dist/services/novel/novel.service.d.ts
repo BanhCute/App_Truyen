@@ -46,6 +46,24 @@ export declare class NovelService {
         }[];
     }[]>;
     findOne(id: number): Promise<{
+        id: number;
+        name: string;
+        description: string;
+        author: string;
+        cover: string;
+        status: string;
+        view: number;
+        rating: number;
+        followerCount: number;
+        commentCount: number;
+        createdAt: Date;
+        updatedAt: Date;
+        userId: number;
+        user: {
+            id: number;
+            name: string;
+            avatar: string;
+        };
         categories: {
             id: number;
             name: string;
@@ -62,25 +80,6 @@ export declare class NovelService {
                 avatar: string;
             };
         }[];
-        averageRating: number;
-        user: {
-            id: number;
-            name: string;
-            avatar: string;
-        };
-        id: number;
-        name: string;
-        description: string | null;
-        createdAt: Date;
-        cover: string | null;
-        author: string;
-        status: string;
-        view: number;
-        updatedAt: Date;
-        rating: number | null;
-        followerCount: number;
-        commentCount: number;
-        userId: number;
     }>;
     update(id: number, updateNovelDto: UpdateNovelDto, userId: number): Promise<{
         id: number;

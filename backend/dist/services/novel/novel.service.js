@@ -79,10 +79,9 @@ let NovelService = class NovelService {
             },
         });
     }
-    findOne(id) {
+    async findOne(id) {
         console.log(`Finding novel with id ${id}`);
-        return this.databaseService.novel
-            .findUnique({
+        const novel = await this.databaseService.novel.findUnique({
             where: { id },
             include: {
                 user: {
@@ -94,13 +93,7 @@ let NovelService = class NovelService {
                 },
                 categories: {
                     include: {
-                        category: {
-                            select: {
-                                id: true,
-                                name: true,
-                                description: true,
-                            },
-                        },
+                        category: true,
                     },
                 },
                 ratings: {
@@ -118,45 +111,57 @@ let NovelService = class NovelService {
                     },
                 },
             },
-        })
-            .then((novel) => {
-            console.log('Found novel:', JSON.stringify(novel, null, 2));
-            if (!novel) {
-                return null;
-            }
-            const transformedCategories = novel.categories.map((nc) => ({
-                id: nc.category.id,
-                name: nc.category.name,
-                description: nc.category.description,
-            }));
-            const transformedRatings = novel.ratings.map((rating) => ({
-                id: rating.id,
-                content: rating.content,
-                score: rating.score,
-                createdAt: rating.createdAt,
-                user: rating.user
-                    ? {
-                        id: rating.user.id,
-                        name: rating.user.name || 'Người dùng',
-                        avatar: rating.user.avatar || 'default-avatar.png',
-                    }
-                    : {
-                        id: rating.userId,
-                        name: 'Người dùng',
-                        avatar: 'default-avatar.png',
-                    },
-            }));
-            const averageRating = novel.ratings.length > 0
-                ? novel.ratings.reduce((acc, r) => acc + r.score, 0) /
-                    novel.ratings.length
-                : 0;
-            return {
-                ...novel,
-                categories: transformedCategories,
-                ratings: transformedRatings,
-                averageRating,
-            };
         });
+        console.log('Raw novel data:', JSON.stringify(novel, null, 2));
+        if (!novel) {
+            return null;
+        }
+        const transformedCategories = novel.categories.map((nc) => ({
+            id: nc.category.id,
+            name: nc.category.name,
+            description: nc.category.description,
+        }));
+        const transformedRatings = novel.ratings.map((rating) => ({
+            id: rating.id,
+            content: rating.content,
+            score: rating.score,
+            createdAt: rating.createdAt,
+            user: rating.user
+                ? {
+                    id: rating.user.id,
+                    name: rating.user.name || 'Người dùng',
+                    avatar: rating.user.avatar || 'default-avatar.png',
+                }
+                : {
+                    id: rating.userId,
+                    name: 'Người dùng',
+                    avatar: 'default-avatar.png',
+                },
+        }));
+        const averageRating = novel.ratings.length > 0
+            ? novel.ratings.reduce((acc, r) => acc + r.score, 0) /
+                novel.ratings.length
+            : 0;
+        const result = {
+            id: novel.id,
+            name: novel.name,
+            description: novel.description,
+            author: novel.author,
+            cover: novel.cover,
+            status: novel.status,
+            view: novel.view,
+            rating: averageRating,
+            followerCount: novel.followerCount,
+            commentCount: novel.commentCount,
+            createdAt: novel.createdAt,
+            updatedAt: novel.updatedAt,
+            userId: novel.userId,
+            user: novel.user,
+            categories: transformedCategories,
+            ratings: transformedRatings,
+        };
+        console.log('Transformed result:', JSON.stringify(result, null, 2));
+        return result;
     }
     async update(id, updateNovelDto, userId) {
         const novel = await this.databaseService.novel.findUnique({

@@ -8,7 +8,42 @@ export declare class NovelController {
     constructor(novelService: NovelService);
     create(createNovelDto: CreateNovelDto, req: Request): NovelDto;
     findAll(): Promise<NovelDto[]>;
-    findOne(id: number): NovelDto;
+    findOne(id: number): Promise<{
+        id: number;
+        name: string;
+        description: string;
+        author: string;
+        cover: string;
+        status: string;
+        view: number;
+        rating: number;
+        followerCount: number;
+        commentCount: number;
+        createdAt: Date;
+        updatedAt: Date;
+        userId: number;
+        user: {
+            id: number;
+            name: string;
+            avatar: string;
+        };
+        categories: {
+            id: number;
+            name: string;
+            description: string;
+        }[];
+        ratings: {
+            id: number;
+            content: string;
+            score: number;
+            createdAt: Date;
+            user: {
+                id: number;
+                name: string;
+                avatar: string;
+            };
+        }[];
+    }>;
     update(id: number, updateNovelDto: UpdateNovelDto, req: Request): NovelDto;
     remove(id: number, req: Request): NovelDto;
     addCategories(id: number, categoryIds: number[], req: Request): Promise<NovelDto>;

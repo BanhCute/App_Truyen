@@ -77,92 +77,101 @@ export class NovelService {
     });
   }
 
-  findOne(id: number) {
+  async findOne(id: number) {
     console.log(`Finding novel with id ${id}`);
-    return this.databaseService.novel
-      .findUnique({
-        where: { id },
-        include: {
-          user: {
-            select: {
-              id: true,
-              name: true,
-              avatar: true,
-            },
-          },
-          categories: {
-            include: {
-              category: {
-                select: {
-                  id: true,
-                  name: true,
-                  description: true,
-                },
-              },
-            },
-          },
-          ratings: {
-            include: {
-              user: {
-                select: {
-                  id: true,
-                  name: true,
-                  avatar: true,
-                },
-              },
-            },
-            orderBy: {
-              createdAt: 'desc',
-            },
+
+    const novel = await this.databaseService.novel.findUnique({
+      where: { id },
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            avatar: true,
           },
         },
-      })
-      .then((novel) => {
-        console.log('Found novel:', JSON.stringify(novel, null, 2));
-        if (!novel) {
-          return null;
-        }
-
-        // Transform categories
-        const transformedCategories = novel.categories.map((nc) => ({
-          id: nc.category.id,
-          name: nc.category.name,
-          description: nc.category.description,
-        }));
-
-        // Transform ratings
-        const transformedRatings = novel.ratings.map((rating) => ({
-          id: rating.id,
-          content: rating.content,
-          score: rating.score,
-          createdAt: rating.createdAt,
-          user: rating.user
-            ? {
-                id: rating.user.id,
-                name: rating.user.name || 'Người dùng',
-                avatar: rating.user.avatar || 'default-avatar.png',
-              }
-            : {
-                id: rating.userId,
-                name: 'Người dùng',
-                avatar: 'default-avatar.png',
+        categories: {
+          include: {
+            category: true,
+          },
+        },
+        ratings: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                name: true,
+                avatar: true,
               },
-        }));
+            },
+          },
+          orderBy: {
+            createdAt: 'desc',
+          },
+        },
+      },
+    });
 
-        // Calculate average rating
-        const averageRating =
-          novel.ratings.length > 0
-            ? novel.ratings.reduce((acc, r) => acc + r.score, 0) /
-              novel.ratings.length
-            : 0;
+    console.log('Raw novel data:', JSON.stringify(novel, null, 2));
 
-        return {
-          ...novel,
-          categories: transformedCategories,
-          ratings: transformedRatings,
-          averageRating,
-        };
-      });
+    if (!novel) {
+      return null;
+    }
+
+    // Transform categories
+    const transformedCategories = novel.categories.map((nc) => ({
+      id: nc.category.id,
+      name: nc.category.name,
+      description: nc.category.description,
+    }));
+
+    // Transform ratings
+    const transformedRatings = novel.ratings.map((rating) => ({
+      id: rating.id,
+      content: rating.content,
+      score: rating.score,
+      createdAt: rating.createdAt,
+      user: rating.user
+        ? {
+            id: rating.user.id,
+            name: rating.user.name || 'Người dùng',
+            avatar: rating.user.avatar || 'default-avatar.png',
+          }
+        : {
+            id: rating.userId,
+            name: 'Người dùng',
+            avatar: 'default-avatar.png',
+          },
+    }));
+
+    // Calculate average rating
+    const averageRating =
+      novel.ratings.length > 0
+        ? novel.ratings.reduce((acc, r) => acc + r.score, 0) /
+          novel.ratings.length
+        : 0;
+
+    const result = {
+      id: novel.id,
+      name: novel.name,
+      description: novel.description,
+      author: novel.author,
+      cover: novel.cover,
+      status: novel.status,
+      view: novel.view,
+      rating: averageRating,
+      followerCount: novel.followerCount,
+      commentCount: novel.commentCount,
+      createdAt: novel.createdAt,
+      updatedAt: novel.updatedAt,
+      userId: novel.userId,
+      user: novel.user,
+      categories: transformedCategories,
+      ratings: transformedRatings,
+    };
+
+    console.log('Transformed result:', JSON.stringify(result, null, 2));
+    return result;
   }
 
   async update(id: number, updateNovelDto: UpdateNovelDto, userId: number) {

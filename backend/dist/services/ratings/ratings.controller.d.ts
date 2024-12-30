@@ -56,10 +56,6 @@ export declare class RatingsController {
                 name: string;
                 avatar: string;
             };
-            novel: {
-                id: number;
-                name: string;
-            };
         }[];
         meta: {
             page: number;

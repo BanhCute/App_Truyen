@@ -96,12 +96,6 @@ let RatingsService = class RatingsService {
                                 avatar: true,
                             },
                         },
-                        novel: {
-                            select: {
-                                id: true,
-                                name: true,
-                            },
-                        },
                     },
                     orderBy: {
                         createdAt: 'desc',
@@ -135,7 +129,6 @@ let RatingsService = class RatingsService {
                         name: 'Người dùng',
                         avatar: 'default-avatar.png',
                     },
-                novel: rating.novel,
             }));
             const result = {
                 items: transformedRatings,

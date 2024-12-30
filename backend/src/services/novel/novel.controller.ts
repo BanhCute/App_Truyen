@@ -8,6 +8,7 @@ import {
   Delete,
   ParseIntPipe,
   Req,
+  NotFoundException,
 } from '@nestjs/common';
 import { NovelService } from './novel.service';
 import { CreateNovelDto } from './dto/create-novel.dto';
@@ -45,8 +46,17 @@ export class NovelController {
   }
 
   @Get(':id')
-  findOne(@Param('id', ParseIntPipe) id: number) {
-    return plainToInstance(NovelDto, this.novelService.findOne(id));
+  async findOne(@Param('id', ParseIntPipe) id: number) {
+    console.log(`GET /novels/${id}`);
+    const novel = await this.novelService.findOne(id);
+
+    if (!novel) {
+      throw new NotFoundException('Không tìm thấy truyện');
+    }
+
+    // Log response
+    console.log('Response:', JSON.stringify(novel, null, 2));
+    return novel;
   }
 
   @Patch(':id')
