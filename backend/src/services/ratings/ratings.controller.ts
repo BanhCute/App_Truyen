@@ -56,9 +56,32 @@ export class RatingsController {
 
       console.log('Raw result:', JSON.stringify(result, null, 2));
 
-      const transformedItems = result.items.map((item) =>
-        plainToInstance(RatingDto, item),
-      );
+      const transformedItems = result.items.map((item) => ({
+        id: item.id,
+        novelId: item.novelId,
+        userId: item.userId,
+        content: item.content,
+        score: item.score,
+        createdAt: item.createdAt,
+        user: item.user
+          ? {
+              id: item.user.id,
+              name: item.user.name || 'Người dùng',
+              avatar: item.user.avatar || 'default-avatar.png',
+            }
+          : {
+              id: item.userId,
+              name: 'Người dùng',
+              avatar: 'default-avatar.png',
+            },
+        novel: item.novel
+          ? {
+              id: item.novel.id,
+              name: item.novel.name,
+              cover: item.novel.cover,
+            }
+          : null,
+      }));
 
       console.log(
         'Transformed items:',
