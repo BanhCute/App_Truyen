@@ -36,4 +36,14 @@ export default class NovelDto {
 
   @Expose()
   updatedAt: Date;
+
+  @Expose()
+  userId: number;
+
+  @Expose()
+  categories: {
+    id: number;
+    name: string;
+    description: string;
+  }[];
 }

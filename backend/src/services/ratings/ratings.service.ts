@@ -159,7 +159,7 @@ export class RatingsService {
           where: {
             novelId: novelId,
           },
-          include: {
+      include: {
             user: {
               select: {
                 id: true,

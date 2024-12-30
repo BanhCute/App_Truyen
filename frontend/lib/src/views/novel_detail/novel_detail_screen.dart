@@ -105,10 +105,17 @@ class _NovelDetailScreenState extends State<NovelDetailScreen> {
         final state = context.read<SessionCubit>().state;
 
         // Parse categories from the nested structure
-        final categoryList = (novelData['categories'] as List?)?.map((cat) {
-              print('Category data: $cat');
-              return cat['category']['name'].toString();
-            }).toList() ??
+        final categoryList = (novelData['categories'] as List?)
+                ?.map((cat) {
+                  print('Category data: $cat');
+                  if (cat is Map<String, dynamic> &&
+                      cat['category'] is Map<String, dynamic>) {
+                    return cat['category']['name'].toString();
+                  }
+                  return '';
+                })
+                .where((name) => name.isNotEmpty)
+                .toList() ??
             [];
 
         setState(() {
@@ -247,6 +254,30 @@ class _NovelDetailScreenState extends State<NovelDetailScreen> {
                           ),
                         ),
                         const SizedBox(height: 8),
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: novel.categories.map((category) {
+                            return Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 4,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withOpacity(0.2),
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                              child: Text(
+                                category.name,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 12,
+                                ),
+                              ),
+                            );
+                          }).toList(),
+                        ),
+                        const SizedBox(height: 8),
                         Row(
                           children: [
                             const Icon(
@@ -276,12 +307,12 @@ class _NovelDetailScreenState extends State<NovelDetailScreen> {
                   child: Wrap(
                     spacing: 8,
                     runSpacing: 8,
-                    children: categories.isEmpty
+                    children: novel.categories.isEmpty
                         ? [const Chip(label: Text('Chưa có thể loại'))]
-                        : categories
+                        : novel.categories
                             .map((category) => Chip(
                                   label: Text(
-                                    category,
+                                    category.name,
                                     style: TextStyle(
                                       color: Theme.of(context).brightness ==
                                               Brightness.dark

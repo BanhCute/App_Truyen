@@ -255,61 +255,7 @@ class _RatingSectionState extends State<RatingSection> {
                 itemCount: _ratings.length,
                 itemBuilder: (context, index) {
                   final rating = _ratings[index];
-                  return Card(
-                    margin:
-                        const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    child: Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              CircleAvatar(
-                                backgroundColor: Theme.of(context).primaryColor,
-                                child: Text(
-                                  rating.userAvatar,
-                                  style: const TextStyle(color: Colors.white),
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      rating.userName,
-                                      style: const TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                    Row(
-                                      children: List.generate(5, (starIndex) {
-                                        return Icon(
-                                          starIndex < rating.score
-                                              ? Icons.star
-                                              : Icons.star_border,
-                                          color: Colors.amber,
-                                          size: 16,
-                                        );
-                                      }),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              Text(
-                                _formatDateTime(rating.createdAt),
-                                style: const TextStyle(
-                                    color: Colors.grey, fontSize: 12),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 8),
-                          Text(rating.content),
-                        ],
-                      ),
-                    ),
-                  );
+                  return RatingItem(rating: rating);
                 },
               ),
               if (_totalPages > 1)
@@ -339,9 +285,82 @@ class _RatingSectionState extends State<RatingSection> {
       ],
     );
   }
+}
+
+class RatingItem extends StatelessWidget {
+  final Rating rating;
+
+  const RatingItem({
+    Key? key,
+    required this.rating,
+  }) : super(key: key);
 
   String _formatDateTime(DateTime dateTime) {
     final localTime = dateTime.add(const Duration(hours: 7));
     return '${localTime.hour}:${localTime.minute.toString().padLeft(2, '0')} ${localTime.day}/${localTime.month}/${localTime.year}';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                CircleAvatar(
+                  backgroundImage: NetworkImage(rating.userAvatar),
+                  radius: 20,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        rating.userName,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
+                      ),
+                      Text(
+                        _formatDateTime(rating.createdAt),
+                        style: TextStyle(
+                          color: Colors.grey[600],
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Row(
+                  children: [
+                    Text(
+                      rating.score.toString(),
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
+                    ),
+                    const Icon(Icons.star, color: Colors.amber, size: 20),
+                  ],
+                ),
+              ],
+            ),
+            if (rating.content.isNotEmpty) ...[
+              const SizedBox(height: 12),
+              Text(
+                rating.content,
+                style: const TextStyle(fontSize: 14),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
   }
 }
