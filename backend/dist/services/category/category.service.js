@@ -25,9 +25,6 @@ let CategoryService = class CategoryService {
         try {
             console.log('Finding all categories');
             const categories = await this.databaseService.category.findMany({
-                where: {
-                    isDeleted: false,
-                },
                 orderBy: {
                     name: 'asc',
                 },
@@ -44,10 +41,7 @@ let CategoryService = class CategoryService {
         try {
             console.log(`Finding category with id ${id}`);
             const category = await this.databaseService.category.findUnique({
-                where: {
-                    id,
-                    isDeleted: false,
-                },
+                where: { id },
             });
             console.log('Found category:', category);
             return category;

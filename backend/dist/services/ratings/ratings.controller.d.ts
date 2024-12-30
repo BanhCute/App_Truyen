@@ -6,33 +6,33 @@ export declare class RatingsController {
     private readonly ratingsService;
     constructor(ratingsService: RatingsService);
     create(createRatingDto: CreateRatingDto, req: Request): Promise<{
-        novel: {
-            rating: number | null;
-            id: number;
-            userId: number;
-            createdAt: Date;
-            name: string;
-            description: string | null;
-            cover: string | null;
-            author: string;
-            status: string;
-            view: number;
-            updatedAt: Date;
-            followerCount: number;
-            commentCount: number;
-        };
         user: {
             id: number;
             name: string;
             avatar: string;
         };
+        novel: {
+            id: number;
+            name: string;
+            rating: number | null;
+            view: number;
+            userId: number;
+            updatedAt: Date;
+            createdAt: Date;
+            description: string | null;
+            cover: string | null;
+            author: string;
+            status: string;
+            followerCount: number;
+            commentCount: number;
+        };
     } & {
         id: number;
-        novelId: number;
         userId: number;
+        createdAt: Date;
+        novelId: number;
         content: string;
         score: number;
-        createdAt: Date;
     }>;
     findAll(novelId: number, page: number, limit: number): Promise<{
         items: {
@@ -77,61 +77,61 @@ export declare class RatingsController {
         };
     }>;
     findOne(id: number): Promise<{
-        novel: {
-            rating: number | null;
-            id: number;
-            userId: number;
-            createdAt: Date;
-            name: string;
-            description: string | null;
-            cover: string | null;
-            author: string;
-            status: string;
-            view: number;
-            updatedAt: Date;
-            followerCount: number;
-            commentCount: number;
-        };
         user: {
             id: number;
             name: string;
             avatar: string;
         };
+        novel: {
+            id: number;
+            name: string;
+            rating: number | null;
+            view: number;
+            userId: number;
+            updatedAt: Date;
+            createdAt: Date;
+            description: string | null;
+            cover: string | null;
+            author: string;
+            status: string;
+            followerCount: number;
+            commentCount: number;
+        };
     } & {
         id: number;
-        novelId: number;
         userId: number;
+        createdAt: Date;
+        novelId: number;
         content: string;
         score: number;
-        createdAt: Date;
     }>;
     update(id: number, updateRatingDto: UpdateRatingDto, req: Request): Promise<{
-        novel: {
-            rating: number | null;
-            id: number;
-            userId: number;
-            createdAt: Date;
-            name: string;
-            description: string | null;
-            cover: string | null;
-            author: string;
-            status: string;
-            view: number;
-            updatedAt: Date;
-            followerCount: number;
-            commentCount: number;
-        };
         user: {
             id: number;
             name: string;
             avatar: string;
         };
+        novel: {
+            id: number;
+            name: string;
+            rating: number | null;
+            view: number;
+            userId: number;
+            updatedAt: Date;
+            createdAt: Date;
+            description: string | null;
+            cover: string | null;
+            author: string;
+            status: string;
+            followerCount: number;
+            commentCount: number;
+        };
     } & {
         id: number;
-        novelId: number;
         userId: number;
+        createdAt: Date;
+        novelId: number;
         content: string;
         score: number;
-        createdAt: Date;
     }>;
 }

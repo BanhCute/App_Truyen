@@ -73,7 +73,15 @@ let RatingsController = class RatingsController {
         }
         catch (error) {
             console.error('Error in findAllByNovelWithUser:', error);
-            throw error;
+            return {
+                items: [],
+                meta: {
+                    page,
+                    limit,
+                    total: 0,
+                    totalPages: 0,
+                },
+            };
         }
     }
     findOne(id) {
