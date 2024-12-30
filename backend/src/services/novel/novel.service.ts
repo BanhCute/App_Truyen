@@ -561,4 +561,13 @@ export class NovelService {
 
     return updatedRating;
   }
+
+  async countFollows(id: number): Promise<number> {
+    const followCount = await this.databaseService.follow.count({
+      where: {
+        novelId: id,
+      },
+    });
+    return followCount;
+  }
 }

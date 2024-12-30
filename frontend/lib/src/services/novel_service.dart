@@ -1,9 +1,12 @@
 import 'dart:convert';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 import '../models/novel.dart';
 
 class NovelService {
+  static const String _viewTimeKey = 'novel_view_time';
+
   static Future<List<Novel>> getRecommendedNovels() async {
     try {
       final response = await http.get(
@@ -24,14 +27,12 @@ class NovelService {
     }
   }
 
-  // Cập nhật số lượt follow
-  static Future<void> updateFollowCount(
-      String novelId, bool isIncrement) async {
+  // Cập nhật số lượt follow bằng cách đếm lại từ database
+  static Future<void> updateFollowCount(String novelId) async {
     try {
-      final response = await http.patch(
+      final response = await http.get(
         Uri.parse('${dotenv.get('API_URL')}/novels/$novelId/follow-count'),
         headers: {'Content-Type': 'application/json'},
-        body: json.encode({'increment': isIncrement}),
       );
 
       if (response.statusCode != 200) {
@@ -42,16 +43,27 @@ class NovelService {
     }
   }
 
-  // Cập nhật số lượt xem
+  // Kiểm tra và cập nhật lượt xem (1 lần/24h)
   static Future<void> incrementView(String novelId) async {
     try {
-      final response = await http.patch(
-        Uri.parse('${dotenv.get('API_URL')}/novels/$novelId/view'),
-        headers: {'Content-Type': 'application/json'},
-      );
+      final prefs = await SharedPreferences.getInstance();
+      final viewTimeKey = '${_viewTimeKey}_$novelId';
+      final lastViewTime = prefs.getInt(viewTimeKey) ?? 0;
+      final now = DateTime.now().millisecondsSinceEpoch;
 
-      if (response.statusCode != 200) {
-        throw Exception('Không thể cập nhật số lượt xem');
+      // Kiểm tra nếu đã qua 24h kể từ lần xem cuối
+      if (now - lastViewTime >= 24 * 60 * 60 * 1000) {
+        final response = await http.patch(
+          Uri.parse('${dotenv.get('API_URL')}/novels/$novelId/view'),
+          headers: {'Content-Type': 'application/json'},
+        );
+
+        if (response.statusCode == 200) {
+          // Lưu thời gian xem mới
+          await prefs.setInt(viewTimeKey, now);
+        } else {
+          throw Exception('Không thể cập nhật số lượt xem');
+        }
       }
     } catch (e) {
       print('Error incrementing view count: $e');

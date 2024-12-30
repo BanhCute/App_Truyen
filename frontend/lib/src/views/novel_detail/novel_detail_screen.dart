@@ -60,18 +60,23 @@ class _NovelDetailScreenState extends State<NovelDetailScreen> {
     try {
       if (isFollowing) {
         await FollowService.unfollowNovel(widget.novel.id);
-        await NovelService.updateFollowCount(widget.novel.id, false);
       } else {
         await FollowService.followNovel(widget.novel.id);
-        await NovelService.updateFollowCount(widget.novel.id, true);
       }
+
+      // Cập nhật số lượt follow từ server
+      await NovelService.updateFollowCount(widget.novel.id);
+
+      // Lấy số follow mới
+      final newFollowCount = await NovelService.getFollowCount(widget.novel.id);
+
       setState(() {
         isFollowing = !isFollowing;
         novel = novel.copyWith(
-          followerCount:
-              isFollowing ? novel.followerCount + 1 : novel.followerCount - 1,
+          followerCount: newFollowCount,
         );
       });
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
