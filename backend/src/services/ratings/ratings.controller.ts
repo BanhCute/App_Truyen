@@ -51,23 +51,14 @@ export class RatingsController {
           page,
           limit,
         );
-        console.log('Found ratings:', JSON.stringify(result, null, 2));
-        return result;
+        console.log('Found ratings:', JSON.stringify(result.items, null, 2));
+        return result.items;
       }
 
       console.log('Finding all ratings without novelId filter');
       const ratings = await this.ratingsService.findAll();
-      const result = {
-        items: ratings,
-        meta: {
-          page,
-          limit,
-          total: ratings.length,
-          totalPages: Math.ceil(ratings.length / limit),
-        },
-      };
-      console.log('Found all ratings:', JSON.stringify(result, null, 2));
-      return result;
+      console.log('Found all ratings:', JSON.stringify(ratings, null, 2));
+      return ratings;
     } catch (error) {
       console.error('Error in findAll:', error);
       throw error;

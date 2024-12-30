@@ -33,7 +33,7 @@ class RatingService {
       print('Fetching ratings for novel: $novelId (page $page, limit $limit)');
       final headers = await _getHeaders();
       final url = Uri.parse(
-          '${dotenv.get('API_URL')}/ratings?novelId=$novelId&page=$page&limit=$limit');
+          '${dotenv.get('API_URL')}/api/v1/ratings?novelId=$novelId&page=$page&limit=$limit');
 
       print('Request URL: $url');
       print('Request headers: $headers');
@@ -58,63 +58,36 @@ class RatingService {
           };
         }
 
-        final data = json.decode(response.body);
+        final List<dynamic> data = json.decode(response.body);
         print('Parsed response data: $data');
 
-        if (data is Map<String, dynamic> && data.containsKey('items')) {
-          print('Response is a Map with keys: ${data.keys.toList()}');
-          final items = (data['items'] as List).map((json) {
-            print('Processing rating item: $json');
-            final rating = Rating.fromJson(json);
-            print(
-                'Processed rating: id=${rating.id}, userId=${rating.userId}, score=${rating.score}');
-            return rating;
-          }).toList();
+        final items = data
+            .map((json) {
+              print('Processing rating item: $json');
+              if (json is Map<String, dynamic> && json.isNotEmpty) {
+                final rating = Rating.fromJson(json);
+                print(
+                    'Processed rating: id=${rating.id}, userId=${rating.userId}, score=${rating.score}');
+                return rating;
+              } else {
+                print('Skipping empty or invalid rating: $json');
+                return null;
+              }
+            })
+            .where((rating) => rating != null)
+            .cast<Rating>()
+            .toList();
 
-          print('Processed ${items.length} ratings');
-          return {
-            'items': items,
-            'meta': data['meta'] ??
-                {
-                  'page': page,
-                  'limit': limit,
-                  'total': items.length,
-                  'totalPages': (items.length / limit).ceil(),
-                },
-          };
-        } else if (data is List) {
-          print('Response is a List with ${data.length} items');
-          final items = data.map((json) {
-            print('Processing rating item: $json');
-            final rating = Rating.fromJson(json);
-            print(
-                'Processed rating: id=${rating.id}, userId=${rating.userId}, score=${rating.score}');
-            return rating;
-          }).toList();
-
-          print('Processed ${items.length} ratings');
-          return {
-            'items': items,
-            'meta': {
-              'page': page,
-              'limit': limit,
-              'total': items.length,
-              'totalPages': (items.length / limit).ceil(),
-            },
-          };
-        } else {
-          print(
-              'Invalid response format - expected Map or List, got ${data.runtimeType}');
-          return {
-            'items': <Rating>[],
-            'meta': {
-              'page': page,
-              'limit': limit,
-              'total': 0,
-              'totalPages': 0,
-            }
-          };
-        }
+        print('Processed ${items.length} valid ratings');
+        return {
+          'items': items,
+          'meta': {
+            'page': page,
+            'limit': limit,
+            'total': items.length,
+            'totalPages': (items.length / limit).ceil(),
+          }
+        };
       } else {
         print(
             'Failed to load ratings: ${response.statusCode} - ${response.body}');
