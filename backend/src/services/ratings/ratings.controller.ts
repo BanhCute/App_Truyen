@@ -42,29 +42,24 @@ export class RatingsController {
     try {
       console.log('Request query params:', { novelId, page, limit });
 
-      if (novelId > 0) {
-        console.log(`Finding ratings for novel ${novelId}`);
-        const result = await this.ratingsService.findAllByNovelWithUser(
-          novelId,
-          page,
-          limit,
-        );
-        console.log('Found ratings:', JSON.stringify(result, null, 2));
-        return plainToInstance(RatingDto, result.items, {
-          excludeExtraneousValues: true,
-        });
-      }
+      const result =
+        novelId > 0
+          ? await this.ratingsService.findAllByNovelWithUser(
+              novelId,
+              page,
+              limit,
+            )
+          : await this.ratingsService.findAll();
 
-      console.log('Finding all ratings');
-      const ratings = await this.ratingsService.findAll();
-      console.log('Found all ratings:', JSON.stringify(ratings, null, 2));
+      console.log('Raw result:', JSON.stringify(result, null, 2));
 
-      const transformedRatings = plainToInstance(RatingDto, ratings.items, {
+      const transformedRatings = plainToInstance(RatingDto, result.items, {
         excludeExtraneousValues: true,
       });
+
       return {
         items: transformedRatings,
-        meta: ratings.meta,
+        meta: result.meta,
       };
     } catch (error) {
       console.error('Error in findAll:', error);

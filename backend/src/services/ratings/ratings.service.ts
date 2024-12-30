@@ -64,29 +64,32 @@ export class RatingsService {
       console.log('Finding all ratings');
 
       // Get all ratings with user and novel info
-      const ratings = await this.databaseService.rating.findMany({
-        include: {
-          user: {
-            select: {
-              id: true,
-              name: true,
-              avatar: true,
+      const [ratings, total] = await Promise.all([
+        this.databaseService.rating.findMany({
+          include: {
+            user: {
+              select: {
+                id: true,
+                name: true,
+                avatar: true,
+              },
+            },
+            novel: {
+              select: {
+                id: true,
+                name: true,
+                cover: true,
+              },
             },
           },
-          novel: {
-            select: {
-              id: true,
-              name: true,
-              cover: true,
-            },
+          orderBy: {
+            createdAt: 'desc',
           },
-        },
-        orderBy: {
-          createdAt: 'desc',
-        },
-      });
+        }),
+        this.databaseService.rating.count(),
+      ]);
 
-      console.log(`Found ${ratings.length} ratings`);
+      console.log(`Found ${ratings.length} ratings (total: ${total})`);
       console.log('Raw ratings:', JSON.stringify(ratings, null, 2));
 
       // Transform ratings
@@ -120,9 +123,9 @@ export class RatingsService {
       return {
         items: transformedRatings,
         meta: {
-          total: ratings.length,
+          total,
           page: 1,
-          limit: ratings.length,
+          limit: total,
           totalPages: 1,
         },
       };

@@ -35,12 +35,12 @@ export declare class RatingsController {
         score: number;
         createdAt: Date;
     }>;
-    findAll(novelId: number, page: number, limit: number): Promise<RatingDto[] | {
+    findAll(novelId: number, page: number, limit: number): Promise<{
         items: RatingDto[];
         meta: {
-            total: number;
             page: number;
             limit: number;
+            total: number;
             totalPages: number;
         };
     }>;

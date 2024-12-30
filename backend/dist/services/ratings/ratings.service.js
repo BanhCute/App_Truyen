@@ -55,28 +55,31 @@ let RatingsService = class RatingsService {
     async findAll() {
         try {
             console.log('Finding all ratings');
-            const ratings = await this.databaseService.rating.findMany({
-                include: {
-                    user: {
-                        select: {
-                            id: true,
-                            name: true,
-                            avatar: true,
+            const [ratings, total] = await Promise.all([
+                this.databaseService.rating.findMany({
+                    include: {
+                        user: {
+                            select: {
+                                id: true,
+                                name: true,
+                                avatar: true,
+                            },
+                        },
+                        novel: {
+                            select: {
+                                id: true,
+                                name: true,
+                                cover: true,
+                            },
                         },
                     },
-                    novel: {
-                        select: {
-                            id: true,
-                            name: true,
-                            cover: true,
-                        },
+                    orderBy: {
+                        createdAt: 'desc',
                     },
-                },
-                orderBy: {
-                    createdAt: 'desc',
-                },
-            });
-            console.log(`Found ${ratings.length} ratings`);
+                }),
+                this.databaseService.rating.count(),
+            ]);
+            console.log(`Found ${ratings.length} ratings (total: ${total})`);
             console.log('Raw ratings:', JSON.stringify(ratings, null, 2));
             const transformedRatings = ratings.map((rating) => ({
                 id: rating.id,
@@ -107,9 +110,9 @@ let RatingsService = class RatingsService {
             return {
                 items: transformedRatings,
                 meta: {
-                    total: ratings.length,
+                    total,
                     page: 1,
-                    limit: ratings.length,
+                    limit: total,
                     totalPages: 1,
                 },
             };

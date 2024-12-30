@@ -32,23 +32,16 @@ let RatingsController = class RatingsController {
     async findAll(novelId, page, limit) {
         try {
             console.log('Request query params:', { novelId, page, limit });
-            if (novelId > 0) {
-                console.log(`Finding ratings for novel ${novelId}`);
-                const result = await this.ratingsService.findAllByNovelWithUser(novelId, page, limit);
-                console.log('Found ratings:', JSON.stringify(result, null, 2));
-                return (0, class_transformer_1.plainToInstance)(rating_dto_1.default, result.items, {
-                    excludeExtraneousValues: true,
-                });
-            }
-            console.log('Finding all ratings');
-            const ratings = await this.ratingsService.findAll();
-            console.log('Found all ratings:', JSON.stringify(ratings, null, 2));
-            const transformedRatings = (0, class_transformer_1.plainToInstance)(rating_dto_1.default, ratings.items, {
+            const result = novelId > 0
+                ? await this.ratingsService.findAllByNovelWithUser(novelId, page, limit)
+                : await this.ratingsService.findAll();
+            console.log('Raw result:', JSON.stringify(result, null, 2));
+            const transformedRatings = (0, class_transformer_1.plainToInstance)(rating_dto_1.default, result.items, {
                 excludeExtraneousValues: true,
             });
             return {
                 items: transformedRatings,
-                meta: ratings.meta,
+                meta: result.meta,
             };
         }
         catch (error) {
