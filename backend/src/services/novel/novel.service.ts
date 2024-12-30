@@ -78,41 +78,48 @@ export class NovelService {
   }
 
   findOne(id: number) {
-    return this.databaseService.novel.findUnique({
-      where: { id },
-      select: {
-        id: true,
-        name: true,
-        description: true,
-        author: true,
-        cover: true,
-        status: true,
-        view: true,
-        rating: true,
-        followerCount: true,
-        commentCount: true,
-        createdAt: true,
-        updatedAt: true,
-        userId: true,
-        user: {
-          select: {
-            id: true,
-            name: true,
-            avatar: true,
+    console.log(`Finding novel with id ${id}`);
+    return this.databaseService.novel
+      .findUnique({
+        where: { id },
+        select: {
+          id: true,
+          name: true,
+          description: true,
+          author: true,
+          cover: true,
+          status: true,
+          view: true,
+          rating: true,
+          followerCount: true,
+          commentCount: true,
+          createdAt: true,
+          updatedAt: true,
+          userId: true,
+          user: {
+            select: {
+              id: true,
+              name: true,
+              avatar: true,
+            },
           },
-        },
-        categories: {
-          select: {
-            category: {
-              select: {
-                id: true,
-                name: true,
+          categories: {
+            select: {
+              category: {
+                select: {
+                  id: true,
+                  name: true,
+                  description: true,
+                },
               },
             },
           },
         },
-      },
-    });
+      })
+      .then((novel) => {
+        console.log('Found novel:', JSON.stringify(novel, null, 2));
+        return novel;
+      });
   }
 
   async update(id: number, updateNovelDto: UpdateNovelDto, userId: number) {
@@ -179,6 +186,7 @@ export class NovelService {
   }
 
   async addCategories(id: number, categoryIds: number[], userId: number) {
+    console.log(`Adding categories ${categoryIds} to novel ${id}`);
     const novel = await this.databaseService.novel.findUnique({
       where: { id },
       select: {
@@ -191,6 +199,8 @@ export class NovelService {
         },
       },
     });
+
+    console.log('Current novel categories:', novel?.categories);
 
     if (!novel) {
       throw new NotFoundException('Không tìm thấy truyện');
@@ -214,11 +224,14 @@ export class NovelService {
       },
     });
 
+    console.log('Found categories:', categories);
+
     if (categories.length !== categoryIds.length) {
       throw new BadRequestException('Một số thể loại không tồn tại');
     }
 
     // Xóa tất cả các thể loại cũ
+    console.log('Deleting old categories...');
     await this.databaseService.novelCategory.deleteMany({
       where: {
         novelId: id,
@@ -226,6 +239,7 @@ export class NovelService {
     });
 
     // Thêm các thể loại mới
+    console.log('Adding new categories...');
     await this.databaseService.novelCategory.createMany({
       data: categoryIds.map((categoryId) => ({
         novelId: id,
@@ -234,7 +248,7 @@ export class NovelService {
     });
 
     // Trả về novel với thông tin categories đã cập nhật
-    return this.databaseService.novel.findUnique({
+    const updatedNovel = await this.databaseService.novel.findUnique({
       where: { id },
       include: {
         categories: {
@@ -244,6 +258,9 @@ export class NovelService {
         },
       },
     });
+
+    console.log('Updated novel categories:', updatedNovel?.categories);
+    return updatedNovel;
   }
 
   async removeCategory(id: number, categoryId: number, userId: number) {

@@ -90,10 +90,24 @@ export class RatingsService {
     try {
       const skip = (page - 1) * limit;
 
+      // Test database connection
+      console.log('Testing database connection...');
+      const testQuery = await this.databaseService.$queryRaw`SELECT 1`;
+      console.log('Database connection test result:', testQuery);
+
       // First check if ratings exist without any conditions
+      console.log('Checking raw ratings...');
       const checkRatings = await this.databaseService.rating.findMany({
         where: {
           novelId: novelId,
+        },
+        select: {
+          id: true,
+          novelId: true,
+          userId: true,
+          content: true,
+          score: true,
+          createdAt: true,
         },
       });
       console.log(
@@ -101,7 +115,21 @@ export class RatingsService {
         JSON.stringify(checkRatings, null, 2),
       );
 
+      if (checkRatings.length === 0) {
+        console.log('No ratings found for novel', novelId);
+        return {
+          items: [],
+          meta: {
+            page,
+            limit,
+            total: 0,
+            totalPages: 0,
+          },
+        };
+      }
+
       // Get ratings with user info
+      console.log('Getting ratings with user info...');
       const [ratings, total] = await Promise.all([
         this.databaseService.rating.findMany({
           where: {
@@ -113,6 +141,12 @@ export class RatingsService {
                 id: true,
                 name: true,
                 avatar: true,
+              },
+            },
+            novel: {
+              select: {
+                id: true,
+                name: true,
               },
             },
           },
@@ -151,6 +185,7 @@ export class RatingsService {
               name: 'Người dùng',
               avatar: 'default-avatar.png',
             },
+        novel: rating.novel,
       }));
 
       const result = {
