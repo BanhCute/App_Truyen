@@ -39,28 +39,39 @@ export class RatingsController {
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
     @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number,
   ) {
-    console.log(
-      `Finding ratings with novelId: ${novelId}, page: ${page}, limit: ${limit}`,
-    );
-    if (novelId > 0) {
-      const result = await this.ratingsService.findAllByNovelWithUser(
-        novelId,
-        page,
-        limit,
+    try {
+      console.log('Request query params:', { novelId, page, limit });
+      console.log(
+        `Finding ratings with novelId: ${novelId}, page: ${page}, limit: ${limit}`,
       );
-      console.log('Found ratings:', JSON.stringify(result, null, 2));
+
+      if (novelId > 0) {
+        const result = await this.ratingsService.findAllByNovelWithUser(
+          novelId,
+          page,
+          limit,
+        );
+        console.log('Found ratings:', JSON.stringify(result, null, 2));
+        return result;
+      }
+
+      console.log('Finding all ratings without novelId filter');
+      const ratings = await this.ratingsService.findAll();
+      const result = {
+        items: ratings,
+        meta: {
+          page,
+          limit,
+          total: ratings.length,
+          totalPages: Math.ceil(ratings.length / limit),
+        },
+      };
+      console.log('Found all ratings:', JSON.stringify(result, null, 2));
       return result;
+    } catch (error) {
+      console.error('Error in findAll:', error);
+      throw error;
     }
-    const ratings = await this.ratingsService.findAll();
-    return {
-      items: ratings,
-      meta: {
-        page,
-        limit,
-        total: ratings.length,
-        totalPages: Math.ceil(ratings.length / limit),
-      },
-    };
   }
 
   @Get('novel/:novelId/with-user')

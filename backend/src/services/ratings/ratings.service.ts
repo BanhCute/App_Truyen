@@ -90,6 +90,19 @@ export class RatingsService {
     try {
       const skip = (page - 1) * limit;
 
+      console.log('Database query params:', {
+        novelId,
+        skip,
+        take: limit,
+        where: {
+          novelId,
+          user: {
+            isDeleted: false,
+            isBanned: false,
+          },
+        },
+      });
+
       const [ratings, total] = await Promise.all([
         this.databaseService.rating.findMany({
           where: {
@@ -125,7 +138,7 @@ export class RatingsService {
         }),
       ]);
 
-      console.log('Database query result:', JSON.stringify(ratings, null, 2));
+      console.log('Raw database result:', JSON.stringify(ratings, null, 2));
       console.log(`Found ${ratings.length} ratings (total: ${total})`);
 
       const result = {
@@ -156,6 +169,8 @@ export class RatingsService {
       return result;
     } catch (error) {
       console.error('Error finding ratings:', error);
+      console.error('Error details:', error.message);
+      console.error('Error stack:', error.stack);
       throw error;
     }
   }

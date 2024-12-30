@@ -27,11 +27,39 @@ let RatingsController = class RatingsController {
         const session = (0, auth_utils_1.getSession)(req);
         return this.ratingsService.create(createRatingDto, session.id);
     }
-    findAll() {
-        return this.ratingsService.findAll();
+    async findAll(novelId, page, limit) {
+        try {
+            console.log('Request query params:', { novelId, page, limit });
+            console.log(`Finding ratings with novelId: ${novelId}, page: ${page}, limit: ${limit}`);
+            if (novelId > 0) {
+                const result = await this.ratingsService.findAllByNovelWithUser(novelId, page, limit);
+                console.log('Found ratings:', JSON.stringify(result, null, 2));
+                return result;
+            }
+            console.log('Finding all ratings without novelId filter');
+            const ratings = await this.ratingsService.findAll();
+            const result = {
+                items: ratings,
+                meta: {
+                    page,
+                    limit,
+                    total: ratings.length,
+                    totalPages: Math.ceil(ratings.length / limit),
+                },
+            };
+            console.log('Found all ratings:', JSON.stringify(result, null, 2));
+            return result;
+        }
+        catch (error) {
+            console.error('Error in findAll:', error);
+            throw error;
+        }
     }
-    findAllByNovelWithUser(novelId) {
-        return this.ratingsService.findAllByNovelWithUser(novelId);
+    async findAllByNovelWithUser(novelId, page, limit) {
+        console.log(`Finding ratings for novel ${novelId} (page ${page}, limit ${limit})`);
+        const result = await this.ratingsService.findAllByNovelWithUser(novelId, page, limit);
+        console.log('Found ratings:', JSON.stringify(result, null, 2));
+        return result;
     }
     findOne(id) {
         return this.ratingsService.findOne(id);
@@ -52,16 +80,21 @@ __decorate([
 ], RatingsController.prototype, "create", null);
 __decorate([
     (0, common_1.Get)(),
+    __param(0, (0, common_1.Query)('novelId', new common_1.DefaultValuePipe(0), common_1.ParseIntPipe)),
+    __param(1, (0, common_1.Query)('page', new common_1.DefaultValuePipe(1), common_1.ParseIntPipe)),
+    __param(2, (0, common_1.Query)('limit', new common_1.DefaultValuePipe(10), common_1.ParseIntPipe)),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", []),
-    __metadata("design:returntype", void 0)
+    __metadata("design:paramtypes", [Number, Number, Number]),
+    __metadata("design:returntype", Promise)
 ], RatingsController.prototype, "findAll", null);
 __decorate([
     (0, common_1.Get)('novel/:novelId/with-user'),
     __param(0, (0, common_1.Param)('novelId', common_1.ParseIntPipe)),
+    __param(1, (0, common_1.Query)('page', new common_1.DefaultValuePipe(1), common_1.ParseIntPipe)),
+    __param(2, (0, common_1.Query)('limit', new common_1.DefaultValuePipe(10), common_1.ParseIntPipe)),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Number]),
-    __metadata("design:returntype", void 0)
+    __metadata("design:paramtypes", [Number, Number, Number]),
+    __metadata("design:returntype", Promise)
 ], RatingsController.prototype, "findAllByNovelWithUser", null);
 __decorate([
     (0, common_1.Get)(':id'),

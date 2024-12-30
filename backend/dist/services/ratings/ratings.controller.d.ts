@@ -7,6 +7,7 @@ export declare class RatingsController {
     constructor(ratingsService: RatingsService);
     create(createRatingDto: CreateRatingDto, req: Request): Promise<{
         novel: {
+            rating: number | null;
             id: number;
             userId: number;
             createdAt: Date;
@@ -17,7 +18,6 @@ export declare class RatingsController {
             status: string;
             view: number;
             updatedAt: Date;
-            rating: number | null;
             followerCount: number;
             commentCount: number;
         };
@@ -30,70 +30,55 @@ export declare class RatingsController {
         id: number;
         novelId: number;
         userId: number;
-        createdAt: Date;
         content: string;
         score: number;
+        createdAt: Date;
     }>;
-    findAll(): import("@prisma/client").Prisma.PrismaPromise<({
-        novel: {
+    findAll(novelId: number, page: number, limit: number): Promise<{
+        items: {
             id: number;
+            novelId: number;
             userId: number;
+            content: string;
+            score: number;
             createdAt: Date;
-            name: string;
-            description: string | null;
-            cover: string | null;
-            author: string;
-            status: string;
-            view: number;
-            updatedAt: Date;
-            rating: number | null;
-            followerCount: number;
-            commentCount: number;
+            user: {
+                id: number;
+                name: string;
+                avatar: string;
+            };
+        }[];
+        meta: {
+            page: number;
+            limit: number;
+            total: number;
+            totalPages: number;
         };
-        user: {
+    }>;
+    findAllByNovelWithUser(novelId: number, page: number, limit: number): Promise<{
+        items: {
             id: number;
-            name: string;
-            avatar: string;
-        };
-    } & {
-        id: number;
-        novelId: number;
-        userId: number;
-        createdAt: Date;
-        content: string;
-        score: number;
-    })[]>;
-    findAllByNovelWithUser(novelId: number): Promise<({
-        novel: {
-            id: number;
+            novelId: number;
             userId: number;
+            content: string;
+            score: number;
             createdAt: Date;
-            name: string;
-            description: string | null;
-            cover: string | null;
-            author: string;
-            status: string;
-            view: number;
-            updatedAt: Date;
-            rating: number | null;
-            followerCount: number;
-            commentCount: number;
+            user: {
+                id: number;
+                name: string;
+                avatar: string;
+            };
+        }[];
+        meta: {
+            page: number;
+            limit: number;
+            total: number;
+            totalPages: number;
         };
-        user: {
-            id: number;
-            name: string;
-            avatar: string;
-        };
-    } & {
-        id: number;
-        novelId: number;
-        userId: number;
-        createdAt: Date;
-        content: string;
-        score: number;
-    })[]>;
+    }>;
     findOne(id: number): Promise<{
         novel: {
+            rating: number | null;
             id: number;
             userId: number;
             createdAt: Date;
@@ -104,7 +89,6 @@ export declare class RatingsController {
             status: string;
             view: number;
             updatedAt: Date;
-            rating: number | null;
             followerCount: number;
             commentCount: number;
         };
@@ -117,12 +101,13 @@ export declare class RatingsController {
         id: number;
         novelId: number;
         userId: number;
-        createdAt: Date;
         content: string;
         score: number;
+        createdAt: Date;
     }>;
     update(id: number, updateRatingDto: UpdateRatingDto, req: Request): Promise<{
         novel: {
+            rating: number | null;
             id: number;
             userId: number;
             createdAt: Date;
@@ -133,7 +118,6 @@ export declare class RatingsController {
             status: string;
             view: number;
             updatedAt: Date;
-            rating: number | null;
             followerCount: number;
             commentCount: number;
         };
@@ -146,8 +130,8 @@ export declare class RatingsController {
         id: number;
         novelId: number;
         userId: number;
-        createdAt: Date;
         content: string;
         score: number;
+        createdAt: Date;
     }>;
 }

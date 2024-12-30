@@ -32,11 +32,13 @@ class RatingService {
     try {
       print('Fetching ratings for novel: $novelId (page $page, limit $limit)');
       final headers = await _getHeaders();
-      final response = await http.get(
-        Uri.parse(
-            '${dotenv.get('API_URL')}/ratings?novelId=$novelId&page=$page&limit=$limit'),
-        headers: headers,
-      );
+      final url = Uri.parse(
+          '${dotenv.get('API_URL')}/ratings?novelId=$novelId&page=$page&limit=$limit');
+
+      print('Request URL: $url');
+      print('Request headers: $headers');
+
+      final response = await http.get(url, headers: headers);
 
       print('Rating response status: ${response.statusCode}');
       print('Rating response headers: ${response.headers}');
@@ -44,20 +46,26 @@ class RatingService {
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
-        print('Parsed data: $data');
+        print('Parsed response data: $data');
 
         if (data is Map<String, dynamic>) {
+          print('Response is a Map with keys: ${data.keys.toList()}');
           final items = (data['items'] as List).map((json) {
-            print('Processing rating: $json');
-            return Rating.fromJson(json);
+            print('Processing rating item: $json');
+            final rating = Rating.fromJson(json);
+            print(
+                'Processed rating: id=${rating.id}, userId=${rating.userId}, score=${rating.score}');
+            return rating;
           }).toList();
 
+          print('Processed ${items.length} ratings');
           return {
             'items': items,
             'meta': data['meta'],
           };
         } else {
-          print('Invalid response format: $data');
+          print(
+              'Invalid response format - expected Map, got ${data.runtimeType}');
           return {
             'items': <Rating>[],
             'meta': {

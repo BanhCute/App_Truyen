@@ -5,33 +5,33 @@ export declare class RatingsService {
     private readonly databaseService;
     constructor(databaseService: DatabaseService);
     create(createRatingDto: CreateRatingDto, userId: number): Promise<{
+        novel: {
+            rating: number | null;
+            id: number;
+            userId: number;
+            createdAt: Date;
+            name: string;
+            description: string | null;
+            cover: string | null;
+            author: string;
+            status: string;
+            view: number;
+            updatedAt: Date;
+            followerCount: number;
+            commentCount: number;
+        };
         user: {
             id: number;
             name: string;
             avatar: string;
         };
-        novel: {
-            id: number;
-            name: string;
-            rating: number | null;
-            view: number;
-            userId: number;
-            updatedAt: Date;
-            createdAt: Date;
-            description: string | null;
-            cover: string | null;
-            author: string;
-            status: string;
-            followerCount: number;
-            commentCount: number;
-        };
     } & {
         id: number;
-        userId: number;
-        createdAt: Date;
         novelId: number;
+        userId: number;
         content: string;
         score: number;
+        createdAt: Date;
     }>;
     findAll(): import("@prisma/client").Prisma.PrismaPromise<({
         user: {
@@ -39,114 +39,91 @@ export declare class RatingsService {
             name: string;
             avatar: string;
         };
-        novel: {
-            id: number;
-            name: string;
-            rating: number | null;
-            view: number;
-            userId: number;
-            updatedAt: Date;
-            createdAt: Date;
-            description: string | null;
-            cover: string | null;
-            author: string;
-            status: string;
-            followerCount: number;
-            commentCount: number;
-        };
     } & {
         id: number;
-        userId: number;
-        createdAt: Date;
         novelId: number;
+        userId: number;
         content: string;
         score: number;
+        createdAt: Date;
     })[]>;
-    findAllByNovelWithUser(novelId: number): Promise<({
-        user: {
+    findAllByNovelWithUser(novelId: number, page?: number, limit?: number): Promise<{
+        items: {
             id: number;
-            name: string;
-            avatar: string;
-        };
-        novel: {
-            id: number;
-            name: string;
-            rating: number | null;
-            view: number;
+            novelId: number;
             userId: number;
-            updatedAt: Date;
+            content: string;
+            score: number;
             createdAt: Date;
-            description: string | null;
-            cover: string | null;
-            author: string;
-            status: string;
-            followerCount: number;
-            commentCount: number;
+            user: {
+                id: number;
+                name: string;
+                avatar: string;
+            };
+        }[];
+        meta: {
+            page: number;
+            limit: number;
+            total: number;
+            totalPages: number;
         };
-    } & {
-        id: number;
-        userId: number;
-        createdAt: Date;
-        novelId: number;
-        content: string;
-        score: number;
-    })[]>;
+    }>;
     findOne(id: number): Promise<{
+        novel: {
+            rating: number | null;
+            id: number;
+            userId: number;
+            createdAt: Date;
+            name: string;
+            description: string | null;
+            cover: string | null;
+            author: string;
+            status: string;
+            view: number;
+            updatedAt: Date;
+            followerCount: number;
+            commentCount: number;
+        };
         user: {
             id: number;
             name: string;
             avatar: string;
         };
-        novel: {
-            id: number;
-            name: string;
-            rating: number | null;
-            view: number;
-            userId: number;
-            updatedAt: Date;
-            createdAt: Date;
-            description: string | null;
-            cover: string | null;
-            author: string;
-            status: string;
-            followerCount: number;
-            commentCount: number;
-        };
     } & {
         id: number;
-        userId: number;
-        createdAt: Date;
         novelId: number;
+        userId: number;
         content: string;
         score: number;
+        createdAt: Date;
     }>;
     update(id: number, updateRatingDto: UpdateRatingDto, userId: number): Promise<{
+        novel: {
+            rating: number | null;
+            id: number;
+            userId: number;
+            createdAt: Date;
+            name: string;
+            description: string | null;
+            cover: string | null;
+            author: string;
+            status: string;
+            view: number;
+            updatedAt: Date;
+            followerCount: number;
+            commentCount: number;
+        };
         user: {
             id: number;
             name: string;
             avatar: string;
         };
-        novel: {
-            id: number;
-            name: string;
-            rating: number | null;
-            view: number;
-            userId: number;
-            updatedAt: Date;
-            createdAt: Date;
-            description: string | null;
-            cover: string | null;
-            author: string;
-            status: string;
-            followerCount: number;
-            commentCount: number;
-        };
     } & {
         id: number;
-        userId: number;
-        createdAt: Date;
         novelId: number;
+        userId: number;
         content: string;
         score: number;
+        createdAt: Date;
     }>;
 }
