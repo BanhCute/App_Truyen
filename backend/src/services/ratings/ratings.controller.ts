@@ -50,13 +50,22 @@ export class RatingsController {
           limit,
         );
         console.log('Found ratings:', JSON.stringify(result, null, 2));
-        return result;
+        return plainToInstance(RatingDto, result.items, {
+          excludeExtraneousValues: true,
+        });
       }
 
       console.log('Finding all ratings');
-      const result = await this.ratingsService.findAll();
-      console.log('Found all ratings:', JSON.stringify(result, null, 2));
-      return result;
+      const ratings = await this.ratingsService.findAll();
+      console.log('Found all ratings:', JSON.stringify(ratings, null, 2));
+
+      const transformedRatings = plainToInstance(RatingDto, ratings.items, {
+        excludeExtraneousValues: true,
+      });
+      return {
+        items: transformedRatings,
+        meta: ratings.meta,
+      };
     } catch (error) {
       console.error('Error in findAll:', error);
       return {
@@ -87,7 +96,14 @@ export class RatingsController {
         limit,
       );
       console.log('Found ratings:', JSON.stringify(result, null, 2));
-      return result;
+
+      const transformedRatings = plainToInstance(RatingDto, result.items, {
+        excludeExtraneousValues: true,
+      });
+      return {
+        items: transformedRatings,
+        meta: result.meta,
+      };
     } catch (error) {
       console.error('Error in findAllByNovelWithUser:', error);
       return {
@@ -103,17 +119,27 @@ export class RatingsController {
   }
 
   @Get(':id')
-  findOne(@Param('id', ParseIntPipe) id: number) {
-    return this.ratingsService.findOne(id);
+  async findOne(@Param('id', ParseIntPipe) id: number) {
+    const rating = await this.ratingsService.findOne(id);
+    return plainToInstance(RatingDto, rating, {
+      excludeExtraneousValues: true,
+    });
   }
 
   @Put(':id')
-  update(
+  async update(
     @Param('id', ParseIntPipe) id: number,
     @Body() updateRatingDto: UpdateRatingDto,
     @Req() req: Request,
   ) {
     const session = getSession(req);
-    return this.ratingsService.update(id, updateRatingDto, session.id);
+    const rating = await this.ratingsService.update(
+      id,
+      updateRatingDto,
+      session.id,
+    );
+    return plainToInstance(RatingDto, rating, {
+      excludeExtraneousValues: true,
+    });
   }
 }

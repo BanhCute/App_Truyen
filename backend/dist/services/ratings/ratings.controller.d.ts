@@ -1,5 +1,6 @@
 import { RatingsService } from './ratings.service';
 import { CreateRatingDto } from './dto/create-rating.dto';
+import RatingDto from './dto/rating.dto';
 import { Request } from 'express';
 import { UpdateRatingDto } from './dto/update-rating.dto';
 export declare class RatingsController {
@@ -34,41 +35,17 @@ export declare class RatingsController {
         score: number;
         createdAt: Date;
     }>;
-    findAll(novelId: number, page: number, limit: number): Promise<{
-        items: {
-            id: number;
-            novelId: number;
-            userId: number;
-            content: string;
-            score: number;
-            createdAt: Date;
-            user: {
-                id: number;
-                name: string;
-                avatar: string;
-            };
-        }[];
+    findAll(novelId: number, page: number, limit: number): Promise<RatingDto[] | {
+        items: RatingDto[];
         meta: {
+            total: number;
             page: number;
             limit: number;
-            total: number;
             totalPages: number;
         };
     }>;
     findAllByNovelWithUser(novelId: number, page: number, limit: number): Promise<{
-        items: {
-            id: number;
-            novelId: number;
-            userId: number;
-            content: string;
-            score: number;
-            createdAt: Date;
-            user: {
-                id: number;
-                name: string;
-                avatar: string;
-            };
-        }[];
+        items: RatingDto[];
         meta: {
             page: number;
             limit: number;
@@ -76,62 +53,6 @@ export declare class RatingsController {
             totalPages: number;
         };
     }>;
-    findOne(id: number): Promise<{
-        novel: {
-            rating: number | null;
-            id: number;
-            userId: number;
-            createdAt: Date;
-            name: string;
-            description: string | null;
-            cover: string | null;
-            author: string;
-            status: string;
-            view: number;
-            updatedAt: Date;
-            followerCount: number;
-            commentCount: number;
-        };
-        user: {
-            id: number;
-            name: string;
-            avatar: string;
-        };
-    } & {
-        id: number;
-        novelId: number;
-        userId: number;
-        content: string;
-        score: number;
-        createdAt: Date;
-    }>;
-    update(id: number, updateRatingDto: UpdateRatingDto, req: Request): Promise<{
-        novel: {
-            rating: number | null;
-            id: number;
-            userId: number;
-            createdAt: Date;
-            name: string;
-            description: string | null;
-            cover: string | null;
-            author: string;
-            status: string;
-            view: number;
-            updatedAt: Date;
-            followerCount: number;
-            commentCount: number;
-        };
-        user: {
-            id: number;
-            name: string;
-            avatar: string;
-        };
-    } & {
-        id: number;
-        novelId: number;
-        userId: number;
-        content: string;
-        score: number;
-        createdAt: Date;
-    }>;
+    findOne(id: number): Promise<RatingDto>;
+    update(id: number, updateRatingDto: UpdateRatingDto, req: Request): Promise<RatingDto>;
 }

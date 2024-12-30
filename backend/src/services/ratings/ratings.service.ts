@@ -117,7 +117,7 @@ export class RatingsService {
           : null,
       }));
 
-      const result = {
+      return {
         items: transformedRatings,
         meta: {
           total: ratings.length,
@@ -126,9 +126,6 @@ export class RatingsService {
           totalPages: 1,
         },
       };
-
-      console.log('Transformed result:', JSON.stringify(result, null, 2));
-      return result;
     } catch (error) {
       console.error('Error finding all ratings:', error);
       console.error('Error details:', error.message);
@@ -153,13 +150,7 @@ export class RatingsService {
     try {
       const skip = (page - 1) * limit;
 
-      // Test database connection
-      console.log('Testing database connection...');
-      const testQuery = await this.databaseService.$queryRaw`SELECT 1`;
-      console.log('Database connection test result:', testQuery);
-
       // Get ratings with user info
-      console.log('Getting ratings with user info...');
       const [ratings, total] = await Promise.all([
         this.databaseService.rating.findMany({
           where: {
@@ -171,6 +162,13 @@ export class RatingsService {
                 id: true,
                 name: true,
                 avatar: true,
+              },
+            },
+            novel: {
+              select: {
+                id: true,
+                name: true,
+                cover: true,
               },
             },
           },
@@ -209,9 +207,16 @@ export class RatingsService {
               name: 'Người dùng',
               avatar: 'default-avatar.png',
             },
+        novel: rating.novel
+          ? {
+              id: rating.novel.id,
+              name: rating.novel.name,
+              cover: rating.novel.cover,
+            }
+          : null,
       }));
 
-      const result = {
+      return {
         items: transformedRatings,
         meta: {
           page,
@@ -220,14 +225,10 @@ export class RatingsService {
           totalPages: Math.ceil(total / limit),
         },
       };
-
-      console.log('Transformed result:', JSON.stringify(result, null, 2));
-      return result;
     } catch (error) {
       console.error('Error finding ratings:', error);
       console.error('Error details:', error.message);
       console.error('Error stack:', error.stack);
-      // Return empty result instead of throwing
       return {
         items: [],
         meta: {

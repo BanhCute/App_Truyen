@@ -72,6 +72,11 @@ export declare class RatingsService {
                 name: string;
                 avatar: string;
             };
+            novel: {
+                id: number;
+                name: string;
+                cover: string;
+            };
         }[];
         meta: {
             page: number;

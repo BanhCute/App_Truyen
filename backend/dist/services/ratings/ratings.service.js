@@ -104,7 +104,7 @@ let RatingsService = class RatingsService {
                     }
                     : null,
             }));
-            const result = {
+            return {
                 items: transformedRatings,
                 meta: {
                     total: ratings.length,
@@ -113,8 +113,6 @@ let RatingsService = class RatingsService {
                     totalPages: 1,
                 },
             };
-            console.log('Transformed result:', JSON.stringify(result, null, 2));
-            return result;
         }
         catch (error) {
             console.error('Error finding all ratings:', error);
@@ -135,10 +133,6 @@ let RatingsService = class RatingsService {
         console.log(`Finding ratings for novel ${novelId} in database (page ${page}, limit ${limit})`);
         try {
             const skip = (page - 1) * limit;
-            console.log('Testing database connection...');
-            const testQuery = await this.databaseService.$queryRaw `SELECT 1`;
-            console.log('Database connection test result:', testQuery);
-            console.log('Getting ratings with user info...');
             const [ratings, total] = await Promise.all([
                 this.databaseService.rating.findMany({
                     where: {
@@ -150,6 +144,13 @@ let RatingsService = class RatingsService {
                                 id: true,
                                 name: true,
                                 avatar: true,
+                            },
+                        },
+                        novel: {
+                            select: {
+                                id: true,
+                                name: true,
+                                cover: true,
                             },
                         },
                     },
@@ -185,8 +186,15 @@ let RatingsService = class RatingsService {
                         name: 'Người dùng',
                         avatar: 'default-avatar.png',
                     },
+                novel: rating.novel
+                    ? {
+                        id: rating.novel.id,
+                        name: rating.novel.name,
+                        cover: rating.novel.cover,
+                    }
+                    : null,
             }));
-            const result = {
+            return {
                 items: transformedRatings,
                 meta: {
                     page,
@@ -195,8 +203,6 @@ let RatingsService = class RatingsService {
                     totalPages: Math.ceil(total / limit),
                 },
             };
-            console.log('Transformed result:', JSON.stringify(result, null, 2));
-            return result;
         }
         catch (error) {
             console.error('Error finding ratings:', error);

@@ -7,43 +7,43 @@ export declare class NovelService {
     create(createNovelDto: CreateNovelDto, userId: number): Promise<{
         id: number;
         name: string;
-        description: string;
+        rating: number;
+        view: number;
+        userId: number;
+        updatedAt: Date;
         createdAt: Date;
+        description: string;
         cover: string;
         author: string;
         status: string;
-        view: number;
-        updatedAt: Date;
-        rating: number;
         followerCount: number;
         commentCount: number;
-        userId: number;
     }>;
     findAll(): import("@prisma/client").Prisma.PrismaPromise<{
         id: number;
         name: string;
-        description: string;
-        createdAt: Date;
-        cover: string;
-        author: string;
-        status: string;
-        view: number;
-        updatedAt: Date;
-        rating: number;
-        followerCount: number;
-        commentCount: number;
-        userId: number;
         user: {
             id: number;
             name: string;
             avatar: string;
         };
+        rating: number;
+        view: number;
+        userId: number;
+        updatedAt: Date;
+        createdAt: Date;
+        description: string;
         categories: {
             category: {
                 id: number;
                 name: string;
             };
         }[];
+        cover: string;
+        author: string;
+        status: string;
+        followerCount: number;
+        commentCount: number;
     }[]>;
     findOne(id: number): Promise<{
         id: number;
@@ -85,17 +85,17 @@ export declare class NovelService {
     update(id: number, updateNovelDto: UpdateNovelDto, userId: number): Promise<{
         id: number;
         name: string;
-        description: string;
+        rating: number;
+        view: number;
+        userId: number;
+        updatedAt: Date;
         createdAt: Date;
+        description: string;
         cover: string;
         author: string;
         status: string;
-        view: number;
-        updatedAt: Date;
-        rating: number;
         followerCount: number;
         commentCount: number;
-        userId: number;
     }>;
     remove(id: number, userId: number): Promise<{
         id: number;
@@ -115,17 +115,17 @@ export declare class NovelService {
     } & {
         id: number;
         name: string;
-        description: string | null;
+        rating: number | null;
+        view: number;
+        userId: number;
+        updatedAt: Date;
         createdAt: Date;
+        description: string | null;
         cover: string | null;
         author: string;
         status: string;
-        view: number;
-        updatedAt: Date;
-        rating: number | null;
         followerCount: number;
         commentCount: number;
-        userId: number;
     }>;
     removeCategory(id: number, categoryId: number, userId: number): Promise<{
         id: number;
@@ -162,8 +162,8 @@ export declare class NovelService {
         };
     } & {
         id: number;
-        createdAt: Date;
         userId: number;
+        createdAt: Date;
         novelId: number;
         content: string;
         score: number;
@@ -179,8 +179,8 @@ export declare class NovelService {
         };
     } & {
         id: number;
-        createdAt: Date;
         userId: number;
+        createdAt: Date;
         novelId: number;
         content: string;
         score: number;

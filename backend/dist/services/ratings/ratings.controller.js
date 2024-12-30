@@ -16,6 +16,8 @@ exports.RatingsController = void 0;
 const common_1 = require("@nestjs/common");
 const ratings_service_1 = require("./ratings.service");
 const create_rating_dto_1 = require("./dto/create-rating.dto");
+const rating_dto_1 = require("./dto/rating.dto");
+const class_transformer_1 = require("class-transformer");
 const swagger_1 = require("@nestjs/swagger");
 const auth_utils_1 = require("../auth/auth.utils");
 const update_rating_dto_1 = require("./dto/update-rating.dto");
@@ -34,12 +36,20 @@ let RatingsController = class RatingsController {
                 console.log(`Finding ratings for novel ${novelId}`);
                 const result = await this.ratingsService.findAllByNovelWithUser(novelId, page, limit);
                 console.log('Found ratings:', JSON.stringify(result, null, 2));
-                return result;
+                return (0, class_transformer_1.plainToInstance)(rating_dto_1.default, result.items, {
+                    excludeExtraneousValues: true,
+                });
             }
             console.log('Finding all ratings');
-            const result = await this.ratingsService.findAll();
-            console.log('Found all ratings:', JSON.stringify(result, null, 2));
-            return result;
+            const ratings = await this.ratingsService.findAll();
+            console.log('Found all ratings:', JSON.stringify(ratings, null, 2));
+            const transformedRatings = (0, class_transformer_1.plainToInstance)(rating_dto_1.default, ratings.items, {
+                excludeExtraneousValues: true,
+            });
+            return {
+                items: transformedRatings,
+                meta: ratings.meta,
+            };
         }
         catch (error) {
             console.error('Error in findAll:', error);
@@ -59,7 +69,13 @@ let RatingsController = class RatingsController {
             console.log(`Finding ratings for novel ${novelId} (page ${page}, limit ${limit})`);
             const result = await this.ratingsService.findAllByNovelWithUser(novelId, page, limit);
             console.log('Found ratings:', JSON.stringify(result, null, 2));
-            return result;
+            const transformedRatings = (0, class_transformer_1.plainToInstance)(rating_dto_1.default, result.items, {
+                excludeExtraneousValues: true,
+            });
+            return {
+                items: transformedRatings,
+                meta: result.meta,
+            };
         }
         catch (error) {
             console.error('Error in findAllByNovelWithUser:', error);
@@ -74,12 +90,18 @@ let RatingsController = class RatingsController {
             };
         }
     }
-    findOne(id) {
-        return this.ratingsService.findOne(id);
+    async findOne(id) {
+        const rating = await this.ratingsService.findOne(id);
+        return (0, class_transformer_1.plainToInstance)(rating_dto_1.default, rating, {
+            excludeExtraneousValues: true,
+        });
     }
-    update(id, updateRatingDto, req) {
+    async update(id, updateRatingDto, req) {
         const session = (0, auth_utils_1.getSession)(req);
-        return this.ratingsService.update(id, updateRatingDto, session.id);
+        const rating = await this.ratingsService.update(id, updateRatingDto, session.id);
+        return (0, class_transformer_1.plainToInstance)(rating_dto_1.default, rating, {
+            excludeExtraneousValues: true,
+        });
     }
 };
 exports.RatingsController = RatingsController;
@@ -114,7 +136,7 @@ __decorate([
     __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Number]),
-    __metadata("design:returntype", void 0)
+    __metadata("design:returntype", Promise)
 ], RatingsController.prototype, "findOne", null);
 __decorate([
     (0, common_1.Put)(':id'),
@@ -123,7 +145,7 @@ __decorate([
     __param(2, (0, common_1.Req)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Number, update_rating_dto_1.UpdateRatingDto, Object]),
-    __metadata("design:returntype", void 0)
+    __metadata("design:returntype", Promise)
 ], RatingsController.prototype, "update", null);
 exports.RatingsController = RatingsController = __decorate([
     (0, swagger_1.ApiTags)('ratings'),
