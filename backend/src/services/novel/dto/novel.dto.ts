@@ -42,8 +42,10 @@ export default class NovelDto {
 
   @Expose()
   categories: {
-    id: number;
-    name: string;
-    description: string;
+    category: {
+      id: number;
+      name: string;
+      description: string;
+    };
   }[];
 }

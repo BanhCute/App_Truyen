@@ -6,13 +6,20 @@ class NovelCategory {
   NovelCategory({required this.category});
 
   String get name => category['name']?.toString() ?? '';
+  int get id => category['id'] as int? ?? 0;
+  String get description => category['description']?.toString() ?? '';
 
   factory NovelCategory.fromJson(Map<String, dynamic> json) {
-    return NovelCategory(category: json['category'] ?? {});
+    if (json['category'] is Map<String, dynamic>) {
+      return NovelCategory(category: json['category'] as Map<String, dynamic>);
+    }
+    return NovelCategory(category: {});
   }
 
   Map<String, dynamic> toJson() {
-    return {'category': category};
+    return {
+      'category': category,
+    };
   }
 }
 
