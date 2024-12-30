@@ -33,7 +33,7 @@ export declare class RatingsService {
         content: string;
         score: number;
     }>;
-    findAll(): import("@prisma/client").Prisma.PrismaPromise<({
+    findAll(): any[] | import("@prisma/client").Prisma.PrismaPromise<({
         user: {
             id: number;
             name: string;

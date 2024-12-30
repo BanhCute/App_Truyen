@@ -53,39 +53,9 @@ let RatingsService = class RatingsService {
         });
     }
     findAll() {
-        return this.databaseService.rating.findMany({
-            include: {
-                user: {
-                    select: {
-                        id: true,
-                        name: true,
-                        avatar: true,
-                    },
-                },
-            },
-            where: {
-                user: {
-                    isDeleted: false,
-                    isBanned: false,
-                },
-            },
-            orderBy: {
-                createdAt: 'desc',
-            },
-        });
-    }
-    async findAllByNovelWithUser(novelId, page = 1, limit = 10) {
-        console.log(`Finding ratings for novel ${novelId} in database (page ${page}, limit ${limit})`);
         try {
-            const skip = (page - 1) * limit;
-            console.log('Database query conditions:', {
-                where: {
-                    novelId: novelId,
-                    user: {
-                        isDeleted: false,
-                        isBanned: false,
-                    },
-                },
+            console.log('Finding all ratings');
+            return this.databaseService.rating.findMany({
                 include: {
                     user: {
                         select: {
@@ -98,23 +68,27 @@ let RatingsService = class RatingsService {
                 orderBy: {
                     createdAt: 'desc',
                 },
-                skip,
-                take: limit,
             });
+        }
+        catch (error) {
+            console.error('Error finding all ratings:', error);
+            return [];
+        }
+    }
+    async findAllByNovelWithUser(novelId, page = 1, limit = 10) {
+        console.log(`Finding ratings for novel ${novelId} in database (page ${page}, limit ${limit})`);
+        try {
+            const skip = (page - 1) * limit;
             const checkRatings = await this.databaseService.rating.findMany({
                 where: {
                     novelId: novelId,
                 },
             });
-            console.log('Raw ratings without conditions:', checkRatings);
+            console.log('Raw ratings without conditions:', JSON.stringify(checkRatings, null, 2));
             const [ratings, total] = await Promise.all([
                 this.databaseService.rating.findMany({
                     where: {
                         novelId: novelId,
-                        user: {
-                            isDeleted: false,
-                            isBanned: false,
-                        },
                     },
                     include: {
                         user: {
@@ -134,31 +108,32 @@ let RatingsService = class RatingsService {
                 this.databaseService.rating.count({
                     where: {
                         novelId: novelId,
-                        user: {
-                            isDeleted: false,
-                            isBanned: false,
-                        },
                     },
                 }),
             ]);
             console.log('Raw database result:', JSON.stringify(ratings, null, 2));
             console.log(`Found ${ratings.length} ratings (total: ${total})`);
+            const transformedRatings = ratings.map((rating) => ({
+                id: rating.id,
+                novelId: rating.novelId,
+                userId: rating.userId,
+                content: rating.content,
+                score: rating.score,
+                createdAt: rating.createdAt,
+                user: rating.user
+                    ? {
+                        id: rating.user.id,
+                        name: rating.user.name || 'Người dùng',
+                        avatar: rating.user.avatar || 'default-avatar.png',
+                    }
+                    : {
+                        id: rating.userId,
+                        name: 'Người dùng',
+                        avatar: 'default-avatar.png',
+                    },
+            }));
             const result = {
-                items: ratings.map((rating) => ({
-                    id: rating.id,
-                    novelId: rating.novelId,
-                    userId: rating.userId,
-                    content: rating.content,
-                    score: rating.score,
-                    createdAt: rating.createdAt,
-                    user: rating.user
-                        ? {
-                            id: rating.user.id,
-                            name: rating.user.name,
-                            avatar: rating.user.avatar,
-                        }
-                        : null,
-                })),
+                items: transformedRatings,
                 meta: {
                     page,
                     limit,
@@ -173,7 +148,15 @@ let RatingsService = class RatingsService {
             console.error('Error finding ratings:', error);
             console.error('Error details:', error.message);
             console.error('Error stack:', error.stack);
-            throw error;
+            return {
+                items: [],
+                meta: {
+                    page,
+                    limit,
+                    total: 0,
+                    totalPages: 0,
+                },
+            };
         }
     }
     async findOne(id) {
