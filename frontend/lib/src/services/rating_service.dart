@@ -34,7 +34,7 @@ class RatingService {
       final headers = await _getHeaders();
       final response = await http.get(
         Uri.parse(
-            '${dotenv.get('API_URL')}/ratings/novel/$novelId/with-user?page=$page&limit=$limit'),
+            '${dotenv.get('API_URL')}/ratings?novelId=$novelId&page=$page&limit=$limit'),
         headers: headers,
       );
 
@@ -43,17 +43,24 @@ class RatingService {
       print('Rating response body: ${response.body}');
 
       if (response.statusCode == 200) {
-        final data = json.decode(response.body);
+        final List<dynamic> data = json.decode(response.body);
         print('Parsed data: $data');
 
-        final items = (data['items'] as List).map((json) {
+        final ratings = data
+            .where((json) => json['novelId'].toString() == novelId)
+            .map((json) {
           print('Processing rating: $json');
           return Rating.fromJson(json);
         }).toList();
 
         return {
-          'items': items,
-          'meta': data['meta'],
+          'items': ratings,
+          'meta': {
+            'page': page,
+            'limit': limit,
+            'total': ratings.length,
+            'totalPages': (ratings.length / limit).ceil(),
+          },
         };
       } else {
         print(

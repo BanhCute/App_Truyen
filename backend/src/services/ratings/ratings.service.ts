@@ -62,7 +62,6 @@ export class RatingsService {
   findAll() {
     return this.databaseService.rating.findMany({
       include: {
-        novel: true,
         user: {
           select: {
             id: true,
@@ -70,6 +69,15 @@ export class RatingsService {
             avatar: true,
           },
         },
+      },
+      where: {
+        user: {
+          isDeleted: false,
+          isBanned: false,
+        },
+      },
+      orderBy: {
+        createdAt: 'desc',
       },
     });
   }

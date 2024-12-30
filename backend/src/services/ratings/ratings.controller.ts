@@ -34,7 +34,23 @@ export class RatingsController {
   }
 
   @Get()
-  findAll() {
+  async findAll(
+    @Query('novelId', new DefaultValuePipe(0), ParseIntPipe) novelId: number,
+    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
+    @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number,
+  ) {
+    console.log(
+      `Finding ratings with novelId: ${novelId}, page: ${page}, limit: ${limit}`,
+    );
+    if (novelId > 0) {
+      const result = await this.ratingsService.findAllByNovelWithUser(
+        novelId,
+        page,
+        limit,
+      );
+      console.log('Found ratings:', JSON.stringify(result.items, null, 2));
+      return result.items;
+    }
     return this.ratingsService.findAll();
   }
 
