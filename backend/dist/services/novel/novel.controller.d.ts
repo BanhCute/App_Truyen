@@ -8,42 +8,7 @@ export declare class NovelController {
     constructor(novelService: NovelService);
     create(createNovelDto: CreateNovelDto, req: Request): NovelDto;
     findAll(): Promise<NovelDto[]>;
-    findOne(id: number): Promise<{
-        id: number;
-        name: string;
-        description: string;
-        author: string;
-        cover: string;
-        status: string;
-        view: number;
-        rating: number;
-        followerCount: number;
-        commentCount: number;
-        createdAt: Date;
-        updatedAt: Date;
-        userId: number;
-        user: {
-            id: number;
-            name: string;
-            avatar: string;
-        };
-        categories: {
-            id: number;
-            name: string;
-            description: string;
-        }[];
-        ratings: {
-            id: number;
-            content: string;
-            score: number;
-            createdAt: Date;
-            user: {
-                id: number;
-                name: string;
-                avatar: string;
-            };
-        }[];
-    }>;
+    findOne(id: number): Promise<NovelDto>;
     update(id: number, updateNovelDto: UpdateNovelDto, req: Request): NovelDto;
     remove(id: number, req: Request): NovelDto;
     addCategories(id: number, categoryIds: number[], req: Request): Promise<NovelDto>;
@@ -56,20 +21,18 @@ export declare class NovelController {
             };
         }[];
     }>;
-    getNovelRatings(id: number): Promise<({
+    getNovelRatings(id: number): Promise<{
+        id: number;
+        content: string;
+        score: number;
+        createdAt: Date;
+        userId: number;
         user: {
             id: number;
             name: string;
             avatar: string;
         };
-    } & {
-        id: number;
-        createdAt: Date;
-        userId: number;
-        novelId: number;
-        content: string;
-        score: number;
-    })[]>;
+    }[]>;
     getAverageRating(id: number): Promise<{
         average: number;
     }>;

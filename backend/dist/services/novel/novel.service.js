@@ -93,7 +93,13 @@ let NovelService = class NovelService {
                 },
                 categories: {
                     include: {
-                        category: true,
+                        category: {
+                            select: {
+                                id: true,
+                                name: true,
+                                description: true,
+                            },
+                        },
                     },
                 },
                 ratings: {
@@ -126,6 +132,7 @@ let NovelService = class NovelService {
             content: rating.content,
             score: rating.score,
             createdAt: rating.createdAt,
+            userId: rating.userId,
             user: rating.user
                 ? {
                     id: rating.user.id,
@@ -142,7 +149,7 @@ let NovelService = class NovelService {
             ? novel.ratings.reduce((acc, r) => acc + r.score, 0) /
                 novel.ratings.length
             : 0;
-        const result = {
+        return {
             id: novel.id,
             name: novel.name,
             description: novel.description,
@@ -160,8 +167,6 @@ let NovelService = class NovelService {
             categories: transformedCategories,
             ratings: transformedRatings,
         };
-        console.log('Transformed result:', JSON.stringify(result, null, 2));
-        return result;
     }
     async update(id, updateNovelDto, userId) {
         const novel = await this.databaseService.novel.findUnique({
@@ -319,6 +324,7 @@ let NovelService = class NovelService {
         });
     }
     async getNovelRatings(id) {
+        console.log(`Getting ratings for novel ${id}`);
         const novel = await this.databaseService.novel.findUnique({
             where: { id },
             include: {
@@ -341,7 +347,25 @@ let NovelService = class NovelService {
         if (!novel) {
             throw new common_1.NotFoundException('Không tìm thấy truyện');
         }
-        return novel.ratings;
+        console.log('Found novel ratings:', JSON.stringify(novel.ratings, null, 2));
+        return novel.ratings.map((rating) => ({
+            id: rating.id,
+            content: rating.content,
+            score: rating.score,
+            createdAt: rating.createdAt,
+            userId: rating.userId,
+            user: rating.user
+                ? {
+                    id: rating.user.id,
+                    name: rating.user.name || 'Người dùng',
+                    avatar: rating.user.avatar || 'default-avatar.png',
+                }
+                : {
+                    id: rating.userId,
+                    name: 'Người dùng',
+                    avatar: 'default-avatar.png',
+                },
+        }));
     }
     async getAverageRating(id) {
         const novel = await this.databaseService.novel.findUnique({

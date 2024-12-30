@@ -54,9 +54,10 @@ export class NovelController {
       throw new NotFoundException('Không tìm thấy truyện');
     }
 
-    // Log response
-    console.log('Response:', JSON.stringify(novel, null, 2));
-    return novel;
+    // Transform response using DTO
+    const result = plainToInstance(NovelDto, novel);
+    console.log('Response:', JSON.stringify(result, null, 2));
+    return result;
   }
 
   @Patch(':id')
@@ -105,7 +106,10 @@ export class NovelController {
 
   @Get(':id/ratings')
   async getNovelRatings(@Param('id', ParseIntPipe) id: number) {
-    return this.novelService.getNovelRatings(id);
+    console.log(`Getting ratings for novel ${id}`);
+    const ratings = await this.novelService.getNovelRatings(id);
+    console.log('Found ratings:', JSON.stringify(ratings, null, 2));
+    return ratings;
   }
 
   @Get(':id/ratings/average')

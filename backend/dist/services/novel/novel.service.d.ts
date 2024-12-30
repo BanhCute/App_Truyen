@@ -74,6 +74,7 @@ export declare class NovelService {
             content: string;
             score: number;
             createdAt: Date;
+            userId: number;
             user: {
                 id: number;
                 name: string;
@@ -135,20 +136,18 @@ export declare class NovelService {
             };
         }[];
     }>;
-    getNovelRatings(id: number): Promise<({
+    getNovelRatings(id: number): Promise<{
+        id: number;
+        content: string;
+        score: number;
+        createdAt: Date;
+        userId: number;
         user: {
             id: number;
             name: string;
             avatar: string;
         };
-    } & {
-        id: number;
-        createdAt: Date;
-        userId: number;
-        novelId: number;
-        content: string;
-        score: number;
-    })[]>;
+    }[]>;
     getAverageRating(id: number): Promise<{
         average: number;
     }>;

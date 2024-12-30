@@ -42,8 +42,9 @@ let NovelController = class NovelController {
         if (!novel) {
             throw new common_1.NotFoundException('Không tìm thấy truyện');
         }
-        console.log('Response:', JSON.stringify(novel, null, 2));
-        return novel;
+        const result = (0, class_transformer_1.plainToInstance)(novel_dto_1.default, novel);
+        console.log('Response:', JSON.stringify(result, null, 2));
+        return result;
     }
     update(id, updateNovelDto, req) {
         const session = (0, auth_utils_1.getSession)(req);
@@ -63,7 +64,10 @@ let NovelController = class NovelController {
         return this.novelService.removeCategory(id, categoryId, session.id);
     }
     async getNovelRatings(id) {
-        return this.novelService.getNovelRatings(id);
+        console.log(`Getting ratings for novel ${id}`);
+        const ratings = await this.novelService.getNovelRatings(id);
+        console.log('Found ratings:', JSON.stringify(ratings, null, 2));
+        return ratings;
     }
     async getAverageRating(id) {
         return this.novelService.getAverageRating(id);
