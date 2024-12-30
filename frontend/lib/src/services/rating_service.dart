@@ -45,10 +45,23 @@ class RatingService {
       print('Rating response body: ${response.body}');
 
       if (response.statusCode == 200) {
+        if (response.body.isEmpty) {
+          print('Empty response body');
+          return {
+            'items': <Rating>[],
+            'meta': {
+              'page': page,
+              'limit': limit,
+              'total': 0,
+              'totalPages': 0,
+            }
+          };
+        }
+
         final data = json.decode(response.body);
         print('Parsed response data: $data');
 
-        if (data is Map<String, dynamic>) {
+        if (data is Map<String, dynamic> && data.containsKey('items')) {
           print('Response is a Map with keys: ${data.keys.toList()}');
           final items = (data['items'] as List).map((json) {
             print('Processing rating item: $json');
@@ -61,11 +74,37 @@ class RatingService {
           print('Processed ${items.length} ratings');
           return {
             'items': items,
-            'meta': data['meta'],
+            'meta': data['meta'] ??
+                {
+                  'page': page,
+                  'limit': limit,
+                  'total': items.length,
+                  'totalPages': (items.length / limit).ceil(),
+                },
+          };
+        } else if (data is List) {
+          print('Response is a List with ${data.length} items');
+          final items = data.map((json) {
+            print('Processing rating item: $json');
+            final rating = Rating.fromJson(json);
+            print(
+                'Processed rating: id=${rating.id}, userId=${rating.userId}, score=${rating.score}');
+            return rating;
+          }).toList();
+
+          print('Processed ${items.length} ratings');
+          return {
+            'items': items,
+            'meta': {
+              'page': page,
+              'limit': limit,
+              'total': items.length,
+              'totalPages': (items.length / limit).ceil(),
+            },
           };
         } else {
           print(
-              'Invalid response format - expected Map, got ${data.runtimeType}');
+              'Invalid response format - expected Map or List, got ${data.runtimeType}');
           return {
             'items': <Rating>[],
             'meta': {
