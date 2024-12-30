@@ -71,16 +71,21 @@ export class RatingsController {
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
     @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number,
   ) {
-    console.log(
-      `Finding ratings for novel ${novelId} (page ${page}, limit ${limit})`,
-    );
-    const result = await this.ratingsService.findAllByNovelWithUser(
-      novelId,
-      page,
-      limit,
-    );
-    console.log('Found ratings:', JSON.stringify(result, null, 2));
-    return result;
+    try {
+      console.log(
+        `Finding ratings for novel ${novelId} (page ${page}, limit ${limit})`,
+      );
+      const result = await this.ratingsService.findAllByNovelWithUser(
+        novelId,
+        page,
+        limit,
+      );
+      console.log('Found ratings:', JSON.stringify(result, null, 2));
+      return result;
+    } catch (error) {
+      console.error('Error in findAllByNovelWithUser:', error);
+      throw error;
+    }
   }
 
   @Get(':id')

@@ -47,10 +47,16 @@ let RatingsController = class RatingsController {
         }
     }
     async findAllByNovelWithUser(novelId, page, limit) {
-        console.log(`Finding ratings for novel ${novelId} (page ${page}, limit ${limit})`);
-        const result = await this.ratingsService.findAllByNovelWithUser(novelId, page, limit);
-        console.log('Found ratings:', JSON.stringify(result, null, 2));
-        return result;
+        try {
+            console.log(`Finding ratings for novel ${novelId} (page ${page}, limit ${limit})`);
+            const result = await this.ratingsService.findAllByNovelWithUser(novelId, page, limit);
+            console.log('Found ratings:', JSON.stringify(result, null, 2));
+            return result;
+        }
+        catch (error) {
+            console.error('Error in findAllByNovelWithUser:', error);
+            throw error;
+        }
     }
     findOne(id) {
         return this.ratingsService.findOne(id);
