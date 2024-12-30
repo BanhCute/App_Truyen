@@ -32,14 +32,18 @@ let RatingsController = class RatingsController {
             console.log('Request query params:', { novelId, page, limit });
             console.log(`Finding ratings with novelId: ${novelId}, page: ${page}, limit: ${limit}`);
             if (novelId > 0) {
-                const result = await this.ratingsService.findAllByNovelWithUser(novelId, page, limit);
-                console.log('Found ratings:', JSON.stringify(result.items, null, 2));
-                return result.items;
+                return this.ratingsService.findAllByNovelWithUser(novelId, page, limit);
             }
-            console.log('Finding all ratings without novelId filter');
             const ratings = await this.ratingsService.findAll();
-            console.log('Found all ratings:', JSON.stringify(ratings, null, 2));
-            return ratings;
+            return {
+                items: ratings,
+                meta: {
+                    page,
+                    limit,
+                    total: ratings.length,
+                    totalPages: Math.ceil(ratings.length / limit),
+                },
+            };
         }
         catch (error) {
             console.error('Error in findAll:', error);

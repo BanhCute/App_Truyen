@@ -52,34 +52,16 @@ class _HomeScreenState extends State<HomeScreen> {
       isLoading = true;
     });
     try {
-      final baseUrl = dotenv.get('API_URL').replaceAll('/api/v1', '');
+      final baseUrl = dotenv.get('API_URL');
       print('Base URL: $baseUrl'); // Log để kiểm tra URL cơ sở
 
-      final response = await http.get(Uri.parse('$baseUrl/api/novels'));
+      final response = await http.get(Uri.parse('$baseUrl/novels'));
 
       print('Response status: ${response.statusCode}');
       print('Response body: ${response.body}');
 
       if (response.statusCode == 200) {
-        final dynamic decodedData = json.decode(response.body);
-        List<dynamic> data;
-
-        if (decodedData is Map<String, dynamic>) {
-          // Nếu response là Map và có key 'items' chứa danh sách truyện
-          if (decodedData.containsKey('items')) {
-            data = decodedData['items'] as List<dynamic>;
-          } else {
-            // Nếu không có key 'items', lấy tất cả các value trong Map
-            data =
-                decodedData.values.whereType<List<dynamic>>().firstOrNull ?? [];
-          }
-        } else if (decodedData is List<dynamic>) {
-          // Nếu response trực tiếp là List
-          data = decodedData;
-        } else {
-          throw Exception('Invalid response format');
-        }
-
+        final List<dynamic> data = json.decode(response.body);
         setState(() {
           novels = data.map((json) => Novel.fromJson(json)).toList();
           isLoading = false;
