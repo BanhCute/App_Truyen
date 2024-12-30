@@ -26,6 +26,10 @@ class _RatingSectionState extends State<RatingSection> {
   Rating? _userRating;
   double _averageRating = 0;
   late SessionState _sessionState;
+  int _currentPage = 1;
+  int _totalPages = 1;
+  int _totalRatings = 0;
+  static const int _pageSize = 10;
 
   @override
   void initState() {
@@ -48,12 +52,22 @@ class _RatingSectionState extends State<RatingSection> {
     });
 
     try {
-      final ratings = await RatingService.getNovelRatings(widget.novelId);
+      final result = await RatingService.getNovelRatings(
+        widget.novelId,
+        page: _currentPage,
+        limit: _pageSize,
+      );
+
+      final ratings = result['items'] as List<Rating>;
+      final meta = result['meta'] as Map<String, dynamic>;
+
       print('Loaded ${ratings.length} ratings for novel ${widget.novelId}');
 
       if (mounted) {
         setState(() {
           _ratings = ratings;
+          _totalPages = meta['totalPages'] as int;
+          _totalRatings = meta['total'] as int;
 
           if (_ratings.isNotEmpty) {
             _averageRating =
@@ -96,6 +110,15 @@ class _RatingSectionState extends State<RatingSection> {
           _isLoading = false;
         });
       }
+    }
+  }
+
+  void _changePage(int page) {
+    if (page != _currentPage && page > 0 && page <= _totalPages) {
+      setState(() {
+        _currentPage = page;
+      });
+      _loadRatings();
     }
   }
 
@@ -193,7 +216,7 @@ class _RatingSectionState extends State<RatingSection> {
                         ),
                         const Icon(Icons.star, color: Colors.amber),
                         Text(
-                          ' (${_ratings.length} đánh giá)',
+                          ' ($_totalRatings đánh giá)',
                           style: const TextStyle(color: Colors.grey),
                         ),
                       ],
@@ -224,67 +247,94 @@ class _RatingSectionState extends State<RatingSection> {
             child: Center(child: Text('Chưa có đánh giá nào')),
           )
         else
-          ListView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: _ratings.length,
-            itemBuilder: (context, index) {
-              final rating = _ratings[index];
-              return Card(
-                margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
+          Column(
+            children: [
+              ListView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: _ratings.length,
+                itemBuilder: (context, index) {
+                  final rating = _ratings[index];
+                  return Card(
+                    margin:
+                        const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          CircleAvatar(
-                            backgroundColor: Theme.of(context).primaryColor,
-                            child: Text(
-                              rating.userAvatar,
-                              style: const TextStyle(color: Colors.white),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  rating.userName,
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                  ),
+                          Row(
+                            children: [
+                              CircleAvatar(
+                                backgroundColor: Theme.of(context).primaryColor,
+                                child: Text(
+                                  rating.userAvatar,
+                                  style: const TextStyle(color: Colors.white),
                                 ),
-                                Row(
-                                  children: List.generate(5, (starIndex) {
-                                    return Icon(
-                                      starIndex < rating.score
-                                          ? Icons.star
-                                          : Icons.star_border,
-                                      color: Colors.amber,
-                                      size: 16,
-                                    );
-                                  }),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      rating.userName,
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    Row(
+                                      children: List.generate(5, (starIndex) {
+                                        return Icon(
+                                          starIndex < rating.score
+                                              ? Icons.star
+                                              : Icons.star_border,
+                                          color: Colors.amber,
+                                          size: 16,
+                                        );
+                                      }),
+                                    ),
+                                  ],
                                 ),
-                              ],
-                            ),
+                              ),
+                              Text(
+                                _formatDateTime(rating.createdAt),
+                                style: const TextStyle(
+                                    color: Colors.grey, fontSize: 12),
+                              ),
+                            ],
                           ),
-                          Text(
-                            _formatDateTime(rating.createdAt),
-                            style: const TextStyle(
-                                color: Colors.grey, fontSize: 12),
-                          ),
+                          const SizedBox(height: 8),
+                          Text(rating.content),
                         ],
                       ),
-                      const SizedBox(height: 8),
-                      Text(rating.content),
+                    ),
+                  );
+                },
+              ),
+              if (_totalPages > 1)
+                Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.chevron_left),
+                        onPressed: _currentPage > 1
+                            ? () => _changePage(_currentPage - 1)
+                            : null,
+                      ),
+                      Text('$_currentPage/$_totalPages'),
+                      IconButton(
+                        icon: const Icon(Icons.chevron_right),
+                        onPressed: _currentPage < _totalPages
+                            ? () => _changePage(_currentPage + 1)
+                            : null,
+                      ),
                     ],
                   ),
                 ),
-              );
-            },
+            ],
           ),
       ],
     );

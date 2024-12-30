@@ -74,25 +74,59 @@ export class RatingsService {
     });
   }
 
-  async findAllByNovelWithUser(novelId: number) {
-    return this.databaseService.rating.findMany({
-      where: {
-        novelId: novelId,
-      },
-      include: {
-        novel: true,
-        user: {
-          select: {
-            id: true,
-            name: true,
-            avatar: true,
+  async findAllByNovelWithUser(novelId: number, page = 1, limit = 10) {
+    console.log(
+      `Finding ratings for novel ${novelId} in database (page ${page}, limit ${limit})`,
+    );
+
+    const skip = (page - 1) * limit;
+
+    const [ratings, total] = await Promise.all([
+      this.databaseService.rating.findMany({
+        where: {
+          novelId: novelId,
+          user: {
+            isDeleted: false,
+            isBanned: false,
           },
         },
+        include: {
+          user: {
+            select: {
+              id: true,
+              name: true,
+              avatar: true,
+            },
+          },
+        },
+        orderBy: {
+          createdAt: 'desc',
+        },
+        skip,
+        take: limit,
+      }),
+      this.databaseService.rating.count({
+        where: {
+          novelId: novelId,
+          user: {
+            isDeleted: false,
+            isBanned: false,
+          },
+        },
+      }),
+    ]);
+
+    console.log(`Found ${ratings.length} ratings (total: ${total})`);
+
+    return {
+      items: ratings,
+      meta: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
       },
-      orderBy: {
-        createdAt: 'desc',
-      },
-    });
+    };
   }
 
   async findOne(id: number) {

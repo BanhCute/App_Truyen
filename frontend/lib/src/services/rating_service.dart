@@ -27,28 +27,59 @@ class RatingService {
     return user['id'] as int;
   }
 
-  static Future<List<Rating>> getNovelRatings(String novelId) async {
+  static Future<Map<String, dynamic>> getNovelRatings(String novelId,
+      {int page = 1, int limit = 10}) async {
     try {
-      print('Fetching ratings for novel: $novelId');
+      print('Fetching ratings for novel: $novelId (page $page, limit $limit)');
       final headers = await _getHeaders();
       final response = await http.get(
-        Uri.parse('${dotenv.get('API_URL')}/ratings/novel/$novelId/with-user'),
+        Uri.parse(
+            '${dotenv.get('API_URL')}/ratings/novel/$novelId/with-user?page=$page&limit=$limit'),
         headers: headers,
       );
 
-      print('Rating response: ${response.body}');
+      print('Rating response status: ${response.statusCode}');
+      print('Rating response headers: ${response.headers}');
+      print('Rating response body: ${response.body}');
 
       if (response.statusCode == 200) {
-        final List<dynamic> data = json.decode(response.body);
-        return data.map((json) => Rating.fromJson(json)).toList();
+        final data = json.decode(response.body);
+        print('Parsed data: $data');
+
+        final items = (data['items'] as List).map((json) {
+          print('Processing rating: $json');
+          return Rating.fromJson(json);
+        }).toList();
+
+        return {
+          'items': items,
+          'meta': data['meta'],
+        };
       } else {
         print(
             'Failed to load ratings: ${response.statusCode} - ${response.body}');
-        return [];
+        return {
+          'items': <Rating>[],
+          'meta': {
+            'page': page,
+            'limit': limit,
+            'total': 0,
+            'totalPages': 0,
+          }
+        };
       }
-    } catch (e) {
+    } catch (e, stackTrace) {
       print('Error getting ratings: $e');
-      return [];
+      print('Stack trace: $stackTrace');
+      return {
+        'items': <Rating>[],
+        'meta': {
+          'page': page,
+          'limit': limit,
+          'total': 0,
+          'totalPages': 0,
+        }
+      };
     }
   }
 
@@ -62,7 +93,8 @@ class RatingService {
       final userId = await _getCurrentUserId();
 
       // Kiểm tra xem đã đánh giá chưa
-      final ratings = await getNovelRatings(novelId);
+      final result = await getNovelRatings(novelId);
+      final ratings = result['items'] as List<Rating>;
       final existingRating = ratings.firstWhere(
         (r) => r.userId == userId,
         orElse: () => Rating(
@@ -119,7 +151,8 @@ class RatingService {
       print('Updating rating $ratingId for novel $novelId');
 
       // Kiểm tra quyền sửa rating
-      final ratings = await getNovelRatings(novelId);
+      final result = await getNovelRatings(novelId);
+      final ratings = result['items'] as List<Rating>;
       final rating = ratings.firstWhere(
         (r) => r.id.toString() == ratingId && r.userId == userId,
         orElse: () => throw Exception('Bạn không có quyền sửa đánh giá này'),

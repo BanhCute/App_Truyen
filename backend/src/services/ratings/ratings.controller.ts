@@ -9,6 +9,8 @@ import {
   Put,
   ClassSerializerInterceptor,
   UseInterceptors,
+  Query,
+  DefaultValuePipe,
 } from '@nestjs/common';
 import { RatingsService } from './ratings.service';
 import { CreateRatingDto } from './dto/create-rating.dto';
@@ -37,8 +39,21 @@ export class RatingsController {
   }
 
   @Get('novel/:novelId/with-user')
-  findAllByNovelWithUser(@Param('novelId', ParseIntPipe) novelId: number) {
-    return this.ratingsService.findAllByNovelWithUser(novelId);
+  async findAllByNovelWithUser(
+    @Param('novelId', ParseIntPipe) novelId: number,
+    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
+    @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number,
+  ) {
+    console.log(
+      `Finding ratings for novel ${novelId} (page ${page}, limit ${limit})`,
+    );
+    const result = await this.ratingsService.findAllByNovelWithUser(
+      novelId,
+      page,
+      limit,
+    );
+    console.log('Found ratings:', JSON.stringify(result, null, 2));
+    return result;
   }
 
   @Get(':id')
