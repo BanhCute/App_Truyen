@@ -137,4 +137,51 @@ export class NovelController {
     const session = getSession(req);
     return this.novelService.updateRating(id, ratingId, session.id, ratingData);
   }
+
+  @Patch(':id/follow-count')
+  async updateFollowCount(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() data: { increment: boolean },
+    @Req() req: Request,
+  ) {
+    const session = getSession(req);
+    const novel = await this.novelService.findOne(id);
+    if (!novel) {
+      throw new NotFoundException('Không tìm thấy truyện');
+    }
+
+    const updatedNovel = await this.novelService.update(
+      id,
+      {
+        followerCount: data.increment
+          ? novel.followerCount + 1
+          : novel.followerCount - 1,
+      },
+      session.id,
+    );
+
+    return plainToInstance(NovelDto, updatedNovel);
+  }
+
+  @Patch(':id/view')
+  async incrementView(
+    @Param('id', ParseIntPipe) id: number,
+    @Req() req: Request,
+  ) {
+    const session = getSession(req);
+    const novel = await this.novelService.findOne(id);
+    if (!novel) {
+      throw new NotFoundException('Không tìm thấy truyện');
+    }
+
+    const updatedNovel = await this.novelService.update(
+      id,
+      {
+        view: novel.view + 1,
+      },
+      session.id,
+    );
+
+    return plainToInstance(NovelDto, updatedNovel);
+  }
 }

@@ -1,24 +1,39 @@
 import 'chapter.dart';
 
 class NovelCategory {
-  final Map<String, dynamic> category;
+  final int id;
+  final String name;
+  final String? description;
 
-  NovelCategory({required this.category});
-
-  String get name => category['name']?.toString() ?? '';
-  int get id => category['id'] as int? ?? 0;
-  String get description => category['description']?.toString() ?? '';
+  NovelCategory({
+    required this.id,
+    required this.name,
+    this.description,
+  });
 
   factory NovelCategory.fromJson(Map<String, dynamic> json) {
+    // Kiểm tra nếu json có chứa 'category'
     if (json['category'] is Map<String, dynamic>) {
-      return NovelCategory(category: json['category'] as Map<String, dynamic>);
+      final categoryData = json['category'] as Map<String, dynamic>;
+      return NovelCategory(
+        id: categoryData['id'] as int? ?? 0,
+        name: categoryData['name']?.toString() ?? '',
+        description: categoryData['description']?.toString(),
+      );
     }
-    return NovelCategory(category: {});
+    // Nếu json là category trực tiếp
+    return NovelCategory(
+      id: json['id'] as int? ?? 0,
+      name: json['name']?.toString() ?? '',
+      description: json['description']?.toString(),
+    );
   }
 
   Map<String, dynamic> toJson() {
     return {
-      'category': category,
+      'id': id,
+      'name': name,
+      'description': description,
     };
   }
 }
@@ -104,5 +119,39 @@ class Novel {
       'userId': userId,
       'chapters': chapters?.map((chapter) => chapter.toJson()).toList(),
     };
+  }
+
+  Novel copyWith({
+    String? id,
+    String? name,
+    String? description,
+    String? author,
+    String? cover,
+    List<NovelCategory>? categories,
+    DateTime? createdAt,
+    DateTime? updatedAt,
+    double? rating,
+    int? view,
+    int? followerCount,
+    String? status,
+    int? userId,
+    List<Chapter>? chapters,
+  }) {
+    return Novel(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      description: description ?? this.description,
+      author: author ?? this.author,
+      cover: cover ?? this.cover,
+      categories: categories ?? this.categories,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      rating: rating ?? this.rating,
+      view: view ?? this.view,
+      followerCount: followerCount ?? this.followerCount,
+      status: status ?? this.status,
+      userId: userId ?? this.userId,
+      chapters: chapters ?? this.chapters,
+    );
   }
 }

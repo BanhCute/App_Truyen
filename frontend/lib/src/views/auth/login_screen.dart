@@ -120,7 +120,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('Xin chào ${state.session.user.name}'),
+                      Text('Xin chào admin ${state.session.user.name}'),
                       const SizedBox(height: 8),
                       const Text('Bạn có quyền:'),
                       const Text('• Đăng truyện mới'),

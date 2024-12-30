@@ -32,9 +32,8 @@ class _ManageNovelCategoriesScreenState
     _sessionCubit = context.read<SessionCubit>();
     _loadCategories();
     if (widget.novel.categories.isNotEmpty) {
-      _selectedCategories = widget.novel.categories
-          .map((cat) => cat.category['id'] as int)
-          .toList();
+      _selectedCategories =
+          widget.novel.categories.map((cat) => cat.id).toList();
     }
   }
 

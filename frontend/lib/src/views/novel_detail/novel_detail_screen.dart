@@ -15,6 +15,7 @@ import '../../services/follow_service.dart';
 import '../admin/manage_novel_categories_screen.dart';
 import '../admin/upload_chapter_screen.dart';
 import 'widgets/rating_section.dart';
+import '../../services/novel_service.dart';
 
 class NovelDetailScreen extends StatefulWidget {
   final Novel novel;
@@ -41,6 +42,7 @@ class _NovelDetailScreenState extends State<NovelDetailScreen> {
     _loadData();
     checkFollowStatus();
     ReadingHistoryService.addToHistory(novel);
+    NovelService.incrementView(novel.id);
   }
 
   Future<void> checkFollowStatus() async {
@@ -58,11 +60,17 @@ class _NovelDetailScreenState extends State<NovelDetailScreen> {
     try {
       if (isFollowing) {
         await FollowService.unfollowNovel(widget.novel.id);
+        await NovelService.updateFollowCount(widget.novel.id, false);
       } else {
         await FollowService.followNovel(widget.novel.id);
+        await NovelService.updateFollowCount(widget.novel.id, true);
       }
       setState(() {
         isFollowing = !isFollowing;
+        novel = novel.copyWith(
+          followerCount:
+              isFollowing ? novel.followerCount + 1 : novel.followerCount - 1,
+        );
       });
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -101,31 +109,21 @@ class _NovelDetailScreenState extends State<NovelDetailScreen> {
       if (novelResponse.statusCode == 200) {
         final novelData = json.decode(novelResponse.body);
         print('Novel response: ${novelResponse.body}');
+        print('Categories in response: ${novelData['categories']}');
 
         final state = context.read<SessionCubit>().state;
 
-        // Parse categories from the nested structure
-        final categoryList = (novelData['categories'] as List?)
-                ?.map((cat) {
-                  print('Category data: $cat');
-                  if (cat is Map<String, dynamic> &&
-                      cat['category'] is Map<String, dynamic>) {
-                    return cat['category']['name'].toString();
-                  }
-                  return '';
-                })
-                .where((name) => name.isNotEmpty)
-                .toList() ??
-            [];
-
         setState(() {
           novel = Novel.fromJson(novelData);
-          categories = categoryList;
           _isAuthor = state is Authenticated &&
               state.session.user.id.toString() == novel.userId;
         });
 
-        print('Categories loaded: $categories'); // Debug log
+        // Debug log cho categories
+        novel.categories.forEach((cat) {
+          print('Category ID: ${cat.id}');
+          print('Category name: ${cat.name}');
+        });
       }
 
       final chaptersResponse = await http.get(
@@ -221,15 +219,22 @@ class _NovelDetailScreenState extends State<NovelDetailScreen> {
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(8),
-                    child: Image.network(
-                      novel.cover,
-                      width: 120,
-                      height: 180,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) =>
-                          const Icon(Icons.error, size: 120),
+                  Hero(
+                    tag: 'novel_cover_${novel.id}',
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(12),
+                      child: Image.network(
+                        novel.cover,
+                        width: 130,
+                        height: 190,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) => Container(
+                          width: 130,
+                          height: 190,
+                          color: Colors.grey[300],
+                          child: const Icon(Icons.error, size: 50),
+                        ),
+                      ),
                     ),
                   ),
                   const SizedBox(width: 16),
@@ -246,52 +251,78 @@ class _NovelDetailScreenState extends State<NovelDetailScreen> {
                           ),
                         ),
                         const SizedBox(height: 8),
-                        Text(
-                          'Tác giả: ${novel.author}',
-                          style: const TextStyle(
-                            color: Colors.white70,
-                            fontSize: 16,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Wrap(
-                          spacing: 8,
-                          runSpacing: 8,
-                          children: novel.categories.map((category) {
-                            return Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 4,
-                              ),
-                              decoration: BoxDecoration(
-                                color: Colors.white.withOpacity(0.2),
-                                borderRadius: BorderRadius.circular(16),
-                              ),
-                              child: Text(
-                                category.name,
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 12,
-                                ),
-                              ),
-                            );
-                          }).toList(),
-                        ),
-                        const SizedBox(height: 8),
                         Row(
                           children: [
                             const Icon(
-                              Icons.star,
-                              color: Colors.amber,
-                              size: 20,
+                              Icons.person,
+                              color: Colors.white70,
+                              size: 16,
                             ),
+                            const SizedBox(width: 4),
                             Text(
-                              ' ${novel.rating.toStringAsFixed(1)}',
+                              novel.author,
                               style: const TextStyle(
                                 color: Colors.white70,
-                                fontSize: 16,
+                                fontSize: 14,
                               ),
                             ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        Wrap(
+                          spacing: 12,
+                          runSpacing: 8,
+                          children: [
+                            _buildStatItem(
+                                Icons.remove_red_eye, '${novel.view}'),
+                            _buildStatItem(
+                                Icons.favorite, '${novel.followerCount}'),
+                            _buildStatItem(
+                                Icons.star, novel.rating.toStringAsFixed(1)),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Wrap(
+                                spacing: 8,
+                                runSpacing: 8,
+                                children: novel.categories.isEmpty
+                                    ? [
+                                        const Chip(
+                                            label: Text('Chưa có thể loại'))
+                                      ]
+                                    : novel.categories.map((category) {
+                                        return Container(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 12,
+                                            vertical: 4,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color:
+                                                Colors.white.withOpacity(0.1),
+                                            borderRadius:
+                                                BorderRadius.circular(16),
+                                          ),
+                                          child: Text(
+                                            category.name,
+                                            style: const TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 12,
+                                            ),
+                                          ),
+                                        );
+                                      }).toList(),
+                              ),
+                            ),
+                            if (_isAuthor)
+                              IconButton(
+                                icon:
+                                    const Icon(Icons.edit, color: Colors.white),
+                                onPressed: _manageCategories,
+                                tooltip: 'Quản lý thể loại',
+                              ),
                           ],
                         ),
                       ],
@@ -301,57 +332,64 @@ class _NovelDetailScreenState extends State<NovelDetailScreen> {
               ),
             ),
             const SizedBox(height: 16),
-            Row(
-              children: [
-                Expanded(
-                  child: Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: novel.categories.isEmpty
-                        ? [const Chip(label: Text('Chưa có thể loại'))]
-                        : novel.categories
-                            .map((category) => Chip(
-                                  label: Text(
-                                    category.name,
-                                    style: TextStyle(
-                                      color: Theme.of(context).brightness ==
-                                              Brightness.dark
-                                          ? Colors.white
-                                          : Colors.black,
-                                    ),
-                                  ),
-                                  backgroundColor:
-                                      Theme.of(context).brightness ==
-                                              Brightness.dark
-                                          ? Colors.white.withOpacity(0.1)
-                                          : Colors.grey.withOpacity(0.1),
-                                ))
-                            .toList(),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Giới thiệu',
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: Theme.of(context).brightness == Brightness.dark
+                              ? Colors.white
+                              : Colors.black,
+                        ),
                   ),
-                ),
-                if (_isAuthor)
-                  IconButton(
-                    icon: const Icon(Icons.edit),
-                    onPressed: _manageCategories,
-                    tooltip: 'Quản lý thể loại',
+                  const SizedBox(height: 8),
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? Colors.white.withOpacity(0.05)
+                          : Colors.grey.withOpacity(0.05),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      novel.description,
+                      style: TextStyle(
+                        color: Theme.of(context).brightness == Brightness.dark
+                            ? Colors.white70
+                            : Colors.black87,
+                        height: 1.5,
+                      ),
+                    ),
                   ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'Giới thiệu:',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: Theme.of(context).brightness == Brightness.dark
-                        ? Colors.white
-                        : Colors.black,
+                  const SizedBox(height: 24),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Danh sách chương',
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                              fontWeight: FontWeight.bold,
+                              color: Theme.of(context).brightness ==
+                                      Brightness.dark
+                                  ? Colors.white
+                                  : Colors.black,
+                            ),
+                      ),
+                      Text(
+                        '${chapters.length} chương',
+                        style: TextStyle(
+                          color: Theme.of(context).brightness == Brightness.dark
+                              ? Colors.white70
+                              : Colors.black54,
+                        ),
+                      ),
+                    ],
                   ),
-            ),
-            Text(
-              novel.description,
-              style: TextStyle(
-                color: Theme.of(context).brightness == Brightness.dark
-                    ? Colors.white70
-                    : Colors.black87,
+                ],
               ),
             ),
             const SizedBox(height: 16),
@@ -372,21 +410,56 @@ class _NovelDetailScreenState extends State<NovelDetailScreen> {
                 final chapter = chapters[index];
                 return Container(
                   margin:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                   decoration: BoxDecoration(
                     color: Theme.of(context).brightness == Brightness.dark
                         ? Colors.white.withOpacity(0.05)
                         : Colors.grey.withOpacity(0.05),
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? Colors.white.withOpacity(0.1)
+                          : Colors.grey.withOpacity(0.1),
+                    ),
                   ),
                   child: ListTile(
+                    contentPadding:
+                        const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     title: Text(
                       chapter.name,
                       style: TextStyle(
                         color: Theme.of(context).brightness == Brightness.dark
                             ? Colors.white
                             : Colors.black,
+                        fontWeight: FontWeight.w500,
                       ),
+                    ),
+                    subtitle: Row(
+                      children: [
+                        Icon(
+                          Icons.access_time,
+                          size: 14,
+                          color: Theme.of(context).brightness == Brightness.dark
+                              ? Colors.white54
+                              : Colors.black54,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          _formatDate(chapter.createdAt),
+                          style: TextStyle(
+                            fontSize: 12,
+                            color:
+                                Theme.of(context).brightness == Brightness.dark
+                                    ? Colors.white54
+                                    : Colors.black54,
+                          ),
+                        ),
+                      ],
+                    ),
+                    trailing: const Icon(
+                      Icons.arrow_forward_ios,
+                      size: 16,
+                      color: Colors.grey,
                     ),
                     onTap: () {
                       Navigator.push(
@@ -402,7 +475,7 @@ class _NovelDetailScreenState extends State<NovelDetailScreen> {
                       );
                     },
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: BorderRadius.circular(12),
                     ),
                     tileColor: Colors.transparent,
                     hoverColor: Theme.of(context).brightness == Brightness.dark
@@ -422,5 +495,44 @@ class _NovelDetailScreenState extends State<NovelDetailScreen> {
         ),
       ),
     );
+  }
+
+  Widget _buildStatItem(IconData icon, String text) {
+    return Row(
+      children: [
+        Icon(
+          icon,
+          color: Colors.white70,
+          size: 16,
+        ),
+        const SizedBox(width: 4),
+        Text(
+          text,
+          style: const TextStyle(
+            color: Colors.white70,
+            fontSize: 14,
+          ),
+        ),
+      ],
+    );
+  }
+
+  String _formatDate(DateTime date) {
+    final now = DateTime.now();
+    final difference = now.difference(date);
+
+    if (difference.inDays == 0) {
+      if (difference.inHours == 0) {
+        if (difference.inMinutes == 0) {
+          return 'Vừa xong';
+        }
+        return '${difference.inMinutes} phút trước';
+      }
+      return '${difference.inHours} giờ trước';
+    } else if (difference.inDays < 7) {
+      return '${difference.inDays} ngày trước';
+    } else {
+      return '${date.day}/${date.month}/${date.year}';
+    }
   }
 }
