@@ -48,10 +48,19 @@ export class RatingsController {
         page,
         limit,
       );
-      console.log('Found ratings:', JSON.stringify(result.items, null, 2));
-      return result.items;
+      console.log('Found ratings:', JSON.stringify(result, null, 2));
+      return result;
     }
-    return this.ratingsService.findAll();
+    const ratings = await this.ratingsService.findAll();
+    return {
+      items: ratings,
+      meta: {
+        page,
+        limit,
+        total: ratings.length,
+        totalPages: Math.ceil(ratings.length / limit),
+      },
+    };
   }
 
   @Get('novel/:novelId/with-user')

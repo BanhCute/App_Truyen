@@ -87,54 +87,77 @@ export class RatingsService {
       `Finding ratings for novel ${novelId} in database (page ${page}, limit ${limit})`,
     );
 
-    const skip = (page - 1) * limit;
+    try {
+      const skip = (page - 1) * limit;
 
-    const [ratings, total] = await Promise.all([
-      this.databaseService.rating.findMany({
-        where: {
-          novelId: novelId,
-          user: {
-            isDeleted: false,
-            isBanned: false,
-          },
-        },
-        include: {
-          user: {
-            select: {
-              id: true,
-              name: true,
-              avatar: true,
+      const [ratings, total] = await Promise.all([
+        this.databaseService.rating.findMany({
+          where: {
+            novelId: novelId,
+            user: {
+              isDeleted: false,
+              isBanned: false,
             },
           },
-        },
-        orderBy: {
-          createdAt: 'desc',
-        },
-        skip,
-        take: limit,
-      }),
-      this.databaseService.rating.count({
-        where: {
-          novelId: novelId,
-          user: {
-            isDeleted: false,
-            isBanned: false,
+          include: {
+            user: {
+              select: {
+                id: true,
+                name: true,
+                avatar: true,
+              },
+            },
           },
+          orderBy: {
+            createdAt: 'desc',
+          },
+          skip,
+          take: limit,
+        }),
+        this.databaseService.rating.count({
+          where: {
+            novelId: novelId,
+            user: {
+              isDeleted: false,
+              isBanned: false,
+            },
+          },
+        }),
+      ]);
+
+      console.log('Database query result:', JSON.stringify(ratings, null, 2));
+      console.log(`Found ${ratings.length} ratings (total: ${total})`);
+
+      const result = {
+        items: ratings.map((rating) => ({
+          id: rating.id,
+          novelId: rating.novelId,
+          userId: rating.userId,
+          content: rating.content,
+          score: rating.score,
+          createdAt: rating.createdAt,
+          user: rating.user
+            ? {
+                id: rating.user.id,
+                name: rating.user.name,
+                avatar: rating.user.avatar,
+              }
+            : null,
+        })),
+        meta: {
+          page,
+          limit,
+          total,
+          totalPages: Math.ceil(total / limit),
         },
-      }),
-    ]);
+      };
 
-    console.log(`Found ${ratings.length} ratings (total: ${total})`);
-
-    return {
-      items: ratings,
-      meta: {
-        page,
-        limit,
-        total,
-        totalPages: Math.ceil(total / limit),
-      },
-    };
+      console.log('Transformed result:', JSON.stringify(result, null, 2));
+      return result;
+    } catch (error) {
+      console.error('Error finding ratings:', error);
+      throw error;
+    }
   }
 
   async findOne(id: number) {

@@ -43,25 +43,31 @@ class RatingService {
       print('Rating response body: ${response.body}');
 
       if (response.statusCode == 200) {
-        final List<dynamic> data = json.decode(response.body);
+        final data = json.decode(response.body);
         print('Parsed data: $data');
 
-        final ratings = data
-            .where((json) => json['novelId'].toString() == novelId)
-            .map((json) {
-          print('Processing rating: $json');
-          return Rating.fromJson(json);
-        }).toList();
+        if (data is Map<String, dynamic>) {
+          final items = (data['items'] as List).map((json) {
+            print('Processing rating: $json');
+            return Rating.fromJson(json);
+          }).toList();
 
-        return {
-          'items': ratings,
-          'meta': {
-            'page': page,
-            'limit': limit,
-            'total': ratings.length,
-            'totalPages': (ratings.length / limit).ceil(),
-          },
-        };
+          return {
+            'items': items,
+            'meta': data['meta'],
+          };
+        } else {
+          print('Invalid response format: $data');
+          return {
+            'items': <Rating>[],
+            'meta': {
+              'page': page,
+              'limit': limit,
+              'total': 0,
+              'totalPages': 0,
+            }
+          };
+        }
       } else {
         print(
             'Failed to load ratings: ${response.statusCode} - ${response.body}');
