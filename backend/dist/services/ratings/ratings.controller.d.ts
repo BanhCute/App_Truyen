@@ -35,7 +35,19 @@ export declare class RatingsController {
         createdAt: Date;
     }>;
     findAll(novelId: number, page: number, limit: number): Promise<{
-        items: any[];
+        items: {
+            id: number;
+            novelId: number;
+            userId: number;
+            content: string;
+            score: number;
+            createdAt: Date;
+            user: {
+                id: number;
+                name: string;
+                avatar: string;
+            };
+        }[];
         meta: {
             page: number;
             limit: number;

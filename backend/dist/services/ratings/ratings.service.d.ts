@@ -33,20 +33,32 @@ export declare class RatingsService {
         score: number;
         createdAt: Date;
     }>;
-    findAll(): any[] | import("@prisma/client").Prisma.PrismaPromise<({
-        user: {
+    findAll(): Promise<{
+        items: {
             id: number;
-            name: string;
-            avatar: string;
+            novelId: number;
+            userId: number;
+            content: string;
+            score: number;
+            createdAt: Date;
+            user: {
+                id: number;
+                name: string;
+                avatar: string;
+            };
+            novel: {
+                id: number;
+                name: string;
+                cover: string;
+            };
+        }[];
+        meta: {
+            total: number;
+            page: number;
+            limit: number;
+            totalPages: number;
         };
-    } & {
-        id: number;
-        novelId: number;
-        userId: number;
-        content: string;
-        score: number;
-        createdAt: Date;
-    })[]>;
+    }>;
     findAllByNovelWithUser(novelId: number, page?: number, limit?: number): Promise<{
         items: {
             id: number;

@@ -59,10 +59,12 @@ export class RatingsService {
     });
   }
 
-  findAll() {
+  async findAll() {
     try {
       console.log('Finding all ratings');
-      return this.databaseService.rating.findMany({
+
+      // Get all ratings with user and novel info
+      const ratings = await this.databaseService.rating.findMany({
         include: {
           user: {
             select: {
@@ -71,14 +73,75 @@ export class RatingsService {
               avatar: true,
             },
           },
+          novel: {
+            select: {
+              id: true,
+              name: true,
+              cover: true,
+            },
+          },
         },
         orderBy: {
           createdAt: 'desc',
         },
       });
+
+      console.log(`Found ${ratings.length} ratings`);
+      console.log('Raw ratings:', JSON.stringify(ratings, null, 2));
+
+      // Transform ratings
+      const transformedRatings = ratings.map((rating) => ({
+        id: rating.id,
+        novelId: rating.novelId,
+        userId: rating.userId,
+        content: rating.content,
+        score: rating.score,
+        createdAt: rating.createdAt,
+        user: rating.user
+          ? {
+              id: rating.user.id,
+              name: rating.user.name || 'Người dùng',
+              avatar: rating.user.avatar || 'default-avatar.png',
+            }
+          : {
+              id: rating.userId,
+              name: 'Người dùng',
+              avatar: 'default-avatar.png',
+            },
+        novel: rating.novel
+          ? {
+              id: rating.novel.id,
+              name: rating.novel.name,
+              cover: rating.novel.cover,
+            }
+          : null,
+      }));
+
+      const result = {
+        items: transformedRatings,
+        meta: {
+          total: ratings.length,
+          page: 1,
+          limit: ratings.length,
+          totalPages: 1,
+        },
+      };
+
+      console.log('Transformed result:', JSON.stringify(result, null, 2));
+      return result;
     } catch (error) {
       console.error('Error finding all ratings:', error);
-      return [];
+      console.error('Error details:', error.message);
+      console.error('Error stack:', error.stack);
+      return {
+        items: [],
+        meta: {
+          total: 0,
+          page: 1,
+          limit: 10,
+          totalPages: 0,
+        },
+      };
     }
   }
 
