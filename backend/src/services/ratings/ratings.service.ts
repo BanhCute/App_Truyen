@@ -95,39 +95,6 @@ export class RatingsService {
       const testQuery = await this.databaseService.$queryRaw`SELECT 1`;
       console.log('Database connection test result:', testQuery);
 
-      // First check if ratings exist without any conditions
-      console.log('Checking raw ratings...');
-      const checkRatings = await this.databaseService.rating.findMany({
-        where: {
-          novelId: novelId,
-        },
-        select: {
-          id: true,
-          novelId: true,
-          userId: true,
-          content: true,
-          score: true,
-          createdAt: true,
-        },
-      });
-      console.log(
-        'Raw ratings without conditions:',
-        JSON.stringify(checkRatings, null, 2),
-      );
-
-      if (checkRatings.length === 0) {
-        console.log('No ratings found for novel', novelId);
-        return {
-          items: [],
-          meta: {
-            page,
-            limit,
-            total: 0,
-            totalPages: 0,
-          },
-        };
-      }
-
       // Get ratings with user info
       console.log('Getting ratings with user info...');
       const [ratings, total] = await Promise.all([

@@ -82,20 +82,7 @@ export class NovelService {
     return this.databaseService.novel
       .findUnique({
         where: { id },
-        select: {
-          id: true,
-          name: true,
-          description: true,
-          author: true,
-          cover: true,
-          status: true,
-          view: true,
-          rating: true,
-          followerCount: true,
-          commentCount: true,
-          createdAt: true,
-          updatedAt: true,
-          userId: true,
+        include: {
           user: {
             select: {
               id: true,
@@ -104,7 +91,7 @@ export class NovelService {
             },
           },
           categories: {
-            select: {
+            include: {
               category: {
                 select: {
                   id: true,
@@ -114,11 +101,67 @@ export class NovelService {
               },
             },
           },
+          ratings: {
+            include: {
+              user: {
+                select: {
+                  id: true,
+                  name: true,
+                  avatar: true,
+                },
+              },
+            },
+            orderBy: {
+              createdAt: 'desc',
+            },
+          },
         },
       })
       .then((novel) => {
         console.log('Found novel:', JSON.stringify(novel, null, 2));
-        return novel;
+        if (!novel) {
+          return null;
+        }
+
+        // Transform categories
+        const transformedCategories = novel.categories.map((nc) => ({
+          id: nc.category.id,
+          name: nc.category.name,
+          description: nc.category.description,
+        }));
+
+        // Transform ratings
+        const transformedRatings = novel.ratings.map((rating) => ({
+          id: rating.id,
+          content: rating.content,
+          score: rating.score,
+          createdAt: rating.createdAt,
+          user: rating.user
+            ? {
+                id: rating.user.id,
+                name: rating.user.name || 'Người dùng',
+                avatar: rating.user.avatar || 'default-avatar.png',
+              }
+            : {
+                id: rating.userId,
+                name: 'Người dùng',
+                avatar: 'default-avatar.png',
+              },
+        }));
+
+        // Calculate average rating
+        const averageRating =
+          novel.ratings.length > 0
+            ? novel.ratings.reduce((acc, r) => acc + r.score, 0) /
+              novel.ratings.length
+            : 0;
+
+        return {
+          ...novel,
+          categories: transformedCategories,
+          ratings: transformedRatings,
+          averageRating,
+        };
       });
   }
 

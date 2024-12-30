@@ -1,0 +1,1 @@
+{"version":3,"file":"create-follow.dto.js","sourceRoot":"","sources":["../../../../src/services/follows/dto/create-follow.dto.ts"],"names":[],"mappings":";;;;;;;;;;;;AAAA,6CAA8C;AAC9C,qDAA2C;AAE3C,MAAa,eAAe;CAI3B;AAJD,0CAIC;AADC;IAFC,IAAA,qBAAW,EAAC,EAAE,OAAO,EAAE,CAAC,EAAE,WAAW,EAAE,0BAA0B,EAAE,CAAC;IACpE,IAAA,0BAAQ,EAAC,EAAE,EAAE,EAAE,OAAO,EAAE,qBAAqB,EAAE,CAAC;;gDACjC"}

@@ -1,0 +1,1 @@
+{"version":3,"file":"google.auth.dto.js","sourceRoot":"","sources":["../../../src/services/google/google.auth.dto.ts"],"names":[],"mappings":";;;;;;;;;;;;AAAA,yDAAiD;AACjD,yDAAuE;AAEvE,MAAa,kBAAkB;CAO9B;AAPD,gDAOC;AALC;IADC,IAAA,0BAAM,GAAE;;uDACW;AAIpB;IAFC,IAAA,0BAAM,GAAE;IACR,IAAA,wBAAI,EAAC,GAAG,EAAE,CAAC,gCAAkB,CAAC;8BACzB,gCAAkB;gDAAC"}
