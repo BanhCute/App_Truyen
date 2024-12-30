@@ -52,13 +52,41 @@ class _HomeScreenState extends State<HomeScreen> {
       isLoading = true;
     });
     try {
-      final response =
-          await http.get(Uri.parse('${dotenv.get('API_URL')}/novels'));
-      final List data = json.decode(response.body);
-      setState(() {
-        novels = data.map((json) => Novel.fromJson(json)).toList();
-        isLoading = false;
-      });
+      final baseUrl = dotenv.get('API_URL').replaceAll('/api/v1', '');
+      print('Base URL: $baseUrl'); // Log để kiểm tra URL cơ sở
+
+      final response = await http.get(Uri.parse('$baseUrl/api/novels'));
+
+      print('Response status: ${response.statusCode}');
+      print('Response body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final dynamic decodedData = json.decode(response.body);
+        List<dynamic> data;
+
+        if (decodedData is Map<String, dynamic>) {
+          // Nếu response là Map và có key 'items' chứa danh sách truyện
+          if (decodedData.containsKey('items')) {
+            data = decodedData['items'] as List<dynamic>;
+          } else {
+            // Nếu không có key 'items', lấy tất cả các value trong Map
+            data =
+                decodedData.values.whereType<List<dynamic>>().firstOrNull ?? [];
+          }
+        } else if (decodedData is List<dynamic>) {
+          // Nếu response trực tiếp là List
+          data = decodedData;
+        } else {
+          throw Exception('Invalid response format');
+        }
+
+        setState(() {
+          novels = data.map((json) => Novel.fromJson(json)).toList();
+          isLoading = false;
+        });
+      } else {
+        throw Exception('Failed to load novels: ${response.statusCode}');
+      }
     } catch (e) {
       print('Error loading novels: $e');
       setState(() {
@@ -166,17 +194,17 @@ class _HomeScreenState extends State<HomeScreen> {
                   },
                   child: SingleChildScrollView(
                     physics: const AlwaysScrollableScrollPhysics(),
-                  child: Column(
-                    children: [
-                      NovelSearchBar(
-                        searchController: _searchController,
-                        isSearching: _isSearching,
-                        filteredNovels: filteredNovels,
-                        onSearch: filterNovels,
-                      ),
-                      RecommendedNovels(novels: recommendedNovels),
-                      RecentNovels(novels: recentNovels),
-                    ],
+                    child: Column(
+                      children: [
+                        NovelSearchBar(
+                          searchController: _searchController,
+                          isSearching: _isSearching,
+                          filteredNovels: filteredNovels,
+                          onSearch: filterNovels,
+                        ),
+                        RecommendedNovels(novels: recommendedNovels),
+                        RecentNovels(novels: recentNovels),
+                      ],
                     ),
                   ),
                 )
@@ -255,28 +283,28 @@ class _HomeScreenState extends State<HomeScreen> {
             ? const Center(child: CircularProgressIndicator())
             : history.isEmpty
                 ? const Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.history, size: 64, color: Colors.grey),
-                    SizedBox(height: 16),
-                    Text(
-                      'Chưa có lịch sử đọc truyện',
-                      style: TextStyle(color: Colors.grey),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.history, size: 64, color: Colors.grey),
+                        SizedBox(height: 16),
+                        Text(
+                          'Chưa có lịch sử đọc truyện',
+                          style: TextStyle(color: Colors.grey),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
                   )
                 : RefreshIndicator(
                     onRefresh: () async {
                       await loadHistory();
                     },
                     child: Stack(
-              children: [
-                ListView.builder(
+                      children: [
+                        ListView.builder(
                           physics: const AlwaysScrollableScrollPhysics(),
-                  itemCount: history.length,
-                  itemBuilder: (context, index) {
+                          itemCount: history.length,
+                          itemBuilder: (context, index) {
                             final item = history[index];
                             return Card(
                               margin: const EdgeInsets.symmetric(
@@ -288,18 +316,18 @@ class _HomeScreenState extends State<HomeScreen> {
                                     horizontal: 16,
                                     vertical: 8,
                                   ),
-                        leading: ClipRRect(
-                          borderRadius: BorderRadius.circular(4),
-                          child: Image.network(
+                                  leading: ClipRRect(
+                                    borderRadius: BorderRadius.circular(4),
+                                    child: Image.network(
                                       item.novel.cover,
-                            width: 50,
-                            height: 70,
-                            fit: BoxFit.cover,
+                                      width: 50,
+                                      height: 70,
+                                      fit: BoxFit.cover,
                                       errorBuilder:
                                           (context, error, stackTrace) =>
-                                const Icon(Icons.error),
-                          ),
-                        ),
+                                              const Icon(Icons.error),
+                                    ),
+                                  ),
                                   title: Text(
                                     item.novel.name,
                                     maxLines: 1,
@@ -357,150 +385,150 @@ class _HomeScreenState extends State<HomeScreen> {
                                       IconButton(
                                         icon: const Icon(Icons.delete_outline),
                                         tooltip: 'Xóa khỏi lịch sử',
-                          onPressed: () async {
+                                        onPressed: () async {
                                           final confirm =
                                               await showDialog<bool>(
-                              context: context,
-                              builder: (context) => AlertDialog(
+                                            context: context,
+                                            builder: (context) => AlertDialog(
                                               title: const Text('Xác nhận xóa'),
-                                content: Text(
+                                              content: Text(
                                                   'Xóa "${item.novel.name}" khỏi lịch sử đọc?'),
-                                actions: [
-                                  TextButton(
-                                    onPressed: () =>
+                                              actions: [
+                                                TextButton(
+                                                  onPressed: () =>
                                                       Navigator.pop(
                                                           context, false),
-                                    child: const Text('Hủy'),
-                                  ),
-                                  TextButton(
-                                    onPressed: () =>
+                                                  child: const Text('Hủy'),
+                                                ),
+                                                TextButton(
+                                                  onPressed: () =>
                                                       Navigator.pop(
                                                           context, true),
-                                    child: const Text(
-                                      'Xóa',
+                                                  child: const Text(
+                                                    'Xóa',
                                                     style: TextStyle(
                                                         color: Colors.red),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            );
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          );
 
-                            if (confirm == true) {
+                                          if (confirm == true) {
                                             await ReadingHistoryService
                                                 .removeFromHistory(
                                                     item.novel.id);
-                              setState(() {});
+                                            setState(() {});
 
                                             if (!mounted) return;
                                             ScaffoldMessenger.of(context)
                                                 .showSnackBar(
-                                  SnackBar(
-                                    content: Text(
+                                              SnackBar(
+                                                content: Text(
                                                     'Đã xóa "${item.novel.name}" khỏi lịch sử'),
                                                 duration:
                                                     const Duration(seconds: 2),
-                                    action: SnackBarAction(
-                                      label: 'Hoàn tác',
-                                      onPressed: () async {
-                                        await ReadingHistoryService
+                                                action: SnackBarAction(
+                                                  label: 'Hoàn tác',
+                                                  onPressed: () async {
+                                                    await ReadingHistoryService
                                                         .addToHistory(
                                                       item.novel,
                                                       lastChapter:
                                                           item.lastChapter,
                                                     );
-                                        setState(() {});
-                                      },
-                                    ),
-                                  ),
-                                );
-                            }
-                          },
+                                                    setState(() {});
+                                                  },
+                                                ),
+                                              ),
+                                            );
+                                          }
+                                        },
                                       ),
                                     ],
-                        ),
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
+                                  ),
+                                  onTap: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
                                         builder: (context) => NovelDetailScreen(
                                             novel: item.novel),
                                       ),
                                     ).then((_) => loadHistory());
                                   },
                                 ),
-                      ),
-                    );
-                  },
-                ),
-                if (history.isNotEmpty)
-                  Positioned(
-                    bottom: 16,
-                    right: 16,
-                    child: FloatingActionButton(
-                      backgroundColor: Colors.red,
-                      child: const Icon(Icons.delete_sweep),
-                      onPressed: () {
-                        showDialog(
-                          context: context,
-                          builder: (context) => AlertDialog(
-                            title: const Text('Xóa lịch sử'),
+                              ),
+                            );
+                          },
+                        ),
+                        if (history.isNotEmpty)
+                          Positioned(
+                            bottom: 16,
+                            right: 16,
+                            child: FloatingActionButton(
+                              backgroundColor: Colors.red,
+                              child: const Icon(Icons.delete_sweep),
+                              onPressed: () {
+                                showDialog(
+                                  context: context,
+                                  builder: (context) => AlertDialog(
+                                    title: const Text('Xóa lịch sử'),
                                     content: const Text(
                                         'Xóa toàn bộ lịch sử đọc truyện?'),
-                            actions: [
-                              TextButton(
-                                onPressed: () => Navigator.pop(context),
-                                child: const Text('Hủy'),
-                              ),
-                              TextButton(
-                                onPressed: () async {
+                                    actions: [
+                                      TextButton(
+                                        onPressed: () => Navigator.pop(context),
+                                        child: const Text('Hủy'),
+                                      ),
+                                      TextButton(
+                                        onPressed: () async {
                                           final oldHistory =
                                               List<ReadingHistory>.from(
                                                   history);
                                           await ReadingHistoryService
                                               .clearHistory();
-                                  Navigator.pop(context);
-                                  setState(() {});
+                                          Navigator.pop(context);
+                                          setState(() {});
 
                                           ScaffoldMessenger.of(context)
                                               .showSnackBar(
-                                    SnackBar(
+                                            SnackBar(
                                               content: const Text(
                                                   'Đã xóa toàn bộ lịch sử'),
                                               duration:
                                                   const Duration(seconds: 2),
-                                      action: SnackBarAction(
+                                              action: SnackBarAction(
                                                 label: 'Hoàn tác',
-                                        onPressed: () async {
+                                                onPressed: () async {
                                                   for (var item
-                                              in oldHistory.reversed) {
-                                            await ReadingHistoryService
+                                                      in oldHistory.reversed) {
+                                                    await ReadingHistoryService
                                                         .addToHistory(
                                                       item.novel,
                                                       lastChapter:
                                                           item.lastChapter,
                                                     );
-                                          }
-                                          setState(() {});
+                                                  }
+                                                  setState(() {});
+                                                },
+                                              ),
+                                            ),
+                                          );
                                         },
+                                        child: const Text(
+                                          'Xóa',
+                                          style: TextStyle(color: Colors.red),
+                                        ),
                                       ),
-                                    ),
-                                  );
-                                },
-                                child: const Text(
-                                  'Xóa',
-                                  style: TextStyle(color: Colors.red),
-                                ),
-                              ),
-                            ],
+                                    ],
+                                  ),
+                                );
+                              },
+                            ),
                           ),
-                        );
-                      },
+                      ],
                     ),
-                  ),
-              ],
-                    ),
-        );
+                  );
       case 3:
         return BlocBuilder<SessionCubit, SessionState>(
           builder: (context, state) {
