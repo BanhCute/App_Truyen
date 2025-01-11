@@ -17,10 +17,14 @@ import NovelDto from './dto/novel.dto';
 import { plainToClass, plainToInstance } from 'class-transformer';
 import { getSession } from '../auth/auth.utils';
 import { Request } from 'express';
+import { DatabaseService } from '../database/database.service';
 
 @Controller('novels')
 export class NovelController {
-  constructor(private readonly novelService: NovelService) {}
+  constructor(
+    private readonly novelService: NovelService,
+    private readonly databaseService: DatabaseService,
+  ) {}
 
   @Post()
   create(@Body() createNovelDto: CreateNovelDto, @Req() req: Request) {
@@ -148,14 +152,14 @@ export class NovelController {
     // Đếm số lượng follow từ database
     const followCount = await this.novelService.countFollows(id);
 
-    // Cập nhật followerCount trong novel
-    await this.novelService.update(
-      id,
-      {
+    // Cập nhật followerCount trong novel mà không cập nhật updatedAt
+    await this.databaseService.novel.update({
+      where: { id },
+      data: {
         followerCount: followCount,
+        updatedAt: novel.updatedAt, // Giữ nguyên updatedAt cũ
       },
-      novel.userId,
-    );
+    });
 
     return { followerCount: followCount };
   }

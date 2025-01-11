@@ -126,7 +126,7 @@ class _ManageNovelCategoriesScreenState
     return Scaffold(
       appBar: AppBar(
         title: const Text('Quản lý thể loại'),
-        backgroundColor: const Color(0xFF1B3A57),
+        backgroundColor: const Color.fromARGB(255, 230, 240, 236),
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
@@ -142,7 +142,6 @@ class _ManageNovelCategoriesScreenState
 
                       return CheckboxListTile(
                         title: Text(category['name']),
-                        subtitle: Text(category['description'] ?? ''),
                         value: isSelected,
                         onChanged: (bool? value) {
                           setState(() {
@@ -163,7 +162,8 @@ class _ManageNovelCategoriesScreenState
                     width: double.infinity,
                     child: ElevatedButton(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF1B3A57),
+                        backgroundColor:
+                            const Color.fromARGB(255, 255, 205, 140),
                         padding: const EdgeInsets.symmetric(vertical: 16),
                       ),
                       onPressed: _saveCategories,

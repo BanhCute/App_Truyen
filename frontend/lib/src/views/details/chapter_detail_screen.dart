@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
 import '../../models/novel.dart';
 import '../../models/chapter.dart';
-import '../../models/comment.dart';
 import '../../services/follow_service.dart';
-import '../../services/comment_service.dart';
 import '../../../bloc/session_cubit.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../services/reading_history_service.dart';
+import '../novel_detail/novel_detail_screen.dart';
 
 class ChapterDetailScreen extends StatefulWidget {
   final Novel novel;
@@ -15,11 +14,11 @@ class ChapterDetailScreen extends StatefulWidget {
   final List<Chapter> allChapters;
 
   const ChapterDetailScreen({
+    super.key,
     required this.novel,
     required this.chapter,
     required this.currentIndex,
     required this.allChapters,
-    super.key,
   });
 
   @override
@@ -27,17 +26,13 @@ class ChapterDetailScreen extends StatefulWidget {
 }
 
 class _ChapterDetailScreenState extends State<ChapterDetailScreen> {
-  bool _showControls = true;
   bool _isFollowing = false;
-  List<Comment> _comments = [];
-  final TextEditingController _commentController = TextEditingController();
-  bool _isLoadingComments = true;
 
   @override
   void initState() {
     super.initState();
     _loadFollowStatus();
-    _loadComments();
+    // Thêm vào lịch sử đọc
     ReadingHistoryService.addToHistory(widget.novel,
         lastChapter: widget.chapter);
   }
@@ -86,325 +81,290 @@ class _ChapterDetailScreenState extends State<ChapterDetailScreen> {
     }
   }
 
-  Future<void> _loadComments() async {
-    try {
-      final comments =
-          await CommentService.getChapterComments(widget.chapter.id);
-      setState(() {
-        _comments = comments;
-        _isLoadingComments = false;
-      });
-    } catch (e) {
-      setState(() {
-        _isLoadingComments = false;
-      });
-    }
-  }
-
-  Future<void> _addComment() async {
-    if (_commentController.text.trim().isEmpty) return;
-
-    try {
-      final comment = await CommentService.addComment(
-        widget.chapter.id,
-        _commentController.text.trim(),
-      );
-      setState(() {
-        _comments.add(comment);
-        _commentController.clear();
-      });
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Không thể thêm bình luận. Vui lòng thử lại sau.'),
-            duration: Duration(seconds: 2),
-          ),
-        );
-      }
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Stack(
-        children: [
-          // Nội dung chapter
-          Positioned.fill(
-            child: GestureDetector(
-              onTap: () {
-                setState(() {
-                  _showControls = !_showControls;
-                });
-              },
-              child: Container(
-                color: Colors.black,
-                child: ListView.builder(
-                  itemCount: widget.chapter.content.split('\n').length,
-                  itemBuilder: (context, index) {
-                    final imageUrl = widget.chapter.content.split('\n')[index];
-                    return Container(
-                      margin: const EdgeInsets.only(bottom: 1),
-                      child: Image.network(
-                        imageUrl,
-                        fit: BoxFit.fitWidth,
-                        width: MediaQuery.of(context).size.width,
-                        loadingBuilder: (context, child, loadingProgress) {
-                          if (loadingProgress == null) return child;
-                          return SizedBox(
-                            height: 200,
-                            child: Center(
-                              child: CircularProgressIndicator(
-                                value: loadingProgress.expectedTotalBytes !=
-                                        null
-                                    ? loadingProgress.cumulativeBytesLoaded /
-                                        loadingProgress.expectedTotalBytes!
-                                    : null,
-                              ),
-                            ),
-                          );
-                        },
-                        errorBuilder: (context, error, stackTrace) {
-                          return const SizedBox(
-                            height: 200,
-                            child: Center(
-                              child: Text(
-                                'Không thể tải ảnh',
-                                style: TextStyle(color: Colors.red),
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-                    );
-                  },
-                ),
-              ),
-            ),
-          ),
-
-          // Controls overlay
-          if (_showControls)
-            Positioned(
-              top: 0,
-              left: 0,
-              right: 0,
-              child: Container(
-                color: Colors.black.withOpacity(0.5),
-                child: SafeArea(
-                  child: Container(
-                    height: 56,
-                    padding: const EdgeInsets.symmetric(horizontal: 8),
-                    child: Row(
-                      children: [
-                        IconButton(
-                          icon:
-                              const Icon(Icons.arrow_back, color: Colors.white),
-                          onPressed: () => Navigator.pop(context),
-                        ),
-                        Expanded(
-                          child: Text(
-                            widget.chapter.name,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                            ),
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                        BlocBuilder<SessionCubit, SessionState>(
-                          builder: (context, state) {
-                            return IconButton(
-                              icon: Icon(
-                                _isFollowing
-                                    ? Icons.favorite
-                                    : Icons.favorite_border,
-                                color: _isFollowing ? Colors.red : Colors.white,
-                              ),
-                              onPressed: () {
-                                if (state is Authenticated) {
-                                  _toggleFollow();
-                                } else {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text(
-                                          'Vui lòng đăng nhập để theo dõi truyện'),
-                                      duration: Duration(seconds: 2),
-                                    ),
-                                  );
-                                }
-                              },
-                            );
-                          },
-                        ),
-                        IconButton(
-                          icon: const Icon(Icons.list, color: Colors.white),
-                          onPressed: () {
-                            showModalBottomSheet(
-                              context: context,
-                              builder: (context) => ChapterListBottomSheet(
-                                novel: widget.novel,
-                                currentChapterIndex: widget.currentIndex,
-                                allChapters: widget.allChapters,
-                              ),
-                            );
-                          },
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-}
-
-// Widget hiển thị danh sách chapter
-class ChapterListBottomSheet extends StatelessWidget {
-  final Novel novel;
-  final int currentChapterIndex;
-  final List<Chapter> allChapters;
-
-  const ChapterListBottomSheet({
-    super.key,
-    required this.novel,
-    required this.currentChapterIndex,
-    required this.allChapters,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: MediaQuery.of(context).size.height * 0.7,
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Danh sách chương',
-            style: Theme.of(context).textTheme.titleLarge,
-          ),
-          const SizedBox(height: 16),
-          Expanded(
-            child: ListView.builder(
-              itemCount: allChapters.length,
-              itemBuilder: (context, index) {
-                final chapter = allChapters[index];
-                return ListTile(
-                  title: Text(
-                    'Chương ${index + 1}: ${chapter.name}',
-                    style: TextStyle(
-                      fontWeight: index == currentChapterIndex
-                          ? FontWeight.bold
-                          : FontWeight.normal,
-                    ),
-                  ),
-                  onTap: () {
-                    Navigator.pop(context); // Đóng bottom sheet
-                    if (index != currentChapterIndex) {
-                      Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => ChapterDetailScreen(
-                            novel: novel,
-                            chapter: chapter,
-                            currentIndex: index,
-                            allChapters: allChapters,
-                          ),
-                        ),
-                      );
-                      // Cập nhật lịch sử đọc khi chọn chương từ danh sách
-                      ReadingHistoryService.addToHistory(
-                        novel,
-                        lastChapter: chapter,
-                      );
-                    }
-                  },
-                );
-              },
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// Widget hiển thị danh sách bình luận
-class CommentBottomSheet extends StatelessWidget {
-  final List<Comment> comments;
-  final bool isLoading;
-  final TextEditingController commentController;
-  final VoidCallback onSubmit;
-
-  const CommentBottomSheet({
-    super.key,
-    required this.comments,
-    required this.isLoading,
-    required this.commentController,
-    required this.onSubmit,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.only(
-        bottom: MediaQuery.of(context).viewInsets.bottom,
-      ),
-      child: Container(
-        height: MediaQuery.of(context).size.height * 0.7,
-        padding: const EdgeInsets.all(16),
-        child: Column(
+      appBar: AppBar(
+        backgroundColor: const Color(0xFF1B3A57),
+        title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Bình luận',
-              style: Theme.of(context).textTheme.titleLarge,
+              widget.novel.name,
+              style: const TextStyle(
+                fontSize: 16,
+                color: Colors.white70,
+              ),
             ),
-            const SizedBox(height: 16),
-            Expanded(
-              child: isLoading
-                  ? const Center(child: CircularProgressIndicator())
-                  : comments.isEmpty
-                      ? const Center(child: Text('Chưa có bình luận nào'))
-                      : ListView.builder(
-                          itemCount: comments.length,
-                          itemBuilder: (context, index) {
-                            final comment = comments[index];
-                            return ListTile(
-                              title: Text(comment.userName ?? 'Người dùng'),
-                              subtitle: Text(comment.content),
-                              trailing: Text(
-                                '${comment.createdAt.day}/${comment.createdAt.month}/${comment.createdAt.year}',
-                                style: Theme.of(context).textTheme.bodySmall,
+            Text(
+              widget.chapter.name,
+              style: const TextStyle(
+                fontSize: 14,
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          BlocBuilder<SessionCubit, SessionState>(
+            builder: (context, state) {
+              return IconButton(
+                icon: Icon(
+                  _isFollowing ? Icons.favorite : Icons.favorite_border,
+                  color: _isFollowing ? Colors.red : Colors.white,
+                ),
+                onPressed: () {
+                  if (state is Authenticated) {
+                    _toggleFollow();
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Vui lòng đăng nhập để theo dõi truyện'),
+                        duration: Duration(seconds: 2),
+                      ),
+                    );
+                  }
+                },
+              );
+            },
+          ),
+          IconButton(
+            icon: const Icon(
+              Icons.info_outline,
+              color: Colors.white,
+            ),
+            tooltip: 'Chi tiết truyện',
+            onPressed: () {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => NovelDetailScreen(novel: widget.novel),
+                ),
+              );
+            },
+          ),
+        ],
+      ),
+      body: Stack(
+        children: [
+          // Nội dung chương
+          SingleChildScrollView(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                ...widget.chapter.content.split('\n').map((imageUrl) {
+                  if (imageUrl.trim().isEmpty) return const SizedBox.shrink();
+                  return Container(
+                    margin: const EdgeInsets.only(bottom: 8),
+                    width: double.infinity,
+                    child: Image.network(
+                      imageUrl,
+                      fit: BoxFit.contain,
+                      errorBuilder: (context, error, stackTrace) => Container(
+                        height: 200,
+                        color: Colors.grey[300],
+                        child: Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.error, color: Colors.grey[600]),
+                              const SizedBox(height: 8),
+                              Text(
+                                'Không thể tải hình ảnh',
+                                style: TextStyle(color: Colors.grey[600]),
                               ),
-                            );
-                          },
+                            ],
+                          ),
                         ),
+                      ),
+                      loadingBuilder: (context, child, loadingProgress) {
+                        if (loadingProgress == null) return child;
+                        return Container(
+                          height: 200,
+                          color: Colors.grey[100],
+                          child: Center(
+                            child: CircularProgressIndicator(
+                              value: loadingProgress.expectedTotalBytes != null
+                                  ? loadingProgress.cumulativeBytesLoaded /
+                                      loadingProgress.expectedTotalBytes!
+                                  : null,
+                              color: const Color(0xFF1B3A57),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  );
+                }).toList(),
+                const SizedBox(height: 80),
+              ],
             ),
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 8),
+          ),
+          // Thanh điều hướng
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 0,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              decoration: BoxDecoration(
+                color: Theme.of(context).scaffoldBackgroundColor,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 8,
+                    offset: const Offset(0, -4),
+                  ),
+                ],
+              ),
               child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
+                  // Nút chương trước
                   Expanded(
-                    child: TextField(
-                      controller: commentController,
-                      decoration: const InputDecoration(
-                        hintText: 'Viết bình luận...',
-                        border: OutlineInputBorder(),
+                    child: ElevatedButton.icon(
+                      onPressed: widget.currentIndex > 0
+                          ? () => _navigateToChapter(
+                              context, widget.currentIndex - 1)
+                          : null,
+                      icon: const Icon(Icons.arrow_back),
+                      label: const Text('Chương trước'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF1B3A57),
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
                       ),
                     ),
                   ),
-                  IconButton(
-                    icon: const Icon(Icons.send),
-                    onPressed: onSubmit,
+                  const SizedBox(width: 12),
+                  // Nút chọn chương
+                  ElevatedButton(
+                    onPressed: () => _showChapterList(context),
+                    child: const Icon(Icons.list),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF1B3A57),
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(
+                          vertical: 12, horizontal: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  // Nút chương sau
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      onPressed:
+                          widget.currentIndex < widget.allChapters.length - 1
+                              ? () => _navigateToChapter(
+                                  context, widget.currentIndex + 1)
+                              : null,
+                      icon: const Icon(Icons.arrow_forward),
+                      label: const Text('Chương sau'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF1B3A57),
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                    ),
                   ),
                 ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _navigateToChapter(BuildContext context, int index) {
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ChapterDetailScreen(
+          novel: widget.novel,
+          chapter: widget.allChapters[index],
+          currentIndex: index,
+          allChapters: widget.allChapters,
+        ),
+      ),
+    );
+  }
+
+  void _showChapterList(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        height: MediaQuery.of(context).size.height * 0.7,
+        decoration: BoxDecoration(
+          color: Theme.of(context).scaffoldBackgroundColor,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        child: Column(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                border: Border(
+                  bottom: BorderSide(
+                    color: Colors.grey.withOpacity(0.2),
+                  ),
+                ),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Danh sách chương',
+                    style: Theme.of(context).textTheme.titleLarge,
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                ],
+              ),
+            ),
+            Expanded(
+              child: ListView.builder(
+                itemCount: widget.allChapters.length,
+                itemBuilder: (context, index) {
+                  final isCurrentChapter = index == widget.currentIndex;
+                  return ListTile(
+                    title: Text(
+                      widget.allChapters[index].name,
+                      style: TextStyle(
+                        color: isCurrentChapter
+                            ? Theme.of(context).primaryColor
+                            : null,
+                        fontWeight: isCurrentChapter ? FontWeight.bold : null,
+                      ),
+                    ),
+                    leading: isCurrentChapter
+                        ? Icon(
+                            Icons.play_arrow,
+                            color: Theme.of(context).primaryColor,
+                          )
+                        : null,
+                    onTap: () {
+                      Navigator.pop(context);
+                      if (!isCurrentChapter) {
+                        _navigateToChapter(context, index);
+                      }
+                    },
+                  );
+                },
               ),
             ),
           ],

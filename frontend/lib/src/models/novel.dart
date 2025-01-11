@@ -12,7 +12,6 @@ class NovelCategory {
   });
 
   factory NovelCategory.fromJson(Map<String, dynamic> json) {
-    // Kiểm tra nếu json có chứa 'category'
     if (json['category'] is Map<String, dynamic>) {
       final categoryData = json['category'] as Map<String, dynamic>;
       return NovelCategory(
@@ -21,7 +20,6 @@ class NovelCategory {
         description: categoryData['description']?.toString(),
       );
     }
-    // Nếu json là category trực tiếp
     return NovelCategory(
       id: json['id'] as int? ?? 0,
       name: json['name']?.toString() ?? '',
@@ -53,6 +51,7 @@ class Novel {
   final String status;
   final int userId;
   final List<Chapter>? chapters;
+  final List<dynamic>? ratings;
 
   Novel({
     required this.id,
@@ -69,10 +68,10 @@ class Novel {
     this.followerCount = 0,
     this.status = 'Đang cập nhật',
     this.chapters,
+    this.ratings,
   });
 
   factory Novel.fromJson(Map<String, dynamic> json) {
-    // Parse categories from the nested structure
     final categoryList = (json['categories'] as List?)
             ?.map((cat) => NovelCategory.fromJson(cat))
             .toList() ??
@@ -99,6 +98,7 @@ class Novel {
               .map((chapter) => Chapter.fromJson(chapter))
               .toList()
           : null,
+      ratings: json['ratings'] as List?,
     );
   }
 
@@ -118,6 +118,7 @@ class Novel {
       'status': status,
       'userId': userId,
       'chapters': chapters?.map((chapter) => chapter.toJson()).toList(),
+      'ratings': ratings,
     };
   }
 
@@ -136,6 +137,7 @@ class Novel {
     String? status,
     int? userId,
     List<Chapter>? chapters,
+    List<dynamic>? ratings,
   }) {
     return Novel(
       id: id ?? this.id,
@@ -152,6 +154,7 @@ class Novel {
       status: status ?? this.status,
       userId: userId ?? this.userId,
       chapters: chapters ?? this.chapters,
+      ratings: ratings ?? this.ratings,
     );
   }
 }

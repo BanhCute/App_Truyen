@@ -75,12 +75,76 @@ class _SelectNovelScreenState extends State<SelectNovelScreen> {
     }
   }
 
+  Future<void> deleteChapter(Chapter chapter) async {
+    try {
+      final state = context.read<SessionCubit>().state;
+      if (state is! Authenticated) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Vui lòng đăng nhập')),
+        );
+        return;
+      }
+      final token = state.session.accessToken;
+
+      final response = await http.delete(
+        Uri.parse('${dotenv.get('API_URL')}/chapters/${chapter.id}'),
+        headers: {
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Xóa chương thành công')),
+          );
+          _loadChapters(); // Tải lại danh sách sau khi xóa
+        }
+      } else {
+        throw Exception('Không thể xóa chương');
+      }
+    } catch (e) {
+      print('Error deleting chapter: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Lỗi khi xóa chương: $e')),
+        );
+      }
+    }
+  }
+
+  void showDeleteConfirmation(Chapter chapter) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Xác nhận xóa'),
+        content: Text('Bạn có chắc chắn muốn xóa chương "${chapter.name}"?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Hủy'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              deleteChapter(chapter);
+            },
+            child: const Text(
+              'Xóa',
+              style: TextStyle(color: Colors.red),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: Text('Chọn chương - ${widget.selectedNovel?.name ?? ""}'),
-        backgroundColor: const Color(0xFF1B3A57),
+        backgroundColor: const Color.fromARGB(255, 230, 240, 236),
       ),
       body: isLoading
           ? const Center(child: CircularProgressIndicator())
@@ -95,19 +159,29 @@ class _SelectNovelScreenState extends State<SelectNovelScreen> {
                           horizontal: 16, vertical: 8),
                       child: ListTile(
                         title: Text(chapter.name),
-                        trailing: IconButton(
-                          icon: const Icon(Icons.edit),
-                          onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => BlocProvider.value(
-                                  value: context.read<SessionCubit>(),
-                                  child: EditChapterScreen(chapter: chapter),
-                                ),
-                              ),
-                            );
-                          },
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            IconButton(
+                              icon: const Icon(Icons.edit),
+                              onPressed: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => BlocProvider.value(
+                                      value: context.read<SessionCubit>(),
+                                      child:
+                                          EditChapterScreen(chapter: chapter),
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.delete, color: Colors.red),
+                              onPressed: () => showDeleteConfirmation(chapter),
+                            ),
+                          ],
                         ),
                       ),
                     );

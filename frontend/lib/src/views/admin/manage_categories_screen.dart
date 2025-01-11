@@ -17,154 +17,194 @@ class ManageCategoriesScreen extends StatefulWidget {
 class _ManageCategoriesScreenState extends State<ManageCategoriesScreen> {
   List<Category> categories = [];
   bool isLoading = true;
-  final _formKey = GlobalKey<FormState>();
-  final _nameController = TextEditingController();
-  final _descriptionController = TextEditingController();
+  bool _mounted = true;
 
   @override
   void initState() {
     super.initState();
-    loadCategories();
+    _loadCategories();
   }
 
   @override
   void dispose() {
-    _nameController.dispose();
-    _descriptionController.dispose();
+    _mounted = false;
     super.dispose();
   }
 
-  Future<void> loadCategories() async {
+  void _safeSetState(VoidCallback fn) {
+    if (_mounted && mounted) {
+      setState(fn);
+    }
+  }
+
+  Future<void> _loadCategories() async {
+    if (!_mounted) return;
+
+    _safeSetState(() {
+      isLoading = true;
+    });
+
     try {
       final response = await http.get(
         Uri.parse('${dotenv.get('API_URL')}/categories'),
       );
 
+      print('Load categories response status: ${response.statusCode}');
+      print('Load categories response body: ${response.body}');
+
+      if (!_mounted) return;
+
       if (response.statusCode == 200) {
-        final List data = json.decode(response.body);
-        setState(() {
+        final List<dynamic> data = json.decode(response.body);
+        _safeSetState(() {
           categories = data.map((json) => Category.fromJson(json)).toList();
           isLoading = false;
         });
       } else {
-        throw Exception('Failed to load categories');
+        _safeSetState(() {
+          isLoading = false;
+        });
+        if (_mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+                content: Text(
+                    'Không thể tải danh sách thể loại: ${response.statusCode} - ${response.body}')),
+          );
+        }
       }
     } catch (e) {
       print('Error loading categories: $e');
-      setState(() {
+      if (!_mounted) return;
+      _safeSetState(() {
         isLoading = false;
       });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Lỗi: ${e.toString()}')),
+      );
     }
   }
 
   Future<void> addCategory() async {
-    if (!_formKey.currentState!.validate()) return;
+    if (!_mounted) return;
+
+    final TextEditingController nameController = TextEditingController();
 
     try {
+      final result = await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Thêm thể loại mới'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: nameController,
+                decoration: const InputDecoration(
+                  labelText: 'Tên thể loại',
+                  hintText: 'Nhập tên thể loại',
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Hủy'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('Thêm'),
+            ),
+          ],
+        ),
+      );
+
+      if (!_mounted || result != true) return;
+
+      if (nameController.text.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Vui lòng nhập tên thể loại')),
+        );
+        return;
+      }
+
+      final state = context.read<SessionCubit>().state;
+      if (state is! Authenticated) {
+        throw Exception('Vui lòng đăng nhập');
+      }
+
       final response = await http.post(
         Uri.parse('${dotenv.get('API_URL')}/categories'),
-        headers: {'Content-Type': 'application/json'},
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ${state.session.accessToken}',
+        },
         body: json.encode({
-          'name': _nameController.text,
-          'description': _descriptionController.text,
+          'name': nameController.text,
         }),
       );
 
+      if (!_mounted) return;
+
       if (response.statusCode == 201) {
-        _nameController.clear();
-        _descriptionController.clear();
-        loadCategories();
-        if (mounted) {
+        await _loadCategories();
+        if (_mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Thêm thể loại thành công')),
           );
         }
       } else {
-        throw Exception('Failed to add category');
+        throw Exception('Không thể thêm thể loại');
       }
     } catch (e) {
-      print('Error adding category: $e');
-      if (mounted) {
+      if (_mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Lỗi: ${e.toString()}')),
+          SnackBar(content: Text(e.toString())),
         );
       }
+    } finally {
+      nameController.dispose();
     }
   }
 
-  Future<void> deleteCategory(int categoryId) async {
+  Future<void> _deleteCategory(int id) async {
+    if (!_mounted) return;
+
     try {
       final state = context.read<SessionCubit>().state;
-      if (state is! Authenticated) return;
+      if (state is! Authenticated) {
+        throw Exception('Vui lòng đăng nhập');
+      }
 
       final response = await http.delete(
-        Uri.parse('${dotenv.get('API_URL')}/categories/$categoryId'),
+        Uri.parse('${dotenv.get('API_URL')}/categories/$id'),
         headers: {
-          'Accept': 'application/json',
           'Authorization': 'Bearer ${state.session.accessToken}',
         },
       );
 
+      if (!_mounted) return;
+
       if (response.statusCode == 200) {
-        if (mounted) {
+        await _loadCategories();
+        if (_mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Xóa thể loại thành công')),
           );
-          loadCategories(); // Tải lại danh sách sau khi xóa
         }
       } else {
         throw Exception('Không thể xóa thể loại');
       }
     } catch (e) {
-      print('Error deleting category: $e');
-      if (mounted) {
+      if (_mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Lỗi khi xóa thể loại: $e')),
+          SnackBar(content: Text(e.toString())),
         );
       }
     }
   }
 
-  Future<void> updateCategory(
-      int categoryId, String name, String description) async {
-    try {
-      final state = context.read<SessionCubit>().state;
-      if (state is! Authenticated) return;
-
-      final response = await http.patch(
-        Uri.parse('${dotenv.get('API_URL')}/categories/$categoryId'),
-        headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer ${state.session.accessToken}',
-        },
-        body: json.encode({
-          'name': name,
-          'description': description,
-        }),
-      );
-
-      if (response.statusCode == 200) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Cập nhật thể loại thành công')),
-          );
-          loadCategories(); // Tải lại danh sách sau khi cập nhật
-        }
-      } else {
-        throw Exception('Không thể cập nhật thể loại');
-      }
-    } catch (e) {
-      print('Error updating category: $e');
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Lỗi khi cập nhật thể loại: $e')),
-        );
-      }
-    }
-  }
-
-  void showDeleteConfirmation(Category category) {
+  void _showDeleteConfirmation(Category category) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -178,7 +218,7 @@ class _ManageCategoriesScreenState extends State<ManageCategoriesScreen> {
           TextButton(
             onPressed: () {
               Navigator.pop(context);
-              deleteCategory(category.id);
+              _deleteCategory(category.id);
             },
             child: const Text(
               'Xóa',
@@ -190,130 +230,92 @@ class _ManageCategoriesScreenState extends State<ManageCategoriesScreen> {
     );
   }
 
-  void showEditDialog(Category category) {
-    final nameController = TextEditingController(text: category.name);
-    final descriptionController =
-        TextEditingController(text: category.description);
-    final formKey = GlobalKey<FormState>();
+  Future<void> _editCategory(Category category) async {
+    if (!_mounted) return;
 
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Sửa thể loại'),
-        content: Form(
-          key: formKey,
-          child: Column(
+    final TextEditingController nameController =
+        TextEditingController(text: category.name);
+
+    try {
+      final result = await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Sửa thể loại'),
+          content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              TextFormField(
+              TextField(
                 controller: nameController,
                 decoration: const InputDecoration(
                   labelText: 'Tên thể loại',
-                  border: OutlineInputBorder(),
+                  hintText: 'Nhập tên thể loại',
                 ),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Vui lòng nhập tên thể loại';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: descriptionController,
-                decoration: const InputDecoration(
-                  labelText: 'Mô tả',
-                  border: OutlineInputBorder(),
-                ),
-                maxLines: 3,
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Vui lòng nhập mô tả';
-                  }
-                  return null;
-                },
               ),
             ],
           ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Hủy'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('Cập nhật'),
+            ),
+          ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Hủy'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              if (formKey.currentState!.validate()) {
-                Navigator.pop(context);
-                updateCategory(
-                  category.id,
-                  nameController.text,
-                  descriptionController.text,
-                );
-              }
-            },
-            child: const Text('Lưu'),
-          ),
-        ],
-      ),
-    );
-  }
+      );
 
-  void _showAddDialog() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Thêm thể loại mới'),
-        content: Form(
-          key: _formKey,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextFormField(
-                controller: _nameController,
-                decoration: const InputDecoration(
-                  labelText: 'Tên thể loại',
-                  border: OutlineInputBorder(),
-                ),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Vui lòng nhập tên thể loại';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: _descriptionController,
-                decoration: const InputDecoration(
-                  labelText: 'Mô tả',
-                  border: OutlineInputBorder(),
-                ),
-                maxLines: 3,
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Vui lòng nhập mô tả';
-                  }
-                  return null;
-                },
-              ),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Hủy'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              addCategory().then((_) => Navigator.pop(context));
-            },
-            child: const Text('Thêm'),
-          ),
-        ],
-      ),
-    );
+      if (!_mounted || result != true) return;
+
+      if (nameController.text.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Vui lòng nhập tên thể loại')),
+        );
+        return;
+      }
+
+      final state = context.read<SessionCubit>().state;
+      if (state is! Authenticated) {
+        throw Exception('Vui lòng đăng nhập');
+      }
+
+      final response = await http.patch(
+        Uri.parse('${dotenv.get('API_URL')}/categories/${category.id}'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ${state.session.accessToken}',
+        },
+        body: json.encode({
+          'name': nameController.text,
+          'description': category.description,
+        }),
+      );
+
+      print('Update category response status: ${response.statusCode}');
+      print('Update category response body: ${response.body}');
+
+      if (!_mounted) return;
+
+      if (response.statusCode == 200 || response.statusCode == 204) {
+        await _loadCategories();
+        if (_mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Cập nhật thể loại thành công')),
+          );
+        }
+      } else {
+        throw Exception('Không thể cập nhật thể loại');
+      }
+    } catch (e) {
+      if (_mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.toString())),
+        );
+      }
+    } finally {
+      nameController.dispose();
+    }
   }
 
   @override
@@ -321,7 +323,7 @@ class _ManageCategoriesScreenState extends State<ManageCategoriesScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Quản lý thể loại'),
-        backgroundColor: const Color(0xFF1B3A57),
+        backgroundColor: const Color.fromARGB(255, 230, 240, 236),
       ),
       body: isLoading
           ? const Center(child: CircularProgressIndicator())
@@ -334,18 +336,17 @@ class _ManageCategoriesScreenState extends State<ManageCategoriesScreen> {
                       const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   child: ListTile(
                     title: Text(category.name),
-                    subtitle: Text(category.description),
                     trailing: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         IconButton(
                           icon: const Icon(Icons.edit),
-                          onPressed: () => showEditDialog(category),
+                          onPressed: () => _editCategory(category),
                           tooltip: 'Sửa thể loại',
                         ),
                         IconButton(
                           icon: const Icon(Icons.delete),
-                          onPressed: () => showDeleteConfirmation(category),
+                          onPressed: () => _showDeleteConfirmation(category),
                           tooltip: 'Xóa thể loại',
                         ),
                       ],
@@ -355,8 +356,8 @@ class _ManageCategoriesScreenState extends State<ManageCategoriesScreen> {
               },
             ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () => _showAddDialog(),
-        backgroundColor: const Color(0xFF1B3A57),
+        onPressed: addCategory,
+        backgroundColor: const Color.fromARGB(255, 230, 240, 236),
         child: const Icon(Icons.add),
       ),
     );

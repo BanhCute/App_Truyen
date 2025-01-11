@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:frontend/bloc/session_cubit.dart';
+import 'package:frontend/models/session.dart';
 import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:async';
 import 'package:http_parser/http_parser.dart';
 import '../../models/novel.dart';
 import '../../models/chapter.dart';
@@ -85,7 +87,9 @@ class _UploadChapterScreenState extends State<UploadChapterScreen> {
   }
 
   Future<List<String>> _uploadImages() async {
+    if (_images.isEmpty) return [];
     List<String> uploadedUrls = [];
+    int maxRetries = 3;
 
     try {
       final state = context.read<SessionCubit>().state;
@@ -93,33 +97,79 @@ class _UploadChapterScreenState extends State<UploadChapterScreen> {
       final token = state.session.accessToken;
 
       for (var image in _images) {
-        var request = http.MultipartRequest(
-          'POST',
-          Uri.parse('${dotenv.get('API_URL')}/cloudinary'),
-        );
+        int retryCount = 0;
+        bool uploadSuccess = false;
 
-        request.headers['Authorization'] = 'Bearer $token';
-        request.files.add(
-          await http.MultipartFile.fromPath(
-            'image',
-            image.path,
-            contentType: MediaType('image', 'jpeg'),
-          ),
-        );
+        while (retryCount < maxRetries && !uploadSuccess) {
+          try {
+            var request = http.MultipartRequest(
+              'POST',
+              Uri.parse('${dotenv.get('API_URL')}/cloudinary'),
+            );
 
-        var response = await request.send();
-        var responseData = await response.stream.bytesToString();
+            request.headers['Authorization'] = 'Bearer $token';
+            request.files.add(
+              await http.MultipartFile.fromPath(
+                'image',
+                image.path,
+                contentType: MediaType('image', 'jpeg'),
+              ),
+            );
 
-        print('Response status: ${response.statusCode}');
-        print('Response data: $responseData');
+            var streamedResponse = await request.send().timeout(
+              const Duration(seconds: 30),
+              onTimeout: () {
+                throw TimeoutException('Quá thời gian tải lên');
+              },
+            );
 
-        if (response.statusCode == 201) {
-          var data = json.decode(responseData);
-          uploadedUrls.addAll(List<String>.from(data['urls']));
+            var response = await http.Response.fromStream(streamedResponse);
+            print('Response status: ${response.statusCode}');
+            print('Response data: ${response.body}');
+
+            if (response.statusCode == 201) {
+              var data = json.decode(response.body);
+              uploadedUrls.add(data['urls'][0]);
+              uploadSuccess = true;
+            } else {
+              print(
+                  'Upload failed with status ${response.statusCode}: ${response.body}');
+              retryCount++;
+              if (retryCount < maxRetries) {
+                await Future.delayed(
+                    Duration(seconds: 2 * retryCount)); // Exponential backoff
+              }
+            }
+          } catch (e) {
+            print('Error uploading image: $e');
+            retryCount++;
+            if (retryCount < maxRetries) {
+              await Future.delayed(Duration(seconds: 2 * retryCount));
+            } else {
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                        'Không thể tải lên ảnh sau $maxRetries lần thử. Vui lòng thử lại sau.'),
+                    duration: const Duration(seconds: 3),
+                  ),
+                );
+              }
+            }
+          }
         }
       }
     } catch (e) {
-      print('Error uploading images: $e');
+      print('Error in _uploadImages: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content:
+                Text('Có lỗi xảy ra khi tải lên ảnh. Vui lòng thử lại sau.'),
+            duration: Duration(seconds: 3),
+          ),
+        );
+      }
     }
 
     return uploadedUrls;
@@ -211,7 +261,7 @@ class _UploadChapterScreenState extends State<UploadChapterScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text('Thêm chương - ${widget.novel.name}'),
-        backgroundColor: const Color(0xFF1B3A57),
+        backgroundColor: const Color.fromARGB(255, 230, 240, 236),
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
@@ -285,11 +335,11 @@ class _UploadChapterScreenState extends State<UploadChapterScreen> {
                         return null;
                       },
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 20),
                     ElevatedButton.icon(
                       onPressed: _pickImages,
                       icon: const Icon(Icons.add_photo_alternate),
-                      label: const Text('Chọn ảnh'),
+                      label: const Text('Chọn ảnh  '),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.green,
                         padding: const EdgeInsets.symmetric(vertical: 12),
@@ -343,7 +393,8 @@ class _UploadChapterScreenState extends State<UploadChapterScreen> {
                       width: double.infinity,
                       child: ElevatedButton(
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF1B3A57),
+                          backgroundColor:
+                              const Color.fromARGB(255, 230, 240, 236),
                           padding: const EdgeInsets.symmetric(vertical: 16),
                         ),
                         onPressed: _submitForm,

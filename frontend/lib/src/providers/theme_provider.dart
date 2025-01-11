@@ -23,7 +23,7 @@ class ThemeProvider extends ChangeNotifier {
   );
 
   static final _darkTheme = ThemeData(
-    scaffoldBackgroundColor: const Color(0xFF1B3A57),
+    scaffoldBackgroundColor: const Color.fromARGB(255, 230, 240, 236),
     primaryColor: Colors.blue,
     textTheme: const TextTheme(
       bodyLarge: TextStyle(color: Colors.white),

@@ -6,11 +6,8 @@ export '../models/session.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:google_sign_in/google_sign_in.dart';
 
 class SessionCubit extends Cubit<SessionState> {
-  final GoogleSignIn _googleSignIn = GoogleSignIn(scopes: ['email']);
-
   SessionCubit() : super(Unauthenticated()) {
     checkAuthStatus();
   }
@@ -131,10 +128,13 @@ class SessionCubit extends Cubit<SessionState> {
   }
 
   Future<void> clearSession() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove('token');
-    print('Cleared token');
-    emit(Unauthenticated());
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove('session');
+      emit(Unauthenticated());
+    } catch (e) {
+      print('Error clearing session: $e');
+    }
   }
 
   Future<void> loadSession() async {
@@ -175,6 +175,27 @@ class SessionCubit extends Cubit<SessionState> {
       }
     } else {
       emit(Unauthenticated());
+    }
+  }
+
+  Future<void> checkAndRefreshToken() async {
+    final state = this.state;
+    if (state is Authenticated) {
+      try {
+        final response = await http.get(
+          Uri.parse('${dotenv.get('API_URL')}/auth/check'),
+          headers: {
+            'Authorization': 'Bearer ${state.session.accessToken}',
+          },
+        );
+
+        if (response.statusCode == 401) {
+          // Token hết hạn, đăng xuất
+          clearSession();
+        }
+      } catch (e) {
+        print('Error checking token: $e');
+      }
     }
   }
 }

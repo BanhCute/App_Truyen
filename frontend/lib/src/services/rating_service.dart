@@ -31,7 +31,12 @@ class RatingService {
       {int page = 1, int limit = 10}) async {
     try {
       print('Fetching ratings for novel: $novelId (page $page, limit $limit)');
-      final headers = await _getHeaders();
+
+      // Không yêu cầu token khi chỉ xem đánh giá
+      final headers = {
+        'Content-Type': 'application/json',
+      };
+
       final url = Uri.parse(
           '${dotenv.get('API_URL')}/ratings?novelId=${int.parse(novelId)}&page=$page&limit=$limit');
 
@@ -185,7 +190,7 @@ class RatingService {
       // Kiểm tra quyền sửa rating
       final result = await getNovelRatings(novelId);
       final ratings = result['items'] as List<Rating>;
-      final rating = ratings.firstWhere(
+      ratings.firstWhere(
         (r) => r.id.toString() == ratingId && r.userId == userId,
         orElse: () => throw Exception('Bạn không có quyền sửa đánh giá này'),
       );

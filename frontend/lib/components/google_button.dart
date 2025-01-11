@@ -90,9 +90,62 @@ class GoogleButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    final textColor = isDarkMode ? Colors.white : Colors.black87;
+
     return ElevatedButton(
       onPressed: () => _signInWithGoogle(context),
-      child: const Text('Đăng nhập với Google'),
+      style: ElevatedButton.styleFrom(
+        backgroundColor: isDarkMode ? const Color(0xFF2C4B6B) : Colors.white,
+        foregroundColor: textColor,
+        padding: const EdgeInsets.symmetric(vertical: 15),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(8),
+          side: BorderSide(
+            color: isDarkMode
+                ? Colors.white.withOpacity(0.2)
+                : Colors.grey.withOpacity(0.3),
+            width: 1,
+          ),
+        ),
+        elevation: 0,
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            height: 24,
+            width: 24,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(4),
+            ),
+            child: Center(
+              child: Image.network(
+                'https://www.google.com/images/branding/googleg/1x/googleg_standard_color_128dp.png',
+                width: 20,
+                height: 20,
+                errorBuilder: (context, error, stackTrace) {
+                  return const Icon(
+                    Icons.g_mobiledata,
+                    color: Colors.blue,
+                    size: 20,
+                  );
+                },
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Text(
+            'Đăng nhập với Google',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w500,
+              color: textColor.withOpacity(0.8),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

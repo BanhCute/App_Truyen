@@ -243,7 +243,7 @@ class _EditNovelScreenState extends State<EditNovelScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Sửa truyện'),
-        backgroundColor: const Color(0xFF1B3A57),
+        backgroundColor: const Color.fromARGB(255, 230, 240, 236),
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())

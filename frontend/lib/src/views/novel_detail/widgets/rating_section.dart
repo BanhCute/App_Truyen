@@ -75,7 +75,7 @@ class _RatingSectionState extends State<RatingSection> {
                     _ratings.length;
           }
 
-          // Tìm đánh giá của người dùng hiện tại
+          // Tìm đánh giá của người dùng hiện tại nếu đã đăng nhập
           if (_sessionState is Authenticated) {
             final userId = (_sessionState as Authenticated).session.user.id;
             print('Current user ID: $userId');
@@ -225,15 +225,14 @@ class _RatingSectionState extends State<RatingSection> {
               ),
               BlocBuilder<SessionCubit, SessionState>(
                 builder: (context, state) {
-                  if (state is Authenticated) {
-                    return ElevatedButton(
-                      onPressed: () =>
-                          _handleRating(existingRating: _userRating),
-                      child: Text(
-                          _userRating?.id == -1 ? 'Đánh giá' : 'Sửa đánh giá'),
-                    );
-                  }
-                  return const SizedBox.shrink();
+                  return ElevatedButton(
+                    onPressed: () => _handleRating(
+                        existingRating:
+                            state is Authenticated ? _userRating : null),
+                    child: Text(state is Authenticated && _userRating?.id != -1
+                        ? 'Sửa đánh giá'
+                        : 'Đánh giá'),
+                  );
                 },
               ),
             ],

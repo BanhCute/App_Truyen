@@ -1,9 +1,7 @@
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:frontend/bloc/session_cubit.dart';
 import 'package:flutter/material.dart';
-import 'package:frontend/models/session.dart';
 import 'package:frontend/src/views/home/home_screen.dart';
-import 'package:provider/provider.dart';
 
 import '../../providers/theme_provider.dart';
 
@@ -11,7 +9,6 @@ import '../../../components/google_button.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'dart:convert';
-import 'dart:io';
 import 'package:http/http.dart' as http;
 
 class LoginScreen extends StatefulWidget {
@@ -27,11 +24,9 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  bool _isLoading = false;
 
   Future<void> _handleGoogleSignIn() async {
     try {
-      setState(() => _isLoading = true);
 
       // Tạo instance mới của GoogleSignIn
       final GoogleSignIn googleSignIn = GoogleSignIn(
@@ -88,7 +83,6 @@ class _LoginScreenState extends State<LoginScreen> {
       }
     } finally {
       if (mounted) {
-        setState(() => _isLoading = false);
       }
     }
   }
@@ -191,7 +185,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   child: const Icon(
                     Icons.menu_book,
                     size: 100,
-                    color: Color(0xFF1B3A57),
+                    color: Colors.black,
                   ),
                 ),
                 const SizedBox(height: 30),
@@ -208,7 +202,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                           const SizedBox(height: 15),
                           Text(
-                            state.session.user.name ?? '',
+                            state.session.user.name,
                             style: TextStyle(
                               fontSize: 20,
                               fontWeight: FontWeight.bold,
@@ -245,7 +239,56 @@ class _LoginScreenState extends State<LoginScreen> {
                   constraints: const BoxConstraints(maxWidth: 400),
                   child: const GoogleButton(),
                 ),
-                const SizedBox(height: 25),
+                const SizedBox(height: 15),
+                Container(
+                  width: double.infinity,
+                  constraints: const BoxConstraints(maxWidth: 400),
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Navigator.pushAndRemoveUntil(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => const HomeScreen()),
+                        (route) => false,
+                      );
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor:
+                          isDarkMode ? const Color(0xFF2C4B6B) : Colors.white,
+                      foregroundColor: textColor,
+                      padding: const EdgeInsets.symmetric(vertical: 15),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        side: BorderSide(
+                          color: isDarkMode
+                              ? Colors.white.withOpacity(0.2)
+                              : Colors.grey.withOpacity(0.3),
+                          width: 1,
+                        ),
+                      ),
+                      elevation: 0,
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.skip_next,
+                          color: textColor.withOpacity(0.8),
+                        ),
+                        const SizedBox(width: 12),
+                        Text(
+                          'Bỏ qua đăng nhập',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w500,
+                            color: textColor.withOpacity(0.8),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 10),
                 Text(
                   'Bằng cách đăng nhập, bạn đồng ý với\nđiều khoản sử dụng của chúng tôi',
                   textAlign: TextAlign.center,

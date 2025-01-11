@@ -9,6 +9,7 @@ import '../../models/novel.dart';
 import 'edit_novel_screen.dart';
 import 'upload_chapter_screen.dart';
 import 'manage_novel_categories_screen.dart';
+import 'select_novel_screen.dart';
 
 class ManageNovelsScreen extends StatefulWidget {
   const ManageNovelsScreen({super.key});
@@ -145,7 +146,7 @@ class _ManageNovelsScreenState extends State<ManageNovelsScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Quản lý truyện'),
-        backgroundColor: const Color(0xFF1B3A57),
+        backgroundColor: const Color.fromARGB(255, 230, 240, 236),
       ),
       body: Column(
         children: [
@@ -275,6 +276,31 @@ class _ManageNovelsScreenState extends State<ManageNovelsScreen> {
                                         },
                                         style: ElevatedButton.styleFrom(
                                           backgroundColor: Colors.orange,
+                                          padding: const EdgeInsets.symmetric(
+                                              vertical: 12),
+                                        ),
+                                      ),
+                                      const SizedBox(height: 8),
+                                      ElevatedButton.icon(
+                                        icon: const Icon(Icons.edit_note),
+                                        label: const Text('Sửa - Xóa chương'),
+                                        onPressed: () {
+                                          Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (context) =>
+                                                  BlocProvider.value(
+                                                value: context
+                                                    .read<SessionCubit>(),
+                                                child: SelectNovelScreen(
+                                                    selectedNovel: novel),
+                                              ),
+                                            ),
+                                          );
+                                        },
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor: const Color.fromARGB(
+                                              255, 148, 193, 45),
                                           padding: const EdgeInsets.symmetric(
                                               vertical: 12),
                                         ),

@@ -8,7 +8,7 @@ class StoryManagementScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Quản lý truyện'),
-        backgroundColor: const Color(0xFF1B3A57),
+        backgroundColor: const Color.fromARGB(255, 230, 240, 236),
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {

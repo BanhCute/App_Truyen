@@ -6,6 +6,7 @@ import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:path_provider/path_provider.dart';
+// ignore: depend_on_referenced_packages
 import 'package:http_parser/http_parser.dart';
 
 import 'dart:convert';
@@ -27,7 +28,7 @@ class _UploadNovelScreenState extends State<UploadNovelScreen> {
   String? _selectedStatus = 'Đang tiến hành';
   File? _coverImage;
   bool _isLoading = false;
-  final int _retryCount = 0; // Đếm số lần thử lại
+// Đếm số lần thử lại
 
   Future<void> _pickImage() async {
     try {
@@ -210,8 +211,7 @@ class _UploadNovelScreenState extends State<UploadNovelScreen> {
         print('Not authenticated');
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-                content: Text('Vui lòng đăng nhập để đăng truy���n')),
+            const SnackBar(content: Text('Vui lòng đăng nhập để đăng truyện')),
           );
         }
         return;
@@ -336,7 +336,7 @@ class _UploadNovelScreenState extends State<UploadNovelScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Đăng truyện mới'),
-        backgroundColor: const Color(0xFF1B3A57),
+        backgroundColor: const Color.fromARGB(255, 230, 240, 236),
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
@@ -450,7 +450,8 @@ class _UploadNovelScreenState extends State<UploadNovelScreen> {
                       width: double.infinity,
                       child: ElevatedButton(
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF1B3A57),
+                          backgroundColor:
+                              const Color.fromARGB(255, 112, 201, 246),
                           padding: const EdgeInsets.symmetric(vertical: 16),
                         ),
                         onPressed: _submitForm,

@@ -1,12 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:frontend/src/views/admin/upload_chapter_screen.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import 'package:provider/provider.dart';
-import '../../providers/theme_provider.dart';
 import '../../models/novel.dart';
+import '../../models/chapter.dart';
 import '../auth/login_screen.dart';
 import '../../../bloc/session_cubit.dart';
 import 'widgets/novel_search_bar.dart';
@@ -15,14 +13,13 @@ import 'widgets/recent_novels.dart';
 import 'widgets/marquee_text.dart';
 import '../../services/reading_history_service.dart';
 import '../admin/upload_novel_screen.dart';
-import '../admin/select_novel_screen.dart';
 import '../follows/followed_novels_screen.dart';
 import '../../models/reading_history.dart';
 import '../novel_detail/novel_detail_screen.dart';
-import '../admin/manage_novel_categories_screen.dart';
 import '../admin/manage_categories_screen.dart';
 import '../admin/manage_novels_screen.dart';
 import '../details/chapter_detail_screen.dart';
+import '../../models/category.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -39,12 +36,73 @@ class _HomeScreenState extends State<HomeScreen> {
   bool isLoading = false;
   int _selectedIndex = 0;
   List<ReadingHistory> history = [];
+  List<NovelCategory> allCategories = [];
+  List<NovelCategory> selectedCategories = [];
+  Map<String, int> chapterCounts = {};
+  Category? _selectedCategory;
 
   @override
   void initState() {
     super.initState();
     loadNovels();
     loadHistory();
+    loadCategories();
+  }
+
+  Future<void> loadChapters() async {
+    try {
+      final chaptersResponse = await http.get(
+        Uri.parse('${dotenv.get('API_URL')}/chapters'),
+      );
+
+      if (chaptersResponse.statusCode == 200) {
+        final List<dynamic> chaptersData = json.decode(chaptersResponse.body);
+
+        // Đếm số chương cho mỗi novel trong history
+        for (var item in history) {
+          final count = chaptersData
+              .where((chapter) =>
+                  chapter['novelId'].toString() == item.novel.id.toString())
+              .length;
+          chapterCounts[item.novel.id.toString()] = count;
+        }
+        if (mounted) {
+          setState(() {});
+        }
+      }
+    } catch (e) {
+      print('Error loading chapters: $e');
+    }
+  }
+
+  Future<void> loadCategories() async {
+    try {
+      final response = await http.get(
+        Uri.parse('${dotenv.get('API_URL')}/categories'),
+      );
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = json.decode(response.body);
+        setState(() {
+          allCategories =
+              data.map((json) => NovelCategory.fromJson(json)).toList();
+        });
+      }
+    } catch (e) {
+      print('Error loading categories: $e');
+    }
+  }
+
+  Future<void> loadHistory() async {
+    try {
+      final history = await ReadingHistoryService.getHistory();
+      setState(() {
+        this.history = history;
+      });
+      loadChapters(); // Load số chương sau khi có history
+    } catch (e) {
+      print('Error loading history: $e');
+    }
   }
 
   Future<void> loadNovels() async {
@@ -77,17 +135,6 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  Future<void> loadHistory() async {
-    try {
-      final history = await ReadingHistoryService.getHistory();
-      setState(() {
-        this.history = history;
-      });
-    } catch (e) {
-      print('Error loading history: $e');
-    }
-  }
-
   List<Novel> get recommendedNovels {
     var sorted = List<Novel>.from(novels)
       ..sort((a, b) => b.rating.compareTo(a.rating));
@@ -100,18 +147,31 @@ class _HomeScreenState extends State<HomeScreen> {
     return sorted;
   }
 
-  void filterNovels(String query) {
+  void _filterNovels(String query) {
     setState(() {
-      _isSearching = query.isNotEmpty;
-      if (query.isEmpty) {
-        filteredNovels = [];
+      _isSearching = query.isNotEmpty || _selectedCategory != null;
+      if (_isSearching) {
+        filteredNovels = novels.where((novel) {
+          bool matchesQuery = query.isEmpty ||
+              novel.name.toLowerCase().contains(query.toLowerCase()) ||
+              novel.author.toLowerCase().contains(query.toLowerCase());
+
+          bool matchesCategories = _selectedCategory == null ||
+              novel.categories
+                  .any((novelCat) => _selectedCategory!.id == novelCat.id);
+
+          return matchesQuery && matchesCategories;
+        }).toList();
       } else {
-        filteredNovels = novels
-            .where((novel) =>
-                novel.name.toLowerCase().contains(query.toLowerCase()) ||
-                novel.author.toLowerCase().contains(query.toLowerCase()))
-            .toList();
+        filteredNovels = [];
       }
+    });
+  }
+
+  void _onCategorySelected(Category? category) {
+    setState(() {
+      _selectedCategory = category;
+      _filterNovels(_searchController.text);
     });
   }
 
@@ -150,22 +210,6 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ],
         ),
-        actions: [
-          Consumer<ThemeProvider>(
-            builder: (context, themeProvider, child) => IconButton(
-              icon: Icon(
-                themeProvider.isDarkMode
-                    ? Icons.lightbulb
-                    : Icons.lightbulb_outline,
-                color: themeProvider.isDarkMode ? Colors.yellow : Colors.white,
-              ),
-              onPressed: () {
-                Provider.of<ThemeProvider>(context, listen: false)
-                    .toggleTheme();
-              },
-            ),
-          ),
-        ],
       ),
       body: isLoading
           ? const Center(child: CircularProgressIndicator())
@@ -182,7 +226,8 @@ class _HomeScreenState extends State<HomeScreen> {
                           searchController: _searchController,
                           isSearching: _isSearching,
                           filteredNovels: filteredNovels,
-                          onSearch: filterNovels,
+                          onSearch: _filterNovels,
+                          onCategorySelected: _onCategorySelected,
                         ),
                         RecommendedNovels(novels: recommendedNovels),
                         RecentNovels(novels: recentNovels),
@@ -283,152 +328,24 @@ class _HomeScreenState extends State<HomeScreen> {
                     },
                     child: Stack(
                       children: [
-                        ListView.builder(
-                          physics: const AlwaysScrollableScrollPhysics(),
-                          itemCount: history.length,
-                          itemBuilder: (context, index) {
-                            final item = history[index];
-                            return Card(
-                              margin: const EdgeInsets.symmetric(
-                                  horizontal: 16, vertical: 8),
-                              child: SizedBox(
-                                width: double.infinity,
-                                child: ListTile(
-                                  contentPadding: const EdgeInsets.symmetric(
-                                    horizontal: 16,
-                                    vertical: 8,
-                                  ),
-                                  leading: ClipRRect(
-                                    borderRadius: BorderRadius.circular(4),
-                                    child: Image.network(
-                                      item.novel.cover,
-                                      width: 50,
-                                      height: 70,
-                                      fit: BoxFit.cover,
-                                      errorBuilder:
-                                          (context, error, stackTrace) =>
-                                              const Icon(Icons.error),
-                                    ),
-                                  ),
-                                  title: Text(
-                                    item.novel.name,
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                  subtitle: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        'Tác giả: ${item.novel.author}',
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                      if (item.lastChapter != null)
-                                        Text(
-                                          'Đang đọc: ${item.lastChapter!.name}',
-                                          style: TextStyle(
-                                            color: Theme.of(context)
-                                                .colorScheme
-                                                .secondary,
-                                          ),
-                                        ),
-                                    ],
-                                  ),
-                                  trailing: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      if (item.lastChapter != null)
-                                        IconButton(
-                                          icon: const Icon(Icons.play_arrow),
-                                          tooltip: 'Đọc tiếp',
-                                          onPressed: () {
-                                            Navigator.push(
-                                              context,
-                                              MaterialPageRoute(
-                                                builder: (context) =>
-                                                    ChapterDetailScreen(
-                                                  novel: item.novel,
-                                                  chapter: item.lastChapter!,
-                                                  currentIndex: item
-                                                          .novel.chapters
-                                                          ?.indexWhere((c) =>
-                                                              c.id ==
-                                                              item.lastChapter!
-                                                                  .id) ??
-                                                      0,
-                                                  allChapters:
-                                                      item.novel.chapters ?? [],
-                                                ),
-                                              ),
-                                            ).then((_) => loadHistory());
-                                          },
-                                        ),
-                                      IconButton(
-                                        icon: const Icon(Icons.delete_outline),
-                                        tooltip: 'Xóa khỏi lịch sử',
-                                        onPressed: () async {
-                                          final confirm =
-                                              await showDialog<bool>(
-                                            context: context,
-                                            builder: (context) => AlertDialog(
-                                              title: const Text('Xác nhận xóa'),
-                                              content: Text(
-                                                  'Xóa "${item.novel.name}" khỏi lịch sử đọc?'),
-                                              actions: [
-                                                TextButton(
-                                                  onPressed: () =>
-                                                      Navigator.pop(
-                                                          context, false),
-                                                  child: const Text('Hủy'),
-                                                ),
-                                                TextButton(
-                                                  onPressed: () =>
-                                                      Navigator.pop(
-                                                          context, true),
-                                                  child: const Text(
-                                                    'Xóa',
-                                                    style: TextStyle(
-                                                        color: Colors.red),
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                          );
-
-                                          if (confirm == true) {
-                                            await ReadingHistoryService
-                                                .removeFromHistory(
-                                                    item.novel.id);
-                                            setState(() {});
-
-                                            if (!mounted) return;
-                                            ScaffoldMessenger.of(context)
-                                                .showSnackBar(
-                                              SnackBar(
-                                                content: Text(
-                                                    'Đã xóa "${item.novel.name}" khỏi lịch sử'),
-                                                duration:
-                                                    const Duration(seconds: 2),
-                                                action: SnackBarAction(
-                                                  label: 'Hoàn tác',
-                                                  onPressed: () async {
-                                                    await ReadingHistoryService
-                                                        .addToHistory(
-                                                      item.novel,
-                                                      lastChapter:
-                                                          item.lastChapter,
-                                                    );
-                                                    setState(() {});
-                                                  },
-                                                ),
-                                              ),
-                                            );
-                                          }
-                                        },
-                                      ),
-                                    ],
-                                  ),
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 80),
+                          child: GridView.builder(
+                            padding: const EdgeInsets.all(16),
+                            gridDelegate:
+                                const SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: 2,
+                              childAspectRatio: 0.39,
+                              crossAxisSpacing: 16,
+                              mainAxisSpacing: 16,
+                            ),
+                            physics: const AlwaysScrollableScrollPhysics(),
+                            itemCount: history.length,
+                            itemBuilder: (context, index) {
+                              final item = history[index];
+                              return Card(
+                                clipBehavior: Clip.antiAlias,
+                                child: InkWell(
                                   onTap: () {
                                     Navigator.push(
                                       context,
@@ -438,10 +355,385 @@ class _HomeScreenState extends State<HomeScreen> {
                                       ),
                                     ).then((_) => loadHistory());
                                   },
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      AspectRatio(
+                                        aspectRatio: 0.7,
+                                        child: Image.network(
+                                          item.novel.cover,
+                                          fit: BoxFit.cover,
+                                          errorBuilder:
+                                              (context, error, stackTrace) =>
+                                                  Container(
+                                            color: Colors.grey[300],
+                                            child: const Icon(Icons.error),
+                                          ),
+                                        ),
+                                      ),
+                                      Expanded(
+                                        child: Padding(
+                                          padding: const EdgeInsets.all(8.0),
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                item.novel.name,
+                                                style: const TextStyle(
+                                                  fontSize: 14,
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                                maxLines: 2,
+                                                overflow: TextOverflow.ellipsis,
+                                              ),
+                                              const SizedBox(height: 4),
+                                              Text(
+                                                'Tác giả: ${item.novel.author}',
+                                                style: const TextStyle(
+                                                    fontSize: 12),
+                                                maxLines: 1,
+                                                overflow: TextOverflow.ellipsis,
+                                              ),
+                                              const SizedBox(height: 4),
+                                              if (item.lastChapter != null) ...[
+                                                Text(
+                                                  'Đang đọc: ${item.lastChapter!.name}',
+                                                  style: TextStyle(
+                                                    fontSize: 12,
+                                                    color: Theme.of(context)
+                                                        .colorScheme
+                                                        .secondary,
+                                                  ),
+                                                  maxLines: 1,
+                                                  overflow:
+                                                      TextOverflow.ellipsis,
+                                                ),
+                                              ],
+                                              const Spacer(),
+                                              Row(
+                                                mainAxisAlignment:
+                                                    MainAxisAlignment.start,
+                                                children: [
+                                                  if (item.lastChapter != null)
+                                                    TextButton.icon(
+                                                      icon: const Icon(
+                                                        Icons.play_arrow,
+                                                        size: 18,
+                                                        color: Colors.blue,
+                                                      ),
+                                                      label: const Text(
+                                                        'Đọc tiếp',
+                                                        style: TextStyle(
+                                                          color: Colors.blue,
+                                                          fontSize: 12,
+                                                        ),
+                                                      ),
+                                                      style:
+                                                          TextButton.styleFrom(
+                                                        padding:
+                                                            const EdgeInsets
+                                                                .symmetric(
+                                                                horizontal: 4),
+                                                      ),
+                                                      onPressed: () async {
+                                                        try {
+                                                          final response =
+                                                              await http.get(
+                                                            Uri.parse(
+                                                                '${dotenv.get('API_URL')}/chapters'),
+                                                            headers: {
+                                                              'Accept':
+                                                                  'application/json',
+                                                              'Content-Type':
+                                                                  'application/json',
+                                                            },
+                                                          );
+
+                                                          if (!mounted) return;
+
+                                                          if (response
+                                                                  .statusCode ==
+                                                              200) {
+                                                            print(
+                                                                'Response body: ${response.body}');
+                                                            final List<dynamic>
+                                                                chaptersData =
+                                                                json.decode(
+                                                                    response
+                                                                        .body);
+
+                                                            // Lọc chapters của novel hiện tại
+                                                            final novelChapters = chaptersData
+                                                                .where((chapter) =>
+                                                                    chapter['novelId']
+                                                                        .toString() ==
+                                                                    item.novel
+                                                                        .id)
+                                                                .map((json) =>
+                                                                    Chapter
+                                                                        .fromJson(
+                                                                            json))
+                                                                .toList();
+
+                                                            if (novelChapters
+                                                                .isEmpty) {
+                                                              ScaffoldMessenger
+                                                                      .of(context)
+                                                                  .showSnackBar(
+                                                                const SnackBar(
+                                                                  content: Text(
+                                                                      'Không có chương nào'),
+                                                                  duration:
+                                                                      Duration(
+                                                                          seconds:
+                                                                              2),
+                                                                ),
+                                                              );
+                                                              return;
+                                                            }
+
+                                                            // Sắp xếp chapters
+                                                            novelChapters
+                                                                .sort((a, b) {
+                                                              try {
+                                                                final aNum = int.parse(a
+                                                                    .name
+                                                                    .replaceAll(
+                                                                        RegExp(
+                                                                            r'[^0-9]'),
+                                                                        ''));
+                                                                final bNum = int.parse(b
+                                                                    .name
+                                                                    .replaceAll(
+                                                                        RegExp(
+                                                                            r'[^0-9]'),
+                                                                        ''));
+                                                                return aNum
+                                                                    .compareTo(
+                                                                        bNum);
+                                                              } catch (e) {
+                                                                return a.name
+                                                                    .compareTo(
+                                                                        b.name);
+                                                              }
+                                                            });
+
+                                                            final currentIndex =
+                                                                novelChapters
+                                                                    .indexWhere((ch) =>
+                                                                        ch.id ==
+                                                                        item.lastChapter!
+                                                                            .id);
+
+                                                            if (currentIndex !=
+                                                                -1) {
+                                                              if (!mounted)
+                                                                return;
+                                                              await Navigator
+                                                                  .push(
+                                                                context,
+                                                                MaterialPageRoute(
+                                                                  builder:
+                                                                      (context) =>
+                                                                          ChapterDetailScreen(
+                                                                    novel: item
+                                                                        .novel,
+                                                                    chapter:
+                                                                        novelChapters[
+                                                                            currentIndex],
+                                                                    currentIndex:
+                                                                        currentIndex,
+                                                                    allChapters:
+                                                                        novelChapters,
+                                                                  ),
+                                                                ),
+                                                              );
+                                                              if (mounted) {
+                                                                loadHistory();
+                                                              }
+                                                            } else {
+                                                              ScaffoldMessenger
+                                                                      .of(context)
+                                                                  .showSnackBar(
+                                                                const SnackBar(
+                                                                  content: Text(
+                                                                      'Không tìm thấy chương đang đọc'),
+                                                                  duration:
+                                                                      Duration(
+                                                                          seconds:
+                                                                              2),
+                                                                ),
+                                                              );
+                                                            }
+                                                          } else {
+                                                            print(
+                                                                'Error response: ${response.statusCode} - ${response.body}');
+                                                            throw Exception(
+                                                                'Không thể tải danh sách chương: ${response.statusCode}');
+                                                          }
+                                                        } catch (e) {
+                                                          print(
+                                                              'Error loading chapters: $e');
+                                                          if (mounted) {
+                                                            ScaffoldMessenger
+                                                                    .of(context)
+                                                                .showSnackBar(
+                                                              const SnackBar(
+                                                                content: Text(
+                                                                    'Có lỗi xảy ra khi tải chương'),
+                                                                duration:
+                                                                    Duration(
+                                                                        seconds:
+                                                                            2),
+                                                              ),
+                                                            );
+                                                          }
+                                                        }
+                                                      },
+                                                    ),
+                                                  IconButton(
+                                                    icon: const Icon(
+                                                      Icons.delete_outline,
+                                                      size: 20,
+                                                    ),
+                                                    padding: EdgeInsets.zero,
+                                                    constraints:
+                                                        const BoxConstraints(),
+                                                    tooltip: 'Xóa khỏi lịch sử',
+                                                    onPressed: () async {
+                                                      final confirm =
+                                                          await showDialog<
+                                                              bool>(
+                                                        context: context,
+                                                        builder: (context) =>
+                                                            AlertDialog(
+                                                          title: const Text(
+                                                              'Xác nhận xóa'),
+                                                          content: Text(
+                                                              'Xóa truyện "${item.novel.name}" khỏi lịch sử đọc?'),
+                                                          actions: [
+                                                            TextButton(
+                                                              onPressed: () =>
+                                                                  Navigator.pop(
+                                                                      context,
+                                                                      false),
+                                                              child: const Text(
+                                                                  'Hủy'),
+                                                            ),
+                                                            TextButton(
+                                                              onPressed: () =>
+                                                                  Navigator.pop(
+                                                                      context,
+                                                                      true),
+                                                              child: const Text(
+                                                                'Xóa',
+                                                                style: TextStyle(
+                                                                    color: Colors
+                                                                        .red),
+                                                              ),
+                                                            ),
+                                                          ],
+                                                        ),
+                                                      );
+
+                                                      if (confirm == true) {
+                                                        await ReadingHistoryService
+                                                            .removeFromHistory(
+                                                                item.novel.id);
+                                                        setState(() {});
+
+                                                        if (!mounted) return;
+                                                        ScaffoldMessenger.of(
+                                                                context)
+                                                            .showSnackBar(
+                                                          SnackBar(
+                                                            content: Text(
+                                                                'Đã xóa "${item.novel.name}" khỏi lịch sử'),
+                                                            duration:
+                                                                const Duration(
+                                                                    seconds: 2),
+                                                            action:
+                                                                SnackBarAction(
+                                                              label: 'Hoàn tác',
+                                                              onPressed:
+                                                                  () async {
+                                                                await ReadingHistoryService
+                                                                    .addToHistory(
+                                                                  item.novel,
+                                                                  lastChapter: item
+                                                                      .lastChapter,
+                                                                );
+                                                                setState(() {});
+                                                              },
+                                                            ),
+                                                          ),
+                                                        );
+                                                      }
+                                                    },
+                                                  ),
+                                                ],
+                                              ),
+                                              Wrap(
+                                                spacing: 8,
+                                                children: [
+                                                  Row(
+                                                    mainAxisSize:
+                                                        MainAxisSize.min,
+                                                    children: [
+                                                      const Icon(
+                                                          Icons.menu_book,
+                                                          size: 14,
+                                                          color: Colors.grey),
+                                                      Text(
+                                                        ' ${chapterCounts[item.novel.id.toString()] ?? 0} ch.',
+                                                        style: const TextStyle(
+                                                            fontSize: 12),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                  Row(
+                                                    mainAxisSize:
+                                                        MainAxisSize.min,
+                                                    children: [
+                                                      const Icon(
+                                                          Icons.remove_red_eye,
+                                                          size: 14,
+                                                          color: Colors.grey),
+                                                      Text(
+                                                        ' ${item.novel.view}',
+                                                        style: const TextStyle(
+                                                            fontSize: 12),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                  Row(
+                                                    mainAxisSize:
+                                                        MainAxisSize.min,
+                                                    children: [
+                                                      const Icon(Icons.favorite,
+                                                          size: 14,
+                                                          color: Colors.grey),
+                                                      Text(
+                                                        ' ${item.novel.followerCount}',
+                                                        style: const TextStyle(
+                                                            fontSize: 12),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ],
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 ),
-                              ),
-                            );
-                          },
+                              );
+                            },
+                          ),
                         ),
                         if (history.isNotEmpty)
                           Positioned(
@@ -530,7 +822,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                     const SizedBox(height: 16),
                     Text(
-                      state.session.user.name ?? 'Người dùng',
+                      state.session.user.name,
                       style: const TextStyle(fontSize: 20),
                     ),
                     const SizedBox(height: 16),
