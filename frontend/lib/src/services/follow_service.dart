@@ -55,16 +55,36 @@ class FollowService {
     }
   }
 
+  static Future<void> _updateFollowCount(String novelId) async {
+    try {
+      final headers = await getHeaders();
+      final response = await http.get(
+        Uri.parse('${dotenv.get('API_URL')}/novels/$novelId/follow-count'),
+        headers: headers,
+      );
+      print(
+          'Update follow count response: ${response.statusCode} - ${response.body}');
+    } catch (e) {
+      print('Error updating follow count: $e');
+    }
+  }
+
   static Future<void> followNovel(String novelId) async {
     try {
       final headers = await getHeaders();
+      print('Following novel $novelId with headers: $headers');
+
       final response = await http.post(
         Uri.parse('${dotenv.get('API_URL')}/follows'),
         headers: headers,
         body: json.encode({'novelId': int.parse(novelId)}),
       );
 
+      print('Follow response: ${response.statusCode} - ${response.body}');
+
       if (response.statusCode == 201) {
+        await _updateFollowCount(novelId);
+
         if (_context.mounted) {
           ScaffoldMessenger.of(_context).showSnackBar(
             const SnackBar(
@@ -78,6 +98,7 @@ class FollowService {
         throw Exception(error['message'] ?? 'Không thể theo dõi truyện');
       }
     } catch (e) {
+      print('Error following novel: $e');
       if (e is FormatException) {
         throw Exception('Không thể theo dõi truyện');
       }
@@ -88,15 +109,22 @@ class FollowService {
   static Future<void> unfollowNovel(String novelId) async {
     try {
       final headers = await getHeaders();
+      print('Unfollowing novel $novelId with headers: $headers');
+
       final response = await http.delete(
         Uri.parse('${dotenv.get('API_URL')}/follows/novel/$novelId'),
         headers: headers,
       );
 
-      if (response.statusCode != 200) {
+      print('Unfollow response: ${response.statusCode} - ${response.body}');
+
+      if (response.statusCode == 200) {
+        await _updateFollowCount(novelId);
+      } else {
         throw Exception('Không thể bỏ theo dõi truyện');
       }
     } catch (e) {
+      print('Error unfollowing novel: $e');
       throw Exception('Lỗi khi bỏ theo dõi truyện');
     }
   }
@@ -104,8 +132,14 @@ class FollowService {
   static Future<bool> isFollowing(String novelId) async {
     try {
       final follows = await getFollowedNovels();
-      return follows.any((follow) => follow.novelId.toString() == novelId);
+      print(
+          'Checking follow status for novel $novelId. Current follows: ${follows.length}');
+      final isFollowed =
+          follows.any((follow) => follow.novelId.toString() == novelId);
+      print('Novel $novelId is followed: $isFollowed');
+      return isFollowed;
     } catch (e) {
+      print('Error checking follow status: $e');
       return false;
     }
   }

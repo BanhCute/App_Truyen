@@ -28,9 +28,14 @@ class _RecentNovelsState extends State<RecentNovels> {
     'Đang tiến hành',
     'Hoàn thành',
     'Tạm ngưng',
-    'Đọc nhiều nhất',
     'Theo dõi nhiều nhất',
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadNovelData();
+  }
 
   List<Novel> get filteredNovels {
     List<Novel> result = List.from(widget.novels);
@@ -45,9 +50,7 @@ class _RecentNovelsState extends State<RecentNovels> {
       case 'Tạm ngưng':
         result = result.where((novel) => novel.status == 'Tạm ngưng').toList();
         break;
-      case 'Đọc nhiều nhất':
-        result.sort((a, b) => b.view.compareTo(a.view));
-        break;
+
       case 'Theo dõi nhiều nhất':
         result.sort((a, b) => b.followerCount.compareTo(a.followerCount));
         break;
@@ -55,12 +58,6 @@ class _RecentNovelsState extends State<RecentNovels> {
         result.sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
     }
     return result;
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    _loadNovelData();
   }
 
   Future<void> _loadNovelData() async {
@@ -122,6 +119,11 @@ class _RecentNovelsState extends State<RecentNovels> {
     final now = DateTime.now();
     final difference = now.difference(dateTime);
 
+    // Đảm bảo difference không âm
+    if (difference.isNegative) {
+      return 'Vừa xong';
+    }
+
     if (difference.inDays > 365) {
       return '${(difference.inDays / 365).floor()} năm trước';
     } else if (difference.inDays > 30) {
@@ -142,85 +144,82 @@ class _RecentNovelsState extends State<RecentNovels> {
   @override
   Widget build(BuildContext context) {
     return Column(
+      mainAxisSize: MainAxisSize.min,
       children: [
         Container(
           padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
-          child: Column(
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Expanded(
-                    flex: 3,
-                    child: Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(6),
-                          decoration: BoxDecoration(
-                            color: Colors.blue.withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: const Icon(
-                            Icons.auto_stories,
-                            color: Colors.blue,
-                            size: 18,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        const Text(
-                          'Danh sách Truyện',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Expanded(
-                    flex: 2,
-                    child: Container(
-                      height: 35,
-                      padding: const EdgeInsets.symmetric(horizontal: 8),
+              Flexible(
+                flex: 3,
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(6),
                       decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(6),
-                        border: Border.all(color: Colors.grey.shade300),
+                        color: Colors.blue.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(8),
                       ),
-                      child: DropdownButtonHideUnderline(
-                        child: DropdownButton<String>(
-                          value: _selectedFilter,
-                          icon: const Icon(Icons.arrow_drop_down, size: 18),
-                          iconSize: 18,
-                          isDense: true,
-                          isExpanded: true,
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: Colors.grey.shade800,
-                          ),
-                          items: _filters
-                              .map<DropdownMenuItem<String>>((String value) {
-                            return DropdownMenuItem<String>(
-                              value: value,
-                              child: Text(
-                                value,
-                                style: const TextStyle(fontSize: 13),
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            );
-                          }).toList(),
-                          onChanged: (String? newValue) {
-                            if (newValue != null) {
-                              setState(() {
-                                _selectedFilter = newValue;
-                              });
-                            }
-                          },
-                        ),
+                      child: const Icon(
+                        Icons.auto_stories,
+                        color: Colors.blue,
+                        size: 18,
                       ),
                     ),
+                    const SizedBox(width: 8),
+                    const Text(
+                      'Danh sách Truyện',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Flexible(
+                flex: 2,
+                child: Container(
+                  height: 35,
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(color: Colors.grey.shade300),
                   ),
-                ],
+                  child: DropdownButtonHideUnderline(
+                    child: DropdownButton<String>(
+                      value: _selectedFilter,
+                      icon: const Icon(Icons.arrow_drop_down, size: 18),
+                      iconSize: 18,
+                      isDense: true,
+                      isExpanded: true,
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: Colors.grey.shade800,
+                      ),
+                      items: _filters
+                          .map<DropdownMenuItem<String>>((String value) {
+                        return DropdownMenuItem<String>(
+                          value: value,
+                          child: Text(
+                            value,
+                            style: const TextStyle(fontSize: 13),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        );
+                      }).toList(),
+                      onChanged: (String? newValue) {
+                        if (newValue != null) {
+                          setState(() {
+                            _selectedFilter = newValue;
+                          });
+                        }
+                      },
+                    ),
+                  ),
+                ),
               ),
             ],
           ),
@@ -252,13 +251,13 @@ class _RecentNovelsState extends State<RecentNovels> {
                         borderRadius: BorderRadius.circular(8),
                         child: Image.network(
                           novel.cover,
-                          width: 120,
-                          height: 180,
+                          width: 80,
+                          height: 120,
                           fit: BoxFit.cover,
                           errorBuilder: (context, error, stackTrace) =>
                               Container(
-                            width: 120,
-                            height: 180,
+                            width: 80,
+                            height: 120,
                             color: Colors.grey[300],
                             child: const Icon(Icons.error),
                           ),
@@ -276,101 +275,100 @@ class _RecentNovelsState extends State<RecentNovels> {
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,
                               ),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
                             ),
                             const SizedBox(height: 4),
-                            Text('Tác giả: ${novel.author}'),
+                            Text(
+                              'Tác giả: ${novel.author}',
+                              style: const TextStyle(fontSize: 14),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
                             const SizedBox(height: 8),
                             Row(
+                              mainAxisSize: MainAxisSize.min,
                               children: [
-                                Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    const Icon(Icons.star,
-                                        size: 14, color: Colors.amber),
-                                    Text(
-                                      ' ${ratings[novel.id.toString()]?.toStringAsFixed(1) ?? "0.0"}',
-                                      style: const TextStyle(fontSize: 12),
-                                    ),
-                                    Text(
-                                      ' (${ratingCounts[novel.id.toString()] ?? 0})',
-                                      style: TextStyle(
-                                        fontSize: 12,
-                                        color: Colors.grey[600],
-                                      ),
-                                    ),
-                                  ],
+                                Icon(
+                                  Icons.menu_book,
+                                  size: 16,
+                                  color: Colors.grey[600],
                                 ),
-                                const SizedBox(width: 8),
-                                Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    const Icon(Icons.menu_book,
-                                        size: 14, color: Colors.grey),
-                                    Text(
-                                      ' ${chapterCounts[novel.id.toString()] ?? 0} ch.',
-                                      style: const TextStyle(fontSize: 12),
-                                    ),
-                                  ],
+                                const SizedBox(width: 4),
+                                Text(
+                                  '${chapterCounts[novel.id.toString()] ?? 0} chương',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    color: Colors.grey[600],
+                                  ),
                                 ),
-                                const SizedBox(width: 8),
-                                Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    const Icon(Icons.remove_red_eye,
-                                        size: 14, color: Colors.grey),
-                                    Text(
-                                      ' ${novel.view}',
-                                      style: const TextStyle(fontSize: 12),
-                                    ),
-                                  ],
+                              ],
+                            ),
+                            const SizedBox(height: 4),
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.favorite,
+                                  size: 16,
+                                  color: Colors.grey[600],
                                 ),
-                                const SizedBox(width: 8),
-                                Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    const Icon(Icons.favorite,
-                                        size: 14, color: Colors.grey),
-                                    Text(
-                                      ' ${novel.followerCount}',
-                                      style: const TextStyle(fontSize: 12),
+                                const SizedBox(width: 4),
+                                Text(
+                                  '${novel.followerCount}',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    color: Colors.grey[600],
+                                  ),
+                                ),
+                                const SizedBox(width: 16),
+                                const Icon(
+                                  Icons.star,
+                                  size: 16,
+                                  color: Colors.amber,
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  '${ratings[novel.id.toString()]?.toStringAsFixed(1) ?? '0.0'} (${ratingCounts[novel.id.toString()] ?? 0})',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    color: Colors.grey[600],
+                                  ),
+                                ),
+                                const SizedBox(width: 16),
+                                Icon(
+                                  Icons.access_time,
+                                  size: 16,
+                                  color: Colors.grey[600],
+                                ),
+                                const SizedBox(width: 4),
+                                Flexible(
+                                  child: Text(
+                                    _formatTimeAgo(novel.updatedAt),
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      color: Colors.grey[600],
                                     ),
-                                  ],
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
                                 ),
                               ],
                             ),
                             const SizedBox(height: 8),
                             Container(
                               padding: const EdgeInsets.symmetric(
-                                  horizontal: 6, vertical: 2),
+                                  horizontal: 8, vertical: 4),
                               decoration: BoxDecoration(
-                                color: novel.status == 'Hoàn thành'
-                                    ? Colors.green.withOpacity(0.2)
-                                    : novel.status == 'Tạm ngưng'
-                                        ? Colors.red.withOpacity(0.2)
-                                        : Colors.blue.withOpacity(0.2),
+                                color: _getStatusColor(novel.status)
+                                    .withOpacity(0.1),
                                 borderRadius: BorderRadius.circular(4),
                               ),
                               child: Text(
                                 novel.status,
                                 style: TextStyle(
-                                  fontSize: 11,
-                                  color: novel.status == 'Hoàn thành'
-                                      ? Colors.green
-                                      : novel.status == 'Tạm ngưng'
-                                          ? Colors.red
-                                          : Colors.blue,
+                                  fontSize: 12,
+                                  color: _getStatusColor(novel.status),
                                 ),
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              'Cập nhật ' + _formatTimeAgo(novel.updatedAt),
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: Theme.of(context).brightness ==
-                                        Brightness.dark
-                                    ? Colors.grey[400]
-                                    : Colors.grey[600],
                               ),
                             ),
                           ],
@@ -385,5 +383,18 @@ class _RecentNovelsState extends State<RecentNovels> {
         ),
       ],
     );
+  }
+
+  Color _getStatusColor(String status) {
+    switch (status) {
+      case 'Hoàn thành':
+        return Colors.green;
+      case 'Tạm ngưng':
+        return Colors.red;
+      case 'Đang tiến hành':
+        return Colors.blue;
+      default:
+        return Colors.grey;
+    }
   }
 }

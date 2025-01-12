@@ -2,13 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import '../../models/novel.dart';
-import '../../models/chapter.dart';
-import '../../models/reading_history.dart';
-import '../../services/follow_service.dart';
-import '../../services/reading_history_service.dart';
-import '../novel_detail/novel_detail_screen.dart';
-import '../details/chapter_detail_screen.dart';
+import '../../../models/novel.dart';
+import '../../../models/chapter.dart';
+import '../../../models/reading_history.dart';
+import '../../../services/follow_service.dart';
+import '../../../services/reading_history_service.dart';
+import '../../novel_detail/novel_detail_screen.dart';
+import '../../details/chapter_detail_screen.dart';
+import '../../../services/novel_service.dart';
 
 class FollowedNovelsScreen extends StatefulWidget {
   const FollowedNovelsScreen({super.key});
@@ -61,26 +62,17 @@ class _FollowedNovelsScreenState extends State<FollowedNovelsScreen> {
       final novelIds = follows.map((f) => f.novelId.toString()).toList();
 
       if (novelIds.isNotEmpty) {
-        final response = await http.get(
-          Uri.parse('${dotenv.get('API_URL')}/novels'),
-        );
+        final allNovels = await NovelService.getAllNovels();
+        final followedNovels = allNovels
+            .where((novel) => novelIds.contains(novel.id.toString()))
+            .toList();
 
-        if (response.statusCode == 200) {
-          final List<dynamic> allNovels = json.decode(response.body);
-          final followedNovels = allNovels
-              .where((novel) => novelIds.contains(novel['id'].toString()))
-              .map((novel) => Novel.fromJson(novel))
-              .toList();
-
-          if (mounted) {
-            setState(() {
-              novels = followedNovels;
-              isLoading = false;
-            });
-            loadChapters(); // Load số chương sau khi có danh sách truyện
-          }
-        } else {
-          throw Exception('Không thể lấy thông tin truyện');
+        if (mounted) {
+          setState(() {
+            novels = followedNovels;
+            isLoading = false;
+          });
+          loadChapters();
         }
       } else {
         if (mounted) {
@@ -109,12 +101,40 @@ class _FollowedNovelsScreenState extends State<FollowedNovelsScreen> {
   Future<void> unfollowNovel(String novelId) async {
     try {
       await FollowService.unfollowNovel(novelId);
+
+      // Cập nhật số lượt follow
+      await NovelService.updateFollowCount(novelId);
+
+      // Đợi một chút để đảm bảo server đã cập nhật xong
+      await Future.delayed(const Duration(milliseconds: 300));
       loadFollowedNovels();
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Đã bỏ theo dõi truyện'),
-            duration: Duration(seconds: 2),
+          SnackBar(
+            content: const Text('Đã bỏ theo dõi truyện'),
+            duration: const Duration(seconds: 3),
+            action: SnackBarAction(
+              label: 'Hoàn tác',
+              onPressed: () async {
+                try {
+                  await FollowService.followNovel(novelId);
+                  // Cập nhật lại số lượt follow khi hoàn tác
+                  await NovelService.updateFollowCount(novelId);
+                  loadFollowedNovels();
+                } catch (e) {
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content:
+                            Text(e.toString().replaceAll('Exception: ', '')),
+                        duration: const Duration(seconds: 2),
+                      ),
+                    );
+                  }
+                }
+              },
+            ),
           ),
         );
       }
@@ -516,20 +536,6 @@ class _FollowedNovelsScreenState extends State<FollowedNovelsScreen> {
                                               Row(
                                                 mainAxisSize: MainAxisSize.min,
                                                 children: [
-                                                  const Icon(
-                                                      Icons.remove_red_eye,
-                                                      size: 14,
-                                                      color: Colors.grey),
-                                                  Text(
-                                                    ' ${novel.view}',
-                                                    style: const TextStyle(
-                                                        fontSize: 12),
-                                                  ),
-                                                ],
-                                              ),
-                                              Row(
-                                                mainAxisSize: MainAxisSize.min,
-                                                children: [
                                                   const Icon(Icons.favorite,
                                                       size: 14,
                                                       color: Colors.grey),
@@ -578,6 +584,9 @@ class _FollowedNovelsScreenState extends State<FollowedNovelsScreen> {
                                         for (var novel in novels) {
                                           await FollowService.unfollowNovel(
                                               novel.id);
+                                          // Cập nhật số lượt follow cho mỗi truyện
+                                          await NovelService.updateFollowCount(
+                                              novel.id);
                                         }
                                         Navigator.pop(context);
                                         loadFollowedNovels();
@@ -596,6 +605,10 @@ class _FollowedNovelsScreenState extends State<FollowedNovelsScreen> {
                                                     in oldNovels.reversed) {
                                                   await FollowService
                                                       .followNovel(novel.id);
+                                                  // Cập nhật lại số lượt follow khi hoàn tác
+                                                  await NovelService
+                                                      .updateFollowCount(
+                                                          novel.id);
                                                 }
                                                 loadFollowedNovels();
                                               },

@@ -5,6 +5,7 @@ import '../../services/follow_service.dart';
 import '../../../bloc/session_cubit.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../services/reading_history_service.dart';
+
 import '../novel_detail/novel_detail_screen.dart';
 
 class ChapterDetailScreen extends StatefulWidget {
@@ -27,14 +28,13 @@ class ChapterDetailScreen extends StatefulWidget {
 
 class _ChapterDetailScreenState extends State<ChapterDetailScreen> {
   bool _isFollowing = false;
+  bool _isReloading = false;
 
   @override
   void initState() {
     super.initState();
     _loadFollowStatus();
-    // Thêm vào lịch sử đọc
-    ReadingHistoryService.addToHistory(widget.novel,
-        lastChapter: widget.chapter);
+    _saveReadingHistory();
   }
 
   Future<void> _loadFollowStatus() async {
@@ -81,6 +81,43 @@ class _ChapterDetailScreenState extends State<ChapterDetailScreen> {
     }
   }
 
+  Future<void> _reloadChapter() async {
+    try {
+      if (mounted) {
+        setState(() {
+          _isReloading = true;
+        });
+      }
+      // Simulate a reload operation
+      await Future.delayed(Duration(seconds: 2));
+      if (mounted) {
+        setState(() {
+          _isReloading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(e.toString().replaceAll('Exception: ', '')),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _saveReadingHistory() async {
+    try {
+      await ReadingHistoryService.addToHistory(
+        widget.novel,
+        lastChapter: widget.chapter,
+      );
+    } catch (e) {
+      print('Error saving reading history: $e');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -107,6 +144,24 @@ class _ChapterDetailScreenState extends State<ChapterDetailScreen> {
           ],
         ),
         actions: [
+          // Nút reload
+          IconButton(
+            icon: _isReloading
+                ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                      color: Colors.white,
+                      strokeWidth: 2,
+                    ),
+                  )
+                : const Icon(
+                    Icons.refresh,
+                    color: Colors.white,
+                  ),
+            tooltip: 'Tải lại chương',
+            onPressed: _isReloading ? null : _reloadChapter,
+          ),
           BlocBuilder<SessionCubit, SessionState>(
             builder: (context, state) {
               return IconButton(
@@ -114,6 +169,7 @@ class _ChapterDetailScreenState extends State<ChapterDetailScreen> {
                   _isFollowing ? Icons.favorite : Icons.favorite_border,
                   color: _isFollowing ? Colors.red : Colors.white,
                 ),
+                tooltip: 'Theo dõi truyện',
                 onPressed: () {
                   if (state is Authenticated) {
                     _toggleFollow();

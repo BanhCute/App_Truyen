@@ -347,15 +347,6 @@ class _NovelSearchBarState extends State<NovelSearchBar> {
                                               context,
                                             ),
                                             _buildInfoItem(
-                                              Icons.remove_red_eye,
-                                              '${novel.view}',
-                                              Theme.of(context).brightness ==
-                                                      Brightness.dark
-                                                  ? Colors.grey[400]!
-                                                  : Colors.grey[700]!,
-                                              context,
-                                            ),
-                                            _buildInfoItem(
                                               Icons.favorite,
                                               '${novel.followerCount}',
                                               Theme.of(context).brightness ==
@@ -427,7 +418,7 @@ class _NovelSearchBarState extends State<NovelSearchBar> {
     if (statusLower == 'hoàn thành' || statusLower == 'completed') {
       return [Colors.green[100]!, Colors.green[900]!];
     } else if (statusLower == 'tạm ngưng' || statusLower == 'paused') {
-      return [Colors.orange[100]!, Colors.orange[900]!];
+      return [Colors.red[100]!, Colors.red[900]!];
     }
     return [Colors.blue[100]!, Colors.blue[900]!];
   }

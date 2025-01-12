@@ -329,17 +329,6 @@ class _RecommendedNovelsState extends State<RecommendedNovels> {
                       Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Icon(Icons.remove_red_eye,
-                              size: 14, color: Colors.grey),
-                          Text(
-                            ' ${novel.view}',
-                            style: const TextStyle(fontSize: 12),
-                          ),
-                        ],
-                      ),
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
                           const Icon(Icons.favorite,
                               size: 14, color: Colors.grey),
                           Text(
