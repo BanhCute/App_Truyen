@@ -194,7 +194,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.history),
-            label: 'Lịch sử',
+            label: 'Lịch sử đọc',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.person),
