@@ -1,7 +1,6 @@
 
-  📚 App_Truyen
-  Ứng dụng đọc và quản lý truyện toàn diện với Flutter và NestJS
-  
+  📖 App_Truyen
+  Ứng dụng đọc và quản lý truyện với Flutter và NestJS
   
   
   
@@ -11,151 +10,209 @@
 
 
 
-🚀 Tổng Quan Dự Án
-App_Truyen là một nền tảng thân thiện với người dùng, hỗ trợ đọc và quản lý truyện một cách mượt mà. Dự án bao gồm:
+📋 Tổng Quan Dự Án
+App_Truyen là một ứng dụng đọc và quản lý truyện, cung cấp trải nghiệm mượt mà cho người dùng. Ứng dụng được xây dựng với Flutter cho phần giao diện (frontend), NestJS cho phần server (backend), và sử dụng Neon (dịch vụ PostgreSQL) làm cơ sở dữ liệu.
+Tính năng chính
 
-Frontend: Ứng dụng di động đa nền tảng được xây dựng bằng Flutter.
-Backend: API mạnh mẽ và có khả năng mở rộng với NestJS.
-Cơ sở dữ liệu: Sử dụng Neon Console (PostgreSQL) để quản lý dữ liệu.
+Tìm kiếm truyện: Tìm truyện theo tên hoặc thể loại.
+Xem chi tiết truyện: Hiển thị thông tin chi tiết (mô tả, tác giả, thể loại, v.v.).
+Đọc truyện online: Truy cập nội dung truyện trực tiếp.
+Quản lý truyện yêu thích: Lưu và quản lý danh sách truyện yêu thích (yêu cầu đăng nhập).
+Đăng nhập/Đăng ký: Hỗ trợ đăng nhập bằng Google và tài khoản thông thường.
+
+Cấu trúc dự án
+
+frontend/: Mã nguồn giao diện người dùng (Flutter).
+backend/: Mã nguồn server (NestJS).
+.gitignore: Định nghĩa các tệp/thư mục bỏ qua khi đẩy lên Git.
 
 
 🛠️ Công Nghệ Sử Dụng
 
 
 
-Thành Phần
+Phần
 Công Nghệ
-Mô Tả
 
 
 
 Frontend
-Flutter (Dart)
-Xây dựng ứng dụng di động đa nền tảng
+Flutter, Provider, Flutter BLoC
 
 
 Backend
-NestJS (TypeScript)
-API mạnh mẽ, dễ mở rộng
+NestJS, Prisma, Cloudinary
 
 
-Cơ Sở Dữ Liệu
-Neon Console (PostgreSQL)
-Quản lý dữ liệu hiệu quả
+Database
+Neon (PostgreSQL)
 
 
-Công Cụ Khác
-Prisma, Cloudinary, Google Sign-In, JWT
-ORM, lưu trữ hình ảnh, xác thực
+Quản lý Dependencies
+npm (backend), pub (frontend)
 
 
 
-📱 Frontend
-Mô Tả
-Dự án Flutter cho ứng dụng di động App_Truyen, mang lại trải nghiệm người dùng mượt mà và tương tác. Thư mục: frontend/.
-Các Thư Viện Chính
+📦 Yêu Cầu Hệ Thống
+Trước khi bắt đầu, hãy đảm bảo bạn đã cài đặt:
 
-🌟 flutter: SDK cho Flutter
-🛠️ provider: ^6.1.1: Quản lý trạng thái
-💾 shared_preferences: ^2.2.2: Lưu trữ cục bộ
-🌐 http: ^1.2.0: Gửi yêu cầu HTTP
-🎨 font_awesome_flutter: ^10.8.0: Thư viện biểu tượng
-🧩 flutter_bloc: ^8.1.6: Mô hình BLoC để quản lý trạng thái
-🔑 google_sign_in: ^6.2.2: Đăng nhập bằng Google
-📸 image_picker: ^1.1.2: Chọn hình ảnh từ thiết bị
-
-Cài Đặt
-
-Chuyển đến thư mục frontend/.
-Chạy lệnh:flutter pub get
+Flutter (phiên bản 3.0.0 hoặc cao hơn) và Dart (phiên bản 3.5.0 hoặc cao hơn).
+Node.js (phiên bản 16.x hoặc cao hơn).
+npm (thường đi kèm với Node.js).
+Tài khoản Neon để quản lý cơ sở dữ liệu PostgreSQL.
+(Tùy chọn) pgAdmin hoặc công cụ quản lý PostgreSQL để kiểm tra cơ sở dữ liệu.
 
 
-Đảm bảo có tệp .env trong thư mục frontend/ để lưu biến môi trường.
-Khởi động ứng dụng:flutter run
-
-
-
-
-🌐 Backend
-Mô Tả
-Backend được xây dựng bằng NestJS, xử lý yêu cầu API, xác thực và quản lý dữ liệu. Thư mục: backend/.
-Các Thư Viện Chính
-
-🚀 @nestjs/core: ^10.4.13: Framework NestJS cốt lõi
-🔒 @nestjs/jwt: ^10.2.0: Xác thực JWT
-📜 @nestjs/swagger: ^8.1.0: Tài liệu API
-🗄️ @prisma/client: ^5.22.0: Prisma ORM
-🖼️ cloudinary: ^2.5.1: Lưu trữ hình ảnh
-🛡️ helmet: ^8.0.0: Middleware bảo mật
-
-Scripts Chính
-
-🛠️ npm run build: Build dự án
-▶️ npm run dev: Khởi động server ở chế độ phát triển
-✅ npm run test: Chạy unit test
-🧪 npm run test:e2e: Chạy end-to-end test
-
-Cài Đặt
-
-Chuyển đến thư mục backend/.
-Cài đặt thư viện:npm install
-
-
-Thiết lập biến môi trường trong tệp .env (URL cơ sở dữ liệu, Cloudinary, v.v.).
-Khởi động server:npm run dev
-
-
-
-
-🗄️ Cơ Sở Dữ Liệu
-Mô Tả
-Dự án sử dụng Neon Console, một dịch vụ PostgreSQL được quản lý.
-Cài Đặt
-
-Đăng ký tài khoản trên Neon Console.
-Tạo một cơ sở dữ liệu PostgreSQL mới.
-Lấy chuỗi kết nối và thêm vào tệp .env của backend.
-Áp dụng migration với Prisma:npx prisma migrate dev
-
-
-
-
-🔗 API Endpoint
-Backend đã được deploy trên Render và có thể truy cập tại:Base URL: https://webtruyenfull.onrender.com/api/v1
-Cấu hình URL này trong tệp .env của frontend để kết nối với backend.
-
-⚙️ Hướng Dẫn Cài Đặt
-1. Clone Repository
+🚀 Hướng Dẫn Cài Đặt
+Dưới đây là các bước chi tiết để thiết lập dự án sau khi clone từ repository:
+1. Clone Dự Án
 git clone https://github.com/BanhCute/App_Truyen.git
 cd App_Truyen
 
-2. Cài Đặt Frontend
-Thực hiện các bước trong phần Frontend.
-3. Cài Đặt Backend
-Thực hiện các bước trong phần Backend.
-4. Cài Đặt Cơ Sở Dữ Liệu
-Thực hiện các bước trong phần Cơ Sở Dữ Liệu.
-5. Kết Nối API
-Cập nhật URL API (https://webtruyenfull.onrender.com/api/v1) trong tệp .env của frontend.
+2. Cài Đặt Dependencies
+Dự án có hai phần chính: frontend và backend. Bạn cần cài đặt dependencies cho cả hai.
+Frontend
 
-🤝 Đóng Góp
-Chúng tôi hoan nghênh mọi đóng góp! Vui lòng làm theo các bước sau:
-
-Fork repository.
-Tạo nhánh mới:git checkout -b feature/tính-năng-của-bạn
+Di chuyển vào thư mục frontend:cd frontend
 
 
-Commit thay đổi:git commit -m "Thêm tính năng của bạn"
+Cài đặt các thư viện:flutter pub get
 
 
-Push lên nhánh:git push origin feature/tính-năng-của-bạn
+Nếu gặp lỗi, hãy đảm bảo cài các thư viện chính:
+provider, flutter_bloc, http, google_sign_in, image_picker.
 
 
-Mở một pull request.
+Tạo tệp .env trong thư mục frontend và cấu hình các biến môi trường:API_URL=https://webtruyenfull.onrender.com/api/v1
 
 
-📜 Giấy Phép
-Dự án hiện không có giấy phép (UNLICENSED). Vui lòng liên hệ tác giả để được phép sử dụng.
+
+Backend
+
+Di chuyển vào thư mục backend:cd ../backend
 
 
-  ✨ Cảm ơn bạn đã quan tâm đến App_Truyen! ✨
+Cài đặt các thư viện:npm install
+
+
+Nếu npm install không cài đầy đủ, hãy đảm bảo cài thêm các thư viện sau:npm install @nestjs/jwt @prisma/client cloudinary helmet
+
+
+@nestjs/jwt: Xử lý xác thực JWT.
+@prisma/client: ORM cho PostgreSQL.
+cloudinary: Lưu trữ hình ảnh.
+helmet: Tăng cường bảo mật API.
+
+
+Tạo tệp .env trong thư mục backend và cấu hình các biến môi trường:PORT=5000
+DATABASE_URL=<your-neon-postgresql-url>
+CLOUDINARY_URL=<your-cloudinary-url>
+
+
+
+3. Cấu Hình Cơ Sở Dữ Liệu
+
+Neon (PostgreSQL):
+Đăng nhập vào tài khoản Neon, tạo một dự án và lấy chuỗi kết nối (connection string).
+Cập nhật chuỗi kết nối vào tệp .env của backend.
+Chạy migration để tạo bảng:npx prisma migrate dev
+
+
+
+
+
+4. Chạy Ứng Dụng
+Backend
+Trong thư mục backend, khởi động server:
+npm run dev
+
+Server sẽ chạy tại http://localhost:5000. API đã được deploy tại:Base URL: https://webtruyenfull.onrender.com/api/v1
+Frontend
+Trong thư mục frontend, chạy ứng dụng Flutter:
+flutter run
+
+Ứng dụng sẽ chạy trên trình giả lập hoặc thiết bị di động.
+5. Kiểm Tra Cơ Sở Dữ Liệu
+
+Neon: Sử dụng bảng điều khiển Neon hoặc pgAdmin để kiểm tra kết nối và dữ liệu.
+
+
+🛠️ Các Lệnh Thường Dùng
+
+
+
+Lệnh
+Mô Tả
+
+
+
+flutter pub get
+Cài đặt dependencies cho frontend.
+
+
+npm install
+Cài đặt dependencies cho backend.
+
+
+npm run dev (backend)
+Khởi động server backend ở chế độ phát triển.
+
+
+flutter run (frontend)
+Khởi động ứng dụng Flutter.
+
+
+npx prisma migrate dev
+Áp dụng migration cho cơ sở dữ liệu.
+
+
+
+⚠️ Lưu Ý Khi Clone Dự Án
+
+Thiếu Dependencies:
+Nếu flutter pub get hoặc npm install không cài hết thư viện, kiểm tra các thư viện chính và cài thủ công (xem bước 2).
+
+
+Tệp .env:
+Tệp này không được đẩy lên Git. Bạn phải tạo lại .env với các biến môi trường cần thiết.
+
+
+Kết Nối Cơ Sở Dữ Liệu:
+Đảm bảo chuỗi kết nối database (Neon) chính xác.
+
+
+Phiên Bản Flutter và Node.js:
+Sử dụng Flutter 3.0.0+ và Node.js 16.x+ để tránh lỗi tương thích.
+
+
+
+
+❓ Khắc Phục Sự Cố
+
+Lỗi flutter pub get hoặc npm install:
+Xóa thư mục pubspec.lock (frontend) hoặc node_modules và package-lock.json (backend), sau đó chạy lại lệnh cài đặt.
+
+
+Lỗi Kết Nối Database:
+Kiểm tra chuỗi kết nối trong .env.
+Đảm bảo Neon đang hoạt động.
+
+
+Lỗi Frontend Không Kết Nối Được API:
+Kiểm tra API_URL trong .env của frontend.
+Đảm bảo backend đang chạy hoặc API tại https://webtruyenfull.onrender.com/api/v1 hoạt động.
+
+
+
+
+📢 Góp Ý
+Nếu bạn có ý tưởng hoặc muốn báo lỗi, hãy tạo issue trên repository hoặc liên hệ trực tiếp với tôi.
+
+👤 Đóng Góp
+Dự án được phát triển bởi:  
+
+BanhCute (Tác giả duy nhất)
+
+
+
+  ✨ Cảm ơn bạn đã quan tâm đến App_Truyen! 📚
